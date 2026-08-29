@@ -257,6 +257,14 @@
     border-radius:20px;padding:9px 6px;font-family:var(--body);font-size:13px;cursor:pointer}
   .velb button.on{background:var(--verde);border-color:var(--verde);color:#fff;font-weight:700}
 </style>
+<style>
+  .sp-nav{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:18px;
+    animation:rise .6s .42s ease both}
+  .sp-b{background:none;border:1px solid var(--linea);border-radius:20px;padding:9px 16px;
+    font-family:var(--body);font-size:13px;color:var(--tinta-2);cursor:pointer}
+  .sp-b:hover{border-color:var(--verde);color:var(--verde-hondo)}
+  .sp-go{max-width:280px;animation:rise .6s .48s ease both}
+</style>
 
 </head>
 <body>
@@ -276,7 +284,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v9 · 28 ago";
+var VERSION="v10 · 28 ago";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -860,6 +868,7 @@ function portada(){
   if(tb)tb.style.display='none';
   var g=saludoDelDia(vuelve);
 
+  var historial=[];
   function pinta(s){
     var vistos=(D.saludosVistos||[]).length;
     APP.innerHTML='<div class="splash" id="sp">'+
@@ -874,9 +883,12 @@ function portada(){
       '<div class="sp-greet" id="gr">'+esc(s.en)+(vuelve?'<span class="sp-nm">'+esc(P.nombre)+'.</span>':'')+'</div>'+
       '<div class="sp-es">'+esc(s.es)+'</div>'+
       '<div class="sp-reg">'+REGISTRO[s.reg]+'</div>'+
-      '<button class="sp-otro" id="otro">Otra forma de saludar ↻</button>'+
+      '<div class="sp-nav">'+
+        (historial.length?'<button class="sp-b" id="ant">← Anterior</button>':'')+
+        '<button class="sp-b" id="otro">Otro saludo ↻</button>'+
+      '</div>'+
+      '<button class="btn sp-go" id="cta">Continuar</button>'+
       '<div class="sp-name">English For All</div>'+
-      '<div class="sp-cta" id="cta">Toca para empezar</div>'+
       '<div class="sp-cuenta">'+vistos+' de '+SALUDOS.length+' saludos vistos</div>'+
       '</div>';
     ligar(s);
@@ -903,12 +915,21 @@ function portada(){
     var ot=document.getElementById('otro');
     if(ot)ot.onclick=function(e){
       e.stopPropagation();
+      historial.push(g);
       g=saludoDelDia(vuelve);
       pinta(g);
       saludar(g);
     };
+    var an=document.getElementById('ant');
+    if(an)an.onclick=function(e){
+      e.stopPropagation();
+      if(!historial.length)return;
+      g=historial.pop();
+      pinta(g);
+      saludar(g);
+    };
     var cta=document.getElementById('cta');
-    if(cta)cta.onclick=avanzar;
+    if(cta)cta.onclick=function(e){e.stopPropagation();avanzar();};
   }
 
   pinta(g);
@@ -924,8 +945,9 @@ function portada(){
     saludar(g);
   });
 
+  // el primer toque libera el audio en los navegadores que lo bloquean
   ['pointerdown','keydown','touchstart'].forEach(function(ev){
-    document.addEventListener(ev,avanzar,{once:true});
+    document.addEventListener(ev,function(){if(!hablado)saludar(g);},{once:true});
   });
 }
 

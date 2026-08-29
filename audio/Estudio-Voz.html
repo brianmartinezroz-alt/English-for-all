@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estudio de voz · English For All</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--crema:#F5F1E8;--papel:#FDFBF6;--tinta:#2A2724;--tinta-2:#57534E;--tenue:#8A837A;
+    --linea:#E2DACA;--verde:#1D9E75;--verde-hondo:#137A59;--verde-suave:#E6F3EC;--coral:#D85A30;
+    --display:'Fraunces',Georgia,serif;--body:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--crema);color:var(--tinta);font-family:var(--body);line-height:1.55}
+  .shell{max-width:760px;margin:0 auto;padding:26px 18px 90px}
+  h1{font-family:var(--display);font-size:30px;font-weight:600;letter-spacing:-.02em;margin-bottom:6px}
+  .kick{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--tenue);margin-bottom:5px}
+  .intro{font-size:14px;color:var(--tinta-2);max-width:62ch;margin-bottom:20px}
+  .barra{position:sticky;top:0;background:var(--crema);border-bottom:1px solid var(--linea);
+    padding:12px 0;margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;z-index:5}
+  .cuenta{font-family:var(--mono);font-size:12px;color:var(--tinta-2)}
+  .prog{flex:1;height:6px;background:var(--linea);border-radius:3px;overflow:hidden;min-width:120px}
+  .prog i{display:block;height:100%;background:var(--verde);width:0;transition:width .3s}
+  button{font-family:var(--body);cursor:pointer}
+  .bt{background:var(--verde);color:#fff;border:0;border-radius:8px;padding:10px 16px;font-size:13px;font-weight:700}
+  .bt:hover{background:var(--verde-hondo)}
+  .bt.g{background:none;border:1px solid var(--linea);color:var(--tinta-2);font-weight:500}
+  .bt.g:hover{border-color:var(--verde);color:var(--verde-hondo)}
+  .bt[disabled]{opacity:.45;cursor:default}
+  .fila{background:var(--papel);border:1px solid var(--linea);border-radius:12px;padding:16px 18px;margin-bottom:10px}
+  .fila.lista{border-color:var(--verde);background:var(--verde-suave)}
+  .top{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:4px}
+  .en{font-family:var(--display);font-size:21px;font-weight:600}
+  .num{font-family:var(--mono);font-size:11px;color:var(--tenue)}
+  .es{font-size:13px;color:var(--tinta-2);margin-bottom:12px}
+  .acc{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .grabando{background:var(--coral)!important}
+  .ok{font-family:var(--mono);font-size:11px;color:var(--verde-hondo)}
+  audio{height:34px;max-width:220px}
+  .aviso{background:#FDF4E3;border-left:2px solid #C08A22;border-radius:0 8px 8px 0;padding:13px 15px;
+    font-size:13px;color:var(--tinta-2);margin-bottom:18px;line-height:1.55}
+  .aviso b{display:block;color:#8A6210;margin-bottom:4px}
+  .fin{background:var(--papel);border:1px solid var(--linea);border-radius:12px;padding:20px;margin-top:20px}
+  .fin h3{font-family:var(--display);font-size:19px;font-weight:600;margin-bottom:8px}
+  .fin p{font-size:13.5px;color:var(--tinta-2);margin-bottom:12px}
+  code{font-family:var(--mono);font-size:12px;background:var(--crema);padding:2px 6px;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="kick">English For All · uso interno</div>
+  <h1>Estudio de voz</h1>
+  <p class="intro">Graba los 28 saludos con tu voz. La app los usa en lugar de la voz del navegador — y si falta alguno, ese sigue con la voz sintética. Puedes grabar unos hoy y otros después.</p>
+
+  <div class="aviso">
+    <b>Antes de empezar</b>
+    Busca un cuarto callado y habla a unos 20 cm del micrófono. Di la frase natural, como se la dirías a un alumno — no la actúes. Deja medio segundo de silencio antes y después de hablar.
+  </div>
+
+  <div class="barra">
+    <span class="cuenta" id="cuenta">0 de 28</span>
+    <span class="prog"><i id="pg"></i></span>
+    <button class="bt" id="bajar" disabled>Descargar grabadas</button>
+  </div>
+
+  <div id="lista"></div>
+
+  <div class="fin">
+    <h3>Cuando termines</h3>
+    <p>Descarga las grabaciones. Se guardan con el nombre que la app espera, por ejemplo <code>hello.webm</code> o <code>good-morning.webm</code>. No les cambies el nombre.</p>
+    <p>Luego, en tu repositorio de GitHub: <strong>Add file → Create new file</strong>, escribe <code>audio/vacio.txt</code> y guarda — eso crea la carpeta. Después entra a esa carpeta y usa <strong>Add file → Upload files</strong> para subir todos los audios de un jalón.</p>
+    <p>La app los busca sola. No hay que configurar nada.</p>
+  </div>
+</div>
+
+<script>
+var SALUDOS=[
+  {en:'Hello.',es:'Hola.'},
+  {en:'Hi.',es:'Hola.'},
+  {en:'Hey.',es:'Hola, qué tal.'},
+  {en:'Hey there.',es:'Hola, qué tal.'},
+  {en:'Good morning.',es:'Buenos días.'},
+  {en:'Morning!',es:'¡Buenos días! — más relajado.'},
+  {en:'Good afternoon.',es:'Buenas tardes.'},
+  {en:'Good evening.',es:'Buenas noches — al llegar.'},
+  {en:'How are you?',es:'¿Cómo estás?'},
+  {en:'How are you doing?',es:'¿Cómo te va?'},
+  {en:"How's it going?",es:'¿Cómo va todo?'},
+  {en:"What's up?",es:'¿Qué onda?'},
+  {en:'How have you been?',es:'¿Cómo has estado?'},
+  {en:"How's everything?",es:'¿Cómo va todo?'},
+  {en:"How's your day going?",es:'¿Cómo va tu día?'},
+  {en:'Nice to see you.',es:'Qué gusto verte.'},
+  {en:'Good to see you again.',es:'Qué gusto verte otra vez.'},
+  {en:'Welcome back.',es:'Bienvenido de vuelta.'},
+  {en:'Long time no see.',es:'Cuánto tiempo sin verte.'},
+  {en:'Nice to meet you.',es:'Mucho gusto.'},
+  {en:'Pleased to meet you.',es:'Encantado de conocerte.'},
+  {en:'How do you do?',es:'¿Cómo está usted? — muy formal.'},
+  {en:'Good to have you here.',es:'Qué bueno tenerte aquí.'},
+  {en:"Hope you're doing well.",es:'Espero que estés bien.'},
+  {en:'Ready when you are.',es:'Cuando quieras, empezamos.'},
+  {en:'Great to see you.',es:'Qué gusto verte.'},
+  {en:'How is everything going?',es:'¿Cómo va todo?'},
+  {en:'Welcome.',es:'Bienvenido.'}
+];
+
+function clave(t){return String(t).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+
+var grabaciones={},rec=null,stream=null,trozos=[],activo=null;
+
+document.getElementById('lista').innerHTML=SALUDOS.map(function(s,i){
+  return '<div class="fila" id="f'+i+'">'+
+    '<div class="top"><span class="en">'+esc(s.en)+'</span><span class="num">'+(i+1)+' de '+SALUDOS.length+' · '+clave(s.en)+'.webm</span></div>'+
+    '<div class="es">'+esc(s.es)+'</div>'+
+    '<div class="acc" id="a'+i+'"><button class="bt" data-g="'+i+'">Grabar</button></div>'+
+    '</div>';
+}).join('');
+
+function pinta(i){
+  var s=SALUDOS[i],box=document.getElementById('a'+i),fila=document.getElementById('f'+i);
+  var g=grabaciones[i];
+  if(g){
+    fila.classList.add('lista');
+    box.innerHTML='<audio controls src="'+URL.createObjectURL(g)+'"></audio>'+
+      '<button class="bt g" data-g="'+i+'">Regrabar</button>'+
+      '<span class="ok">✓ lista</span>';
+  }else{
+    fila.classList.remove('lista');
+    box.innerHTML='<button class="bt" data-g="'+i+'">Grabar</button>';
+  }
+  ligar();
+  var n=Object.keys(grabaciones).length;
+  document.getElementById('cuenta').textContent=n+' de '+SALUDOS.length;
+  document.getElementById('pg').style.width=Math.round(n/SALUDOS.length*100)+'%';
+  document.getElementById('bajar').disabled=n===0;
+}
+
+function ligar(){
+  document.querySelectorAll('[data-g]').forEach(function(b){
+    b.onclick=function(){
+      var i=+b.dataset.g;
+      if(activo===i){parar();return;}
+      if(activo!==null)parar();
+      arrancar(i,b);
+    };
+  });
+}
+
+function arrancar(i,b){
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(st){
+    stream=st;trozos=[];activo=i;
+    var tipo='';
+    ['audio/webm;codecs=opus','audio/webm','audio/mp4'].forEach(function(t){
+      if(!tipo&&window.MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t))tipo=t;
+    });
+    rec=tipo?new MediaRecorder(st,{mimeType:tipo}):new MediaRecorder(st);
+    rec.ondataavailable=function(e){if(e.data&&e.data.size)trozos.push(e.data);};
+    rec.onstop=function(){
+      grabaciones[i]=new Blob(trozos,{type:rec.mimeType||'audio/webm'});
+      if(stream){stream.getTracks().forEach(function(t){t.stop();});stream=null;}
+      activo=null;pinta(i);
+    };
+    rec.start();
+    b.textContent='Parar';b.classList.add('grabando');
+  }).catch(function(){
+    alert('No se pudo abrir el micrófono. Revisa el permiso del navegador.');
+  });
+}
+function parar(){try{if(rec&&rec.state!=='inactive')rec.stop();}catch(e){}}
+
+document.getElementById('bajar').onclick=function(){
+  var idx=Object.keys(grabaciones);
+  var n=0;
+  (function siguiente(){
+    if(n>=idx.length)return;
+    var i=idx[n++];
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(grabaciones[i]);
+    a.download=clave(SALUDOS[i].en)+'.webm';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(siguiente,600);   // el navegador no deja bajar todo de golpe
+  })();
+};
+
+ligar();
+</script>
+</body>
+</html>

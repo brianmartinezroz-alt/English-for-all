@@ -234,6 +234,29 @@
   .pick button.otra.sel{border-style:solid;color:#fff}
   @media(prefers-reduced-motion:reduce){#app > *{animation:none}}
 </style>
+<style>
+  .ses{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:3px;
+    background:var(--verde);border:1px solid var(--verde);color:#fff;border-radius:12px;
+    padding:14px 16px;margin-bottom:8px;cursor:pointer;font-family:var(--body);text-align:left}
+  .ses:hover{background:var(--verde-hondo)}
+  .ses-n{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.85}
+  .ses-t{font-family:var(--display);font-size:17px;font-weight:600;line-height:1.25}
+  .ses.hecha{background:var(--papel);border-color:var(--linea);color:var(--tinta-2)}
+  .ses.hecha:hover{background:var(--crema-2)}
+  .ses.hecha .ses-n{color:var(--verde-hondo);opacity:1}
+</style>
+<style>
+  .vnat{display:inline-block;font-style:normal;font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;
+    text-transform:uppercase;background:var(--verde);color:#fff;border-radius:10px;padding:2px 7px;margin-left:8px;
+    vertical-align:middle}
+  .vel{margin-top:16px}
+  .vel span{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--tenue);margin-bottom:8px}
+  .velb{display:flex;gap:6px}
+  .velb button{flex:1;background:var(--crema);border:1px solid var(--linea);color:var(--tinta-2);
+    border-radius:20px;padding:9px 6px;font-family:var(--body);font-size:13px;cursor:pointer}
+  .velb button.on{background:var(--verde);border-color:var(--verde);color:#fff;font-weight:700}
+</style>
 
 </head>
 <body>
@@ -253,7 +276,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v6 · 27 ago";
+var VERSION="v9 · 28 ago";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -264,7 +287,7 @@ function pack(o){try{return btoa(unescape(encodeURIComponent(JSON.stringify(o)))
 var ONLINE=(typeof google!=='undefined'&&google.script&&google.script.run);
 
 /* ═══════════ voz: hablar ═══════════ */
-var VOCES=[],VOZ_EN=null,VOZ_ES=null;
+var VOCES=[],VOZ_EN=null,VOZ_ES=null,RATE=0.78;
 
 function cargarVoces(cb){
   if(!('speechSynthesis' in window)){cb([]);return;}
@@ -275,14 +298,24 @@ function cargarVoces(cb){
     t++;setTimeout(intenta,150);
   })();
 }
+function calidadVoz(v){
+  var n=(v.name||'')+' '+(v.voiceURI||'');
+  var p=0;
+  if(/natural|neural|premium|enhanced|wavenet|studio/i.test(n))p+=5;
+  if(/google/i.test(n))p+=3;
+  if(/siri|samantha|karen|daniel|moira|aaron|nicky/i.test(n))p+=2;
+  if(v.localService===false)p+=2;              // las de servidor suelen sonar mejor
+  if(/david|zira|mark|hazel|espeak|compact|pico/i.test(n))p-=4;
+  return p;
+}
 function vocesIngles(){
   var en=VOCES.filter(function(v){return /^en(-|_)/i.test(v.lang);});
-  // una por variante, para no abrumar con veinte opciones casi iguales
+  en.sort(function(a,b){return calidadVoz(b)-calidadVoz(a);});
+  // sin repetir la misma voz, hasta 6
   var vistos={},out=[];
   en.forEach(function(v){
-    var k=v.lang.toLowerCase();
+    var k=(v.name||'').toLowerCase();
     if(!vistos[k]){vistos[k]=1;out.push(v);}
-    else if(vistos[k]<2){vistos[k]++;out.push(v);}
   });
   return out.slice(0,6);
 }
@@ -310,7 +343,7 @@ function hablar(t,lang,cb){
   var u=new SpeechSynthesisUtterance(t);
   var es=(lang==='es-MX');
   u.lang=es?'es-MX':'en-US';
-  u.rate=es?.98:.78;
+  u.rate=es?.98:(RATE||0.78);
   var v=es?VOZ_ES:VOZ_EN;
   if(v)u.voice=v;
   if(cb)u.onend=cb;
@@ -537,7 +570,7 @@ function router(){
   if(!D.vista){portada();return;}
   if(!D.probado){pruebaSonido();return;}
   if(D.voz===undefined&&('speechSynthesis' in window)){vozPicker();return;}
-  aplicarVoz(D.voz);elegirVozES();
+  aplicarVoz(D.voz);elegirVozES();if(D.rate)RATE=D.rate;
   if(!P){entrevista();return;}
   MAT=materialDe(P);
   if(sIdx===null){menu();return;}
@@ -958,11 +991,18 @@ function vozPicker(){
     '<div class="qsub">Toca cada una para oírla. Escoge la que entiendas mejor, no la que suene más bonita.</div>'+
     '<div id="vl">'+en.map(function(v,i){
       var e=etiquetaVoz(v);
-      return '<button class="vopt" data-i="'+i+'"><span class="vn">'+esc(e.nombre)+'</span>'+
+      return '<button class="vopt" data-i="'+i+'"><span class="vn">'+esc(e.nombre)+
+             (calidadVoz(v)>=3?'<em class="vnat">más natural</em>':'')+'</span>'+
              '<span class="vp">'+esc(e.pais)+'</span><span class="vplay">▶</span></button>';
     }).join('')+'</div>'+
+    '<div class="vel"><span>Qué tan rápido te hablo</span>'+
+      '<div class="velb">'+
+      '<button data-r="0.65">Muy lento</button>'+
+      '<button data-r="0.78" class="on">Lento</button>'+
+      '<button data-r="0.92">Normal</button>'+
+      '</div></div>'+
     '<button class="btn" id="ok" style="margin-top:14px">Con esta voz</button>'+
-    '<p class="tiny">Puedes cambiarla después desde el menú.</p></div>';
+    '<p class="tiny">Puedes cambiarla después desde el menú. Si todas suenan robóticas, escoge la que se entienda mejor — se va a arreglar pronto.</p></div>';
 
   function marcar(){
     APP.querySelectorAll('.vopt').forEach(function(b,i){b.classList.toggle('sel',i===sel);});
@@ -975,8 +1015,16 @@ function vozPicker(){
     };
   });
   marcar();
+  APP.querySelectorAll('.velb button').forEach(function(b){
+    b.onclick=function(){
+      APP.querySelectorAll('.velb button').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on');
+      RATE=parseFloat(b.dataset.r);
+      say('This is how fast I will speak.','en-US');
+    };
+  });
   document.getElementById('ok').onclick=function(){
-    D.voz=en[sel].voiceURI;save(D);
+    D.voz=en[sel].voiceURI;D.rate=RATE;save(D);
     aplicarVoz(D.voz);
     router();
   };
@@ -1170,8 +1218,9 @@ function menu(){
     '<div class="qtxt">'+esc(P.nombre)+'</div>'+
     '<div class="qsub">Elige con cuál seguir. La 5 repite la pregunta de la 1 para comparar.</div>'+
     MAT.map(function(s,i){
-      return '<button class="btn '+(hechas[i]?'ghost':'')+'" data-i="'+i+'" style="margin-bottom:8px;justify-content:flex-start;text-align:left">'+
-        (i+1)+'. '+esc(s.t)+(hechas[i]?' ✓':'')+'</button>';
+      return '<button class="ses '+(hechas[i]?'hecha':'')+'" data-i="'+i+'">'+
+        '<span class="ses-n">Sesión '+(i+1)+(hechas[i]?' · hecha ✓':'')+'</span>'+
+        '<span class="ses-t">'+esc(s.t)+'</span></button>';
     }).join('')+
     '<button class="btn ghost" id="cambiarvoz" style="margin-top:6px">Cambiar mi voz</button>'+
     '<button class="btn ghost" id="probarson" style="margin-top:6px">Probar sonido y micrófono</button></div>';
@@ -1208,17 +1257,12 @@ function portadaSesion(){
 
   var h='<div class="qcard">'+
     '<div class="qlbl">Sesión '+(sIdx+1)+' de '+MAT.length+'</div>'+
-    '<div class="qtxt" style="font-size:27px">'+esc(S.t)+'</div>'+
+    '<div class="qtxt" style="font-size:26px">Sesión '+(sIdx+1)+' · '+esc(S.t)+'</div>'+
     '<div class="qsub">Hola '+esc(P.nombre)+'. '+esc(S.enc)+'</div>'+
 
     '<div class="objx"><span>Al terminar vas a poder</span>'+esc(S.obj)+'</div>'+
 
-    '<div class="chips">'+
-      '<span class="chip"><b>'+modelos.length+'</b> frases para repetir</span>'+
-      (preg?'<span class="chip"><b>'+preg+'</b> preguntas que te hago</span>':'')+
-      (libres?'<span class="chip"><b>'+libres+'</b> de hablar libre</span>':'')+
-      '<span class="chip alt">unos 20 min</span>'+
-    '</div>';
+    '';
 
   if(u){
     var t={

@@ -223,6 +223,17 @@
     text-transform:uppercase;color:var(--tenue);cursor:pointer;padding:8px 2px;margin-bottom:10px}
   .volver:hover{color:var(--verde-hondo)}
 </style>
+<style>
+  /* cambio de pantalla con desvanecido */
+  #app > *{animation:aparece .34s cubic-bezier(.22,1,.36,1) both}
+  @keyframes aparece{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .splash.out{opacity:0;transform:translateY(-6px);transition:opacity .34s ease,transform .34s ease}
+
+  /* opción "otra" en las listas */
+  .pick button.otra{border-style:dashed;color:var(--tinta-2)}
+  .pick button.otra.sel{border-style:solid;color:#fff}
+  @media(prefers-reduced-motion:reduce){#app > *{animation:none}}
+</style>
 
 </head>
 <body>
@@ -242,7 +253,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v4 · 27 ago";
+var VERSION="v6 · 27 ago";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -422,13 +433,19 @@ var METAS=[
 
 /* ═══════════ armar el material desde el perfil ═══════════ */
 function materialDe(p){
+  var n=p.nivel_n||0;
+  function frase(t,pre){
+    t=(t||'').trim();
+    if(!t)return null;
+    return (pre?pre+' ':'')+t.replace(/\.$/,'')+'.';
+  }
   var yo='My name is '+p.nombre+'.';
-  var trab='I am '+p.trabajo_en+'.';
-  var lug='I work '+p.lugar_en+'.';
-  var acc=p.accion_en+'.';
-  var hor='I start '+p.hora_en+'.';
-  var gus='I like '+p.gusto_en+'.';
-  var met='I study English '+p.meta_en+'.';
+  var trab=frase(p.trabajo_en&&p.trabajo_en.replace(/^I am /,''),'I am')||'I have a job.';
+  var lug=frase(p.lugar_en&&p.lugar_en.replace(/^I work /,''),'I work')||'I work every day.';
+  var acc=frase(p.accion_en)||'I work every day.';
+  var hor=frase(p.hora_en&&p.hora_en.replace(/^I start /,''),'I start')||'I start early.';
+  var gus=frase(p.gusto_en&&p.gusto_en.replace(/^I like /,''),'I like')||'I like my family.';
+  var met=frase(p.meta_en&&p.meta_en.replace(/^I study English /,''),'I study English')||'I study English for my job.';
 
   var base=[
     {t:'Tú, en tres frases',
@@ -686,11 +703,11 @@ var FAMILIAS=[
 // Tres preguntas de dificultad creciente. No pretende ser una evaluación
 // formal: sirve para no arrancar a alguien de A2 con "My name is".
 var NIVEL_Q=[
-  {q:'How are you?',es:'Contesta como puedas. Si no sabes, dale a "no sé todavía".',
+  {q:'How are you?',sig:'¿Cómo estás?',es:'Contesta como puedas. Si no sabes, dale a "no sé todavía".',
    ok:/\b(fine|good|ok|okay|well|great|alright|not bad|so so)\b/i,vale:1},
-  {q:'What do you do?',es:'Dime a qué te dedicas, en inglés.',
+  {q:'What do you do?',sig:'¿A qué te dedicas?',es:'Dime a qué te dedicas, en inglés.',
    ok:/\b(i am|i'm|i work|i teach|i study|im)\b/i,vale:2},
-  {q:'What did you do yesterday?',es:'Cuéntame algo de ayer. En pasado.',
+  {q:'What did you do yesterday?',sig:'¿Qué hiciste ayer?',es:'Cuéntame algo de ayer. En pasado.',
    ok:/\b(worked|went|had|was|were|did|studied|taught|saw|made|ate|slept)\b/i,vale:3}
 ];
 function nivelDe(pts){
@@ -743,7 +760,8 @@ function pruebaNivel(){
     APP.innerHTML=atras()+'<div class="prog">'+NIVEL_Q.map(function(_,k){return '<i class="'+(k<=i?'on':'')+'"></i>';}).join('')+'</div>'+
       '<div class="qcard"><div class="qlbl">Paso 3 de 5 · a ver qué tanto sabes ('+(i+1)+' de '+NIVEL_Q.length+')</div>'+
       '<div class="qtxt" id="nq"></div><div class="qsub" id="ne"></div>'+
-      '<button class="btn ghost" id="oir" style="margin-bottom:10px">▶ Oír la pregunta</button>'+
+      '<button class="btn ghost" id="oir" style="margin-bottom:8px">▶ Oír la pregunta</button>'+
+      '<button class="btn ghost" id="sig1" style="margin-bottom:10px">¿Qué significa?</button>'+
       '<div id="res"></div>'+
       (HAY_MIC?'<button class="mic-big" id="mic"><span class="ring2"></span> Tocar y contestar</button>':'')+
       '<textarea class="typebox" id="tb" placeholder="O escríbelo aquí…" style="margin-top:10px"></textarea>'+
@@ -754,6 +772,11 @@ function pruebaNivel(){
     document.getElementById('ne').textContent=x.es;
     setTimeout(function(){say(x.q,'en-US');},250);
     document.getElementById('oir').onclick=function(){say(x.q,'en-US');};
+    document.getElementById('sig1').onclick=function(){
+      this.outerHTML='<div class="heard" style="margin-bottom:10px"><div class="hl">quiere decir</div>'+
+        '<div class="ht">'+esc(x.sig)+'</div></div>';
+      say(x.sig,'es-MX');
+    };
     var mic=document.getElementById('mic');
     if(mic)mic.onclick=function(){
       var b=this;b.classList.add('rec');b.innerHTML='<span class="ring2"></span> Escuchando…';b.disabled=true;
@@ -777,9 +800,10 @@ function pruebaNivel(){
     resp.push({q:x.q,r:t,ok:bien});
     document.getElementById('res').innerHTML='<div class="heard"><div class="hl">te entendí</div>'+
       '<div class="ht">'+esc(t)+'</div><div class="tst-r">'+(bien
-        ?'<span class="ok2">Eso funciona.</span>':'<span class="no2">Lo anoto. No pasa nada.</span>')+'</div></div>';
+        ?'<span class="ok2">Eso funciona.</span>':'<span class="no2">Lo anoto. No pasa nada — esto no es examen.</span>')+'</div></div>'+
+      '<button class="btn" id="cont1" style="margin-top:10px">Continuar</button>';
     say(bien?'Bien.':'Está bien, lo anoto.','es-MX');
-    setTimeout(function(){i++;paso1();},1400);
+    document.getElementById('cont1').onclick=function(){i++;paso1();};
   }
   function cerrar(){
     var nv=nivelDe(pts);
@@ -965,8 +989,8 @@ var PASOS=[
   {id:'trabajo',lbl:'Tu trabajo',q:'¿A qué te dedicas?',sub:'Escríbelo con tus palabras. Si eres dentista, mecánico, ama de casa, estudiante, lo que sea — como tú lo dirías.',tipo:'libre',ph:'Ej: soy dentista / trabajo en una fábrica de plásticos'},
   {id:'accion',lbl:'Tu día',q:'¿Qué haces en un día normal de trabajo?',sub:'Dos o tres cosas que repites casi siempre.',tipo:'libre',ph:'Ej: reviso pacientes, limpio dientes, hago radiografías'},
   {id:'hora',lbl:'Tu día',q:'¿A qué hora empiezas?',sub:'',tipo:'pick',ops:HORAS},
-  {id:'gusto',lbl:'Tú',q:'¿Qué te gusta?',sub:'Algo fuera del trabajo, si quieres.',tipo:'pick',ops:GUSTOS},
-  {id:'meta',lbl:'Tú',q:'¿Para qué quieres el inglés?',sub:'No hay respuesta correcta.',tipo:'pick',ops:METAS}
+  {id:'gusto',lbl:'Tú',q:'¿Qué te gusta?',sub:'Puedes escoger varias. Si no está la tuya, escríbela.',tipo:'pick',ops:GUSTOS,multi:true,otra:'Otra cosa…',otraPh:'Ej: bailar, el box, mis plantas'},
+  {id:'meta',lbl:'Tú',q:'¿Para qué quieres el inglés?',sub:'Puedes escoger varias. No hay respuesta correcta.',tipo:'pick',ops:METAS,multi:true,otra:'Otra razón…',otraPh:'Ej: para irme a vivir a Canadá'}
 ];
 var epaso=0,edatos={};
 
@@ -986,7 +1010,10 @@ function entrevista(){
        '<button class="btn" id="ok" style="margin-top:8px">Continuar</button>';
   }else{
     h+='<div class="pick" id="pk">'+s.ops.map(function(o,i){
-      return '<button data-i="'+i+'">'+esc(o[0])+'<i>'+esc(o[1])+'</i></button>';}).join('')+'</div>'+
+      return '<button data-i="'+i+'">'+esc(o[0])+'<i>'+esc(o[1])+'</i></button>';}).join('')+
+      (s.otra?'<button data-otra="1" class="otra">'+esc(s.otra)+'</button>':'')+'</div>'+
+      (s.otra?'<textarea class="typebox" id="txotra" placeholder="'+esc(s.otraPh||'')+'" style="display:none;min-height:56px"></textarea>':'')+
+      (s.multi?'<p class="tiny" style="margin:0 0 12px;text-align:left">Toca todas las que quieras.</p>':'')+
       '<button class="btn" id="ok" disabled>Continuar</button>';
   }
   h+='<p class="tiny">Esto solo se pregunta una vez. Con tus respuestas armo tu material.</p></div>';
@@ -1040,19 +1067,43 @@ function entrevista(){
       avanzar();
     };
   }else{
-    var sel=null;
+    var sel=[],otraOn=false;
+    var caja=document.getElementById('txotra');
+    function revisa(){
+      var hay=sel.length>0||(otraOn&&caja&&caja.value.trim());
+      document.getElementById('ok').disabled=!hay;
+    }
     APP.querySelectorAll('#pk button').forEach(function(b){
       b.onclick=function(){
-        APP.querySelectorAll('#pk button').forEach(function(x){x.classList.remove('sel');});
-        b.classList.add('sel');sel=+b.dataset.i;
-        document.getElementById('ok').disabled=false;
-        say(s.ops[sel][1],'en-US');
+        if(b.dataset.otra){
+          otraOn=!otraOn;
+          b.classList.toggle('sel',otraOn);
+          if(caja){caja.style.display=otraOn?'block':'none';if(otraOn)caja.focus();}
+          revisa();return;
+        }
+        var i=+b.dataset.i;
+        if(s.multi){
+          var k=sel.indexOf(i);
+          if(k>=0){sel.splice(k,1);b.classList.remove('sel');}
+          else{sel.push(i);b.classList.add('sel');say(s.ops[i][1],'en-US');}
+        }else{
+          APP.querySelectorAll('#pk button').forEach(function(x){x.classList.remove('sel');});
+          b.classList.add('sel');sel=[i];say(s.ops[i][1],'en-US');
+        }
+        revisa();
       };
     });
+    if(caja)caja.oninput=revisa;
     document.getElementById('ok').onclick=function(){
-      if(sel===null)return;
-      edatos[s.id+'_es']=s.ops[sel][0];
-      edatos[s.id+'_en']=s.ops[sel][1];
+      var es=sel.map(function(i){return s.ops[i][0];});
+      var en=sel.map(function(i){return s.ops[i][1];});
+      if(otraOn&&caja&&caja.value.trim()){
+        es.push(caja.value.trim());
+        edatos[s.id+'_otra']=caja.value.trim();
+      }
+      if(!es.length)return;
+      edatos[s.id+'_es']=es.join(' y ');
+      edatos[s.id+'_en']=en.length?en.join(' and '):null;
       avanzar();
     };
   }
@@ -1073,7 +1124,8 @@ function cerrarPerfil(){
      gusto_es:edatos.gusto_es,gusto_en:edatos.gusto_en,
      meta_es:edatos.meta_es,meta_en:edatos.meta_en,
      voz:(VOZ_EN?VOZ_EN.name+' ('+VOZ_EN.lang+')':'sin voz'),
-     nivel:edatos.nivel,nivel_pts:edatos.nivel_pts,nivel_resp:edatos.nivel_resp,
+     nivel:edatos.nivel,nivel_n:edatos.nivel_n,nivel_pts:edatos.nivel_pts,nivel_resp:edatos.nivel_resp,
+     gusto_otra:edatos.gusto_otra||'',meta_otra:edatos.meta_otra||'',
      creado:new Date().toISOString().slice(0,10)};
   if(edatos.trabajo_en_directo){
     P.trabajo_en=edatos.trabajo_en_directo;

@@ -293,7 +293,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v13 · 28 ago";
+var VERSION="v14 · 28 ago";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -350,6 +350,12 @@ function aplicarVoz(uri){
 }
 
 function say(t,lang,cb){
+  var k=clave(t);
+  if(typeof GRABABLES!=='undefined'&&GRABABLES[k]&&!AUDIO_FALLA[GRABABLES[k]]){
+    try{speechSynthesis.cancel();}catch(e){}
+    decirConTuVoz(t,lang,cb,GRABABLES[k]);
+    return;
+  }
   if(!('speechSynthesis' in window)){cb&&cb();return;}
   try{
     speechSynthesis.cancel();
@@ -382,8 +388,8 @@ var AUDIO_FALLA={};   // los que ya se sabe que no existen, para no reintentar
 function clave(t){
   return String(t).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 }
-function decirConTuVoz(texto,lang,cb){
-  var k=clave(texto);
+function decirConTuVoz(texto,lang,cb,archivo){
+  var k=archivo||clave(texto);
   if(AUDIO_FALLA[k]){say(texto,lang,cb);return;}
   var a=new Audio(AUDIO_BASE+k+'.webm');
   var arrancó=false;
@@ -957,6 +963,40 @@ function marca(){
   };
 }
 
+
+/* ═══════════ frases que pueden llevar tu voz ═══════════ */
+// Clave corta -> texto. El archivo se llama igual que la clave: es-01.webm
+var FIJAS=[
+  ['es-01','Hola. Soy tu tutor de inglés. Toca la pantalla y empezamos.'],
+  ['es-02','Muy bien. Ahora quiero saber quién eres.'],
+  ['es-03','No conozco esa palabra en inglés todavía. Dime a cuál se parece más.'],
+  ['es-04','Yo digo la frase, tú la repites en voz alta. Toca el botón verde cuando estés lista para hablar.'],
+  ['es-05','Ahora te voy a hacer preguntas. Contéstame hablando, con lo que ya practicamos.'],
+  ['es-06','Este es tu momento libre. Dime lo que puedas, aunque sea una frase. Cuando ya no tengas más, me avisas.'],
+  ['es-07','Muy bien.'],
+  ['es-08','Eso es.'],
+  ['es-09','Así se dice.'],
+  ['es-10','Bien.'],
+  ['es-11','Está bien, lo anoto.'],
+  ['es-12','Casi. Escúchala otra vez y repítela sin prisa.'],
+  ['es-13','Escribe o dicta tu respuesta antes de continuar.'],
+  ['es-14','Tu inglés va por arriba de este programa. Le voy a avisar a Brian para que te contacte.'],
+  ['en-01','How are you?'],
+  ['en-02','What do you do?'],
+  ['en-03','What did you do yesterday?'],
+  ['en-04','What is the hardest part of your job, and why?'],
+  ['en-05','If you had more time, what would you change about your work?'],
+  ['en-06','Hello. I am your English tutor. Let us practice together.'],
+  ['en-07','Nice to meet you.'],
+  ['en-08','And you?'],
+  ['en-09','I work every day.']
+];
+var GRABABLES={};
+(function(){
+  SALUDOS.forEach(function(x){GRABABLES[clave(x.en)]=clave(x.en);});
+  FIJAS.forEach(function(f){GRABABLES[clave(f[1])]=f[0];});
+})();
+
 /* ═══════════ 0 · portada ═══════════ */
 function portada(){
   var vuelve=!!P;
@@ -1107,7 +1147,8 @@ function vozPicker(){
   var sel=0;
   APP.innerHTML=atras()+'<div class="qcard"><div class="qlbl">Paso 1 de 5 · voz</div>'+
     '<div class="qtxt">¿Cómo quieres que suene mi voz?</div>'+
-    '<div class="qsub">Toca cada una para oírla. Escoge la que entiendas mejor, no la que suene más bonita.</div>'+
+    '<div class="qsub">Toca cada una para oírla. Escoge la que entiendas mejor, no la que suene más bonita. '+
+    'En las partes que Brian grabó con su voz, vas a oírlo a él — esta voz es para lo demás.</div>'+
     '<div id="vl">'+en.map(function(v,i){
       var e=etiquetaVoz(v);
       return '<button class="vopt" data-i="'+i+'"><span class="vn">'+esc(e.nombre)+

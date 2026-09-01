@@ -341,7 +341,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v30 · 1 sep";
+var VERSION="v31 · 1 sep";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -466,24 +466,39 @@ function callarTodo(){
   try{speechSynthesis.cancel();}catch(e){}
   if(AUDIO_ACTUAL){
     try{
-      AUDIO_ACTUAL.onended=null;AUDIO_ACTUAL.onerror=null;AUDIO_ACTUAL.onplaying=null;
+      AUDIO_ACTUAL.onended=null;AUDIO_ACTUAL.onerror=null;AUDIO_ACTUAL.oncanplaythrough=null;
       AUDIO_ACTUAL.pause();AUDIO_ACTUAL.currentTime=0;
     }catch(e){}
     AUDIO_ACTUAL=null;
   }
 }
-function reproducir(url,cb,onFalla){
+// Se separa "el archivo no existe" de "el navegador no me dejó sonar".
+// Antes se confundían y un bloqueo momentáneo dejaba la frase en voz genérica
+// para el resto de la sesión.
+function reproducir(url,onOk,onNoExiste,onBloqueado){
   callarTodo();
-  var a=new Audio(url),arranco=false;
-  AUDIO_ACTUAL=a;
-  try{a.playbackRate=Math.max(0.5,Math.min(1.6,(RATE||0.85)/0.85));}catch(e){}
-  a.onplaying=function(){arranco=true;};
-  a.onended=function(){cb&&cb();};
-  a.onerror=function(){if(!arranco)onFalla();};
-  var p=a.play();
-  if(p&&p.catch)p.catch(function(){if(!arranco)onFalla();});
+  var a=new Audio();
+  a.preload='auto';
+  var resuelto=false;
+  a.oncanplaythrough=function(){
+    if(resuelto)return;resuelto=true;
+    AUDIO_ACTUAL=a;
+    a.onended=function(){onOk&&onOk();};
+    var p=a.play();
+    if(p&&p.catch)p.catch(function(){
+      // existe, pero no se pudo reproducir: no se marca como faltante
+      onBloqueado&&onBloqueado();
+    });
+  };
+  a.onerror=function(){
+    if(resuelto)return;resuelto=true;
+    onNoExiste&&onNoExiste();
+  };
+  a.src=url;
+  try{a.load();}catch(e){if(!resuelto){resuelto=true;onNoExiste&&onNoExiste();}}
   return a;
 }
+
 function nombresPosibles(texto,archivo){
   // el mismo audio puede estar con nombre corto (es-01) o largo (la frase entera)
   var n=[];
@@ -503,9 +518,16 @@ function decirConTuVoz(texto,lang,cb,archivo){
   });
   var n=0;
   (function intenta(){
-    if(n>=combos.length){nombres.forEach(function(k){AUDIO_FALLA[k]=1;});say2(texto,lang,cb);return;}
+    if(n>=combos.length){
+      nombres.forEach(function(k){AUDIO_FALLA[k]=1;});
+      say2(texto,lang,cb);return;
+    }
     var c=combos[n++];
-    reproducir(c.url,function(){AUDIO_RUTA=c.r;AUDIO_HAY++;cb&&cb();},intenta);
+    reproducir(c.url,
+      function(){AUDIO_RUTA=c.r;AUDIO_HAY++;cb&&cb();},   // sonó
+      intenta,                                            // no existe: siguiente
+      function(){AUDIO_RUTA=c.r;cb&&cb();}                // existe pero bloqueado: no se marca
+    );
   })();
 }
 // habla siempre con la voz del navegador, sin buscar grabación
@@ -544,7 +566,11 @@ function soloTuVoz(texto,cb,archivo){
   (function intenta(){
     if(n>=combos.length){nombres.forEach(function(k){AUDIO_FALLA[k]=1;});cb&&cb(false);return;}
     var c=combos[n++];
-    reproducir(c.url,function(){AUDIO_RUTA=c.r;cb&&cb(true);},intenta);
+    reproducir(c.url,
+      function(){AUDIO_RUTA=c.r;cb&&cb(true);},
+      intenta,
+      function(){AUDIO_RUTA=c.r;cb&&cb(true);}
+    );
   })();
 }
 

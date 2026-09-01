@@ -325,7 +325,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v19 · 31 ago";
+var VERSION="v21 · 31 ago";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -479,6 +479,20 @@ function buscarGrabacion(nombre,cb){
     a.oncanplaythrough=function(){AUDIO_RUTA=r;cb(true,r);};
     a.onerror=intenta;
     a.load();
+  })();
+}
+
+
+// solo tu voz: si no hay grabación, no habla nadie
+function soloTuVoz(texto,cb,archivo){
+  var k=archivo||clave(texto);
+  if(AUDIO_FALLA[k]){cb&&cb(false);return;}
+  var rutas=AUDIO_RUTA!==null?[AUDIO_RUTA]:RUTAS.slice();
+  var n=0;
+  (function intenta(){
+    if(n>=rutas.length){AUDIO_FALLA[k]=1;cb&&cb(false);return;}
+    var r=rutas[n++];
+    reproducir(r+k+'.webm',function(){AUDIO_RUTA=r;cb&&cb(true);},intenta);
   })();
 }
 
@@ -691,6 +705,8 @@ var APP=document.getElementById('app');
 var D=load(),P=D.perfil,MAT=null,sIdx=0,it=0,attempts=[],t0=0,recog=null;
 
 var vioMarca=false,vioSaludo=false;   // por visita, no se guardan
+var forzar=null;                      // para que el botón atrás vaya una pantalla exacta
+function irA(p){forzar=p;router();}
 function aplicarPreferencias(){
   elegirVozES();
   if(D.rate)RATE=D.rate;
@@ -704,6 +720,13 @@ function router(){
   var tb=document.querySelector('.topbar');
   if(tb)tb.style.display='';
   aplicarModo();
+  if(forzar){
+    var f=forzar;forzar=null;
+    if(f==='saludo'){vioSaludo=false;portada();return;}
+    if(f==='experiencia'){preguntaExperiencia();return;}
+    if(f==='sonido'){pruebaSonido();return;}
+    if(f==='voz'){vozPicker();return;}
+  }
   if(!vioMarca){marca();return;}
   if(!vioSaludo){portada();return;}
   if(D.experiencia===undefined){preguntaExperiencia();return;}
@@ -1054,7 +1077,7 @@ function preguntaExperiencia(){
   var tb=document.querySelector('.topbar');
   if(tb)tb.style.display='none';
   var sel=null;
-  APP.innerHTML='<div class="qcard grande">'+
+  APP.innerHTML=atras()+'<div class="qcard grande">'+
     '<div class="qlbl">Antes de empezar</div>'+
     '<div class="qtxt">¿Qué tanto usas el celular?</div>'+
     '<div class="qsub">Con esto acomodo la pantalla para ti. No hay respuesta buena ni mala.</div>'+
@@ -1065,6 +1088,7 @@ function preguntaExperiencia(){
     '</div>'+
     '<button class="btn" id="ok" disabled>Continuar</button></div>';
   say2('¿Qué tanto usas el celular? Escoge la que más se parezca a ti.','es-MX');
+  ligarAtras(function(){irA('saludo');});
   APP.querySelectorAll('#pk button').forEach(function(b){
     b.onclick=function(){
       APP.querySelectorAll('#pk button').forEach(function(x){x.classList.remove('sel');});
@@ -1173,10 +1197,18 @@ function portada(){
   }
 
   var hablado=false,avanzado=false;
+  var intentos=0;
   function saludar(s){
     hablado=true;
-    // solo el saludo en inglés: la traducción se lee en pantalla, no se narra
-    decirConTuVoz(s.en,'en-US');
+    soloTuVoz(s.en,function(sono){
+      if(sono||intentos>=6)return;
+      // ese saludo no está grabado: se cambia por otro que sí lo esté,
+      // para que nunca se oiga la voz sintética en esta pantalla
+      intentos++;
+      var otro=saludoDelDia(vuelve);
+      if(otro.en===s.en)return;
+      g=otro;pinta(g);saludar(g);
+    });
   }
   function avanzar(){
     if(avanzado)return;
@@ -1277,18 +1309,19 @@ function pruebaSonido(){
   };
   document.getElementById('go').onclick=function(){D.probado=1;save(D);router();};
   ligarAyuda('Vamos a probar dos cosas: que tú me escuches a mí, y que yo te escuche a ti. Toca el botón A, y luego el B.');
-  ligarAtras(function(){vioSaludo=false;router();});
+  ligarAtras(function(){irA('experiencia');});
 }
 
 function vozPicker(){
   var en=vocesIngles();
   if(!en.length){
     D.voz=null;D.probado=1;save(D);
-    APP.innerHTML='<div class="qcard"><div class="qlbl">Aviso</div>'+
+    APP.innerHTML=atras()+'<div class="qcard"><div class="qlbl">Aviso</div>'+
       '<div class="qtxt">Este navegador no tiene voces instaladas.</div>'+
       '<div class="qsub">Vas a poder practicar igual, pero sin oírme. Para la experiencia completa, abre esto en Chrome.</div>'+
       '<button class="btn" id="go">Seguir de todos modos</button></div>';
     document.getElementById('go').onclick=function(){router();};
+    ligarAtras(function(){irA('sonido');});
     return;
   }
   var sel=0;
@@ -1341,7 +1374,7 @@ function vozPicker(){
     aplicarVoz(D.voz);
     router();
   };
-  ligarAtras(function(){D.probado=0;save(D);router();});
+  ligarAtras(function(){irA('sonido');});
 }
 
 /* ═══════════ entrevista inicial ═══════════ */
@@ -1385,7 +1418,7 @@ function entrevista(){
   ligarAyuda(textoAyuda);
   ligarAtras(function(){
     if(epaso>0){epaso--;entrevista();}
-    else{D.voz=undefined;save(D);router();}
+    else{irA(vocesIngles().length?'voz':'sonido');}
   });
 
   if(epaso===0){

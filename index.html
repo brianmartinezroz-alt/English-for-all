@@ -325,7 +325,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v23 · 31 ago";
+var VERSION="v25 · 31 ago";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -403,9 +403,12 @@ function aplicarVoz(id){
 
 function say(t,lang,cb){
   var k=clave(t);
-  if(typeof GRABABLES!=='undefined'&&GRABABLES[k]&&!AUDIO_FALLA[GRABABLES[k]]){
+  var archivo=(typeof GRABABLES!=='undefined'&&GRABABLES[k])?GRABABLES[k]:k;
+  // se intenta SIEMPRE el audio: si el archivo existe, suena la voz buena;
+  // si no, se apunta como faltante y de ahí en adelante va la del navegador
+  if(!AUDIO_FALLA[archivo]){
     try{speechSynthesis.cancel();}catch(e){}
-    decirConTuVoz(t,lang,cb,GRABABLES[k]);
+    decirConTuVoz(t,lang,cb,archivo);
     return;
   }
   say2(t,lang,cb);
@@ -435,6 +438,7 @@ function decirSeguido(lista){
 // Busca el audio en audio/nombre.webm y, si no está, en nombre.webm (la raíz).
 // Así funciona aunque los archivos se hayan subido sueltos.
 var RUTAS=['audio/',''];
+var EXT=['.webm','.mp3'];   // sirve cualquiera de los dos formatos
 var AUDIO_FALLA={};     // los que ya se sabe que no existen
 var AUDIO_RUTA=null;    // la ruta que sí sirvió, para no volver a probar
 var AUDIO_HAY=0;        // cuántas grabaciones se han encontrado
@@ -454,13 +458,16 @@ function reproducir(url,cb,onFalla){
 function decirConTuVoz(texto,lang,cb,archivo){
   var k=archivo||clave(texto);
   if(AUDIO_FALLA[k]){say2(texto,lang,cb);return;}
-  var rutas=AUDIO_RUTA!==null?[AUDIO_RUTA]:RUTAS.slice();
+  var combos=[];
+  (AUDIO_RUTA!==null?[AUDIO_RUTA]:RUTAS).forEach(function(r){
+    EXT.forEach(function(e){combos.push(r+k+e);});
+  });
   var n=0;
   (function intenta(){
-    if(n>=rutas.length){AUDIO_FALLA[k]=1;say2(texto,lang,cb);return;}
-    var r=rutas[n++];
-    reproducir(r+k+'.webm',function(){
-      AUDIO_RUTA=r;AUDIO_HAY++;cb&&cb();
+    if(n>=combos.length){AUDIO_FALLA[k]=1;say2(texto,lang,cb);return;}
+    var url=combos[n++];
+    reproducir(url,function(){
+      AUDIO_RUTA=url.slice(0,url.indexOf(k));AUDIO_HAY++;cb&&cb();
     },intenta);
   })();
 }
@@ -471,12 +478,14 @@ function say2(t,lang,cb){
 }
 // comprueba si existe una grabación, sin reproducirla
 function buscarGrabacion(nombre,cb){
-  var n=0,rutas=RUTAS.slice();
+  var combos=[];
+  RUTAS.forEach(function(r){EXT.forEach(function(e){combos.push([r,r+nombre+e]);});});
+  var n=0;
   (function intenta(){
-    if(n>=rutas.length){cb(false);return;}
-    var r=rutas[n++];
-    var a=new Audio(r+nombre+'.webm');
-    a.oncanplaythrough=function(){AUDIO_RUTA=r;cb(true,r);};
+    if(n>=combos.length){cb(false);return;}
+    var par=combos[n++];
+    var a=new Audio(par[1]);
+    a.oncanplaythrough=function(){AUDIO_RUTA=par[0];cb(true,par[0]);};
     a.onerror=intenta;
     a.load();
   })();
@@ -487,12 +496,15 @@ function buscarGrabacion(nombre,cb){
 function soloTuVoz(texto,cb,archivo){
   var k=archivo||clave(texto);
   if(AUDIO_FALLA[k]){cb&&cb(false);return;}
-  var rutas=AUDIO_RUTA!==null?[AUDIO_RUTA]:RUTAS.slice();
+  var combos=[];
+  (AUDIO_RUTA!==null?[AUDIO_RUTA]:RUTAS).forEach(function(r){
+    EXT.forEach(function(e){combos.push(r+k+e);});
+  });
   var n=0;
   (function intenta(){
-    if(n>=rutas.length){AUDIO_FALLA[k]=1;cb&&cb(false);return;}
-    var r=rutas[n++];
-    reproducir(r+k+'.webm',function(){AUDIO_RUTA=r;cb&&cb(true);},intenta);
+    if(n>=combos.length){AUDIO_FALLA[k]=1;cb&&cb(false);return;}
+    var url=combos[n++];
+    reproducir(url,function(){AUDIO_RUTA=url.slice(0,url.indexOf(k));cb&&cb(true);},intenta);
   })();
 }
 

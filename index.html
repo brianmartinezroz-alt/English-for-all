@@ -341,7 +341,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v29 · 1 sep";
+var VERSION="v30 · 1 sep";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -461,8 +461,21 @@ var AUDIO_HAY=0;        // cuántas grabaciones se han encontrado
 function clave(t){
   return String(t).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 }
+var AUDIO_ACTUAL=null;
+function callarTodo(){
+  try{speechSynthesis.cancel();}catch(e){}
+  if(AUDIO_ACTUAL){
+    try{
+      AUDIO_ACTUAL.onended=null;AUDIO_ACTUAL.onerror=null;AUDIO_ACTUAL.onplaying=null;
+      AUDIO_ACTUAL.pause();AUDIO_ACTUAL.currentTime=0;
+    }catch(e){}
+    AUDIO_ACTUAL=null;
+  }
+}
 function reproducir(url,cb,onFalla){
+  callarTodo();
   var a=new Audio(url),arranco=false;
+  AUDIO_ACTUAL=a;
   try{a.playbackRate=Math.max(0.5,Math.min(1.6,(RATE||0.85)/0.85));}catch(e){}
   a.onplaying=function(){arranco=true;};
   a.onended=function(){cb&&cb();};
@@ -497,8 +510,9 @@ function decirConTuVoz(texto,lang,cb,archivo){
 }
 // habla siempre con la voz del navegador, sin buscar grabación
 function say2(t,lang,cb){
+  callarTodo();
   if(!('speechSynthesis' in window)){cb&&cb();return;}
-  try{speechSynthesis.cancel();hablar(t,lang,cb);}catch(e){cb&&cb();}
+  try{hablar(t,lang,cb);}catch(e){cb&&cb();}
 }
 // comprueba si existe una grabación, sin reproducirla
 function buscarGrabacion(nombre,cb){
@@ -762,7 +776,7 @@ function buscarVisualCompleto(texto,id){
 // Pexels da video de calidad con permiso de uso comercial, pero pide una
 // llave gratuita. Si está vacía, se salta y quedan las imágenes.
 // Sácala en pexels.com/api — tarda dos minutos.
-var PEXELS_KEY='7XkPW1AAsPQZydxmmmonBQInUZrZIIoMmGAFiGe6SVjthBWETzBlisAZ';
+var PEXELS_KEY='';
 var VID_CACHE_KEY='efa_vid_v1';
 function cacheVid(){try{return JSON.parse(localStorage.getItem(VID_CACHE_KEY)||'{}');}catch(e){return {};}}
 function guardarVid(k,u){try{var c=cacheVid();c[k]=u;localStorage.setItem(VID_CACHE_KEY,JSON.stringify(c));}catch(e){}}
@@ -1054,6 +1068,7 @@ function aplicarPreferencias(){
   }
 }
 function router(){
+  callarTodo();
   var tb=document.querySelector('.topbar');
   if(tb)tb.style.display='';
   aplicarModo();
@@ -1085,7 +1100,7 @@ function ligarAtras(fn){
   var b=document.getElementById('volver');
   if(b)b.onclick=function(e){
     e.stopPropagation();
-    try{speechSynthesis.cancel();}catch(x){}
+    callarTodo();
     fn();
   };
 }
@@ -1496,7 +1511,7 @@ function ligarAyuda(txt){
   var b=document.getElementById('guiaoir');
   if(b)b.onclick=function(e){
     e.stopPropagation();
-    say2(String(txt).replace(/<[^>]+>/g,' '),'es-MX');
+    say(String(txt).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim(),'es-MX');
   };
 }
 
@@ -1514,7 +1529,7 @@ function preguntaExperiencia(){
       '<button data-i="2">Poco. Me cuesta trabajo y prefiero que me expliquen</button>'+
     '</div>'+
     '<button class="btn" id="ok" disabled>Continuar</button></div>';
-  say2('¿Qué tanto usas el celular? Escoge la que más se parezca a ti.','es-MX');
+  say('¿Qué tanto usas el celular? Escoge la que más se parezca a ti.','es-MX');
   ligarAtras(function(){irA('saludo');});
   APP.querySelectorAll('#pk button').forEach(function(b){
     b.onclick=function(){
@@ -1709,7 +1724,7 @@ function pruebaSonido(){
     var e=document.getElementById('rgrab');
     if(!e)return;
     e.innerHTML=hay
-      ? '<span class="ok2">Voz de Brian encontrada'+(ruta?' en '+(ruta||'la raíz'):'')+'.</span>'
+      ? '<span class="ok2">Las grabaciones se están usando.</span>'
       : '<span class="no2">No encontré las grabaciones de Brian. Vas a oír la voz del navegador.</span>';
   });
   document.getElementById('oirme').onclick=function(){
@@ -2012,7 +2027,7 @@ function menu(){
   document.getElementById('probarson').onclick=function(){D.probado=0;save(D);router();};
   document.getElementById('modoguia').onclick=function(){
     D.guiado=!D.guiado;save(D);aplicarModo();menu();
-    say2(D.guiado?'Listo. Ahora te voy explicando qué hacer en cada pantalla.':'Listo, quité las explicaciones.','es-MX');
+    say(D.guiado?'Listo. Ahora te voy explicando qué hacer en cada pantalla.':'Listo, quité las explicaciones.','es-MX');
   };
   say('Hola de nuevo, '+P.nombre+'. ¿Con cuál seguimos?','es-MX');
 }
@@ -2090,6 +2105,7 @@ function correr(){
 
 var vistos={};
 function paso(){
+  callarTodo();
   var S=MAT[sIdx];
   if(it>=S.items.length){cierre();return;}
   var x=S.items[it];

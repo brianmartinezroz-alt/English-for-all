@@ -306,6 +306,22 @@
   .pick.vert button{width:100%;border-radius:12px}
   .grande .qtxt{font-size:26px}
 </style>
+<style>
+  .vis{display:flex;align-items:center;justify-content:center;background:var(--crema);
+    border:1px solid var(--linea);border-radius:14px;height:150px;margin-bottom:14px;overflow:hidden}
+  .vis.con-medio{background:#000;border-color:var(--tinta-2)}
+  .vis-sim{font-size:72px;line-height:1}
+  .vis img,.vis video{width:100%;height:100%;object-fit:cover;display:block}
+  .guiado .vis{height:180px}
+  .guiado .vis-sim{font-size:88px}
+  .pmini{font-size:20px;line-height:1;flex:0 0 auto}
+</style>
+<style>
+  .vis{position:relative}
+  .vis-x{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;
+    border:0;background:rgba(0,0,0,.55);color:#fff;font-size:14px;cursor:pointer;line-height:1}
+  .vis-x:hover{background:rgba(0,0,0,.8)}
+</style>
 
 </head>
 <body>
@@ -325,7 +341,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v26 · 31 ago";
+var VERSION="v28 · 31 ago";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -576,6 +592,246 @@ function blobABase64(blob,cb){
   var r=new FileReader();
   r.onloadend=function(){cb(String(r.result).split(',')[1]||'');};
   r.readAsDataURL(blob);
+}
+
+
+/* ═══════════ apoyo visual ═══════════ */
+// Dos capas: si existe img/<frase>.jpg (o .png .webp .mp4) se usa eso;
+// si no, se dibuja un símbolo grande escogido por el significado.
+// Así funciona desde el primer día y mejora cuando subas fotos reales.
+var IMG_RUTAS=['img/','imagenes/'];
+var IMG_EXT=['.jpg','.png','.webp','.gif'];
+var VID_EXT=['.mp4','.webm'];
+var IMG_FALLA={};
+
+var SIMBOLOS=[
+  [/my name is|what is your name/i,'👋'],
+  [/teacher|teach/i,'🧑‍🏫'],
+  [/dentist|teeth|tooth/i,'🦷'],
+  [/nurse|hospital/i,'🏥'],
+  [/doctor|patient/i,'🩺'],
+  [/engineer/i,'📐'],
+  [/accountant|reports/i,'📊'],
+  [/sales|sell|store|cashier/i,'🛒'],
+  [/mechanic|fix/i,'🔧'],
+  [/welder/i,'🔥'],
+  [/machine|operator|factory|plant/i,'🏭'],
+  [/quality|check/i,'🔍'],
+  [/maintenance|technician/i,'🛠️'],
+  [/warehouse|forklift|move materials/i,'📦'],
+  [/construction|helper/i,'🦺'],
+  [/plumber/i,'🚿'],
+  [/electrician/i,'💡'],
+  [/painter/i,'🎨'],
+  [/gardener|land|farmer|farm/i,'🌱'],
+  [/rancher|ranch/i,'🐄'],
+  [/fisherman|sea/i,'🎣'],
+  [/miner|mine/i,'⛏️'],
+  [/driver|drive|road|truck/i,'🚚'],
+  [/delivery/i,'📮'],
+  [/waiter|restaurant/i,'🍽️'],
+  [/cook|kitchen/i,'🍳'],
+  [/baker|bakery/i,'🥖'],
+  [/butcher/i,'🥩'],
+  [/barista|coffee/i,'☕'],
+  [/hairstylist|salon|nails/i,'💇'],
+  [/tattoo/i,'🖊️'],
+  [/massage|spa/i,'💆'],
+  [/security|guard|watch over/i,'🛡️'],
+  [/police/i,'🚓'],
+  [/firefighter/i,'🚒'],
+  [/military|base/i,'🎖️'],
+  [/cleaner|clean|building/i,'🧹'],
+  [/nanny|caregiver|children/i,'🧒'],
+  [/student|study|school/i,'🎒'],
+  [/office|assistant|administrative/i,'🗂️'],
+  [/human resources/i,'👥'],
+  [/purchasing|logistics/i,'🚛'],
+  [/manager|supervisor/i,'📋'],
+  [/lawyer|law firm/i,'⚖️'],
+  [/architect/i,'🏛️'],
+  [/it\b|computer|program/i,'💻'],
+  [/designer|design/i,'✏️'],
+  [/customer service|call center|emails|messages/i,'📞'],
+  [/marketing/i,'📣'],
+  [/photographer/i,'📷'],
+  [/musician|music/i,'🎵'],
+  [/fitness|gym|trainer/i,'🏋️'],
+  [/homemaker|home/i,'🏠'],
+  [/retired/i,'🌴'],
+  [/looking for a job/i,'🔎'],
+  [/pharmacist|pharmacy/i,'💊'],
+  [/lab|chemist/i,'🧪'],
+  [/veterinarian/i,'🐕'],
+  [/appraiser|surveyor/i,'📏'],
+  [/translator/i,'🌐'],
+  [/journalist/i,'📰'],
+  [/i start at|what time|o.clock|seven|eight|nine|ten|six/i,'🕗'],
+  [/every day/i,'📅'],
+  [/yesterday/i,'⏪'],
+  [/i like|family/i,'❤️'],
+  [/football/i,'⚽'],
+  [/cooking/i,'👩‍🍳'],
+  [/traveling|travel/i,'✈️'],
+  [/reading/i,'📖'],
+  [/my job/i,'💼'],
+  [/study english|for my job|to travel/i,'🇬🇧'],
+  [/nice to meet you|hello|hi\b|good morning|good afternoon|good evening/i,'🙂'],
+  [/how are you|how is it going/i,'💬'],
+  [/organize|things/i,'🗃️'],
+  [/products|make products/i,'📦'],
+  [/help people/i,'🤝'],
+  [/measure|adjust/i,'📐'],
+  [/meetings/i,'🗣️']
+];
+function simboloDe(t){
+  for(var i=0;i<SIMBOLOS.length;i++){if(SIMBOLOS[i][0].test(t))return SIMBOLOS[i][1];}
+  return '💭';
+}
+// dibuja el apoyo visual; si hay archivo lo cambia después, sin trabar nada
+function visual(texto,id){
+  return '<div class="vis" id="'+id+'" data-frase="'+clave(texto)+'" data-sim="'+simboloDe(texto)+'">'+
+    '<span class="vis-sim">'+simboloDe(texto)+'</span></div>';
+}
+function buscarVisual(texto,id){
+  try{ buscarVisual_(texto,id); }catch(e){}
+}
+function buscarVisual_(texto,id){
+  var k=clave(texto);
+  if(IMG_FALLA[k])return;
+  var combos=[];
+  IMG_RUTAS.forEach(function(r){
+    VID_EXT.forEach(function(e){combos.push({url:r+k+e,video:true});});
+    IMG_EXT.forEach(function(e){combos.push({url:r+k+e,video:false});});
+  });
+  var n=0;
+  (function intenta(){
+    if(n>=combos.length){IMG_FALLA[k]=1;return;}
+    var c=combos[n++];
+    if(c.video){
+      try{
+        var v=document.createElement('video');
+        if(typeof v.load!=='function'){intenta();return;}
+        v.oncanplay=function(){poner(c,true);};
+        v.onerror=intenta;
+        v.src=c.url;v.load();
+      }catch(e){intenta();}
+    }else{
+      var im=new Image();
+      im.onload=function(){poner(c,false);};
+      im.onerror=intenta;
+      im.src=c.url;
+    }
+  })();
+  function poner(c,esVideo){
+    var caja=document.getElementById(id);
+    if(!caja)return;
+    caja.classList.add('con-medio');
+    caja.innerHTML=esVideo
+      ? '<video src="'+c.url+'" autoplay muted loop playsinline></video>'
+      : '<img src="'+c.url+'" alt="">';
+  }
+}
+
+// primero busca en tu carpeta img/; si no hay nada, va a internet
+function buscarVisualCompleto(texto,id){
+  var k=clave(texto);
+  var c=cacheImg();
+  if(c[k]&&c[k]!=='no'){poner_(id,c[k]);return;}
+  var yaHubo=false;
+  var original=document.getElementById(id);
+  buscarVisual(texto,id);
+  setTimeout(function(){
+    var caja=document.getElementById(id);
+    if(caja&&!caja.classList.contains('con-medio'))buscarEnLinea(texto,id);
+  },900);
+}
+
+
+/* ═══════════ imágenes desde internet ═══════════ */
+// Openverse: buscador de imágenes de licencia libre, sin llave y filtrando
+// por uso comercial. Se guarda la elegida para no volver a buscarla.
+var IMG_CACHE_KEY='efa_img_v1';
+function cacheImg(){try{return JSON.parse(localStorage.getItem(IMG_CACHE_KEY)||'{}');}catch(e){return {};}}
+function guardarImg(k,u){try{var c=cacheImg();c[k]=u;localStorage.setItem(IMG_CACHE_KEY,JSON.stringify(c));}catch(e){}}
+
+// término de búsqueda limpio: buscar la frase entera da resultados malos
+var TERMINOS=[
+  [/dentist/i,'dentist working patient'],[/nurse/i,'nurse hospital'],[/doctor/i,'doctor clinic'],
+  [/teacher|teach/i,'teacher classroom students'],[/student|study/i,'student studying notebook'],
+  [/machine operator|operate machines/i,'factory machine operator'],
+  [/factory|plant/i,'factory production line'],[/quality|check things/i,'quality inspection factory'],
+  [/maintenance/i,'maintenance technician tools'],[/warehouse|forklift/i,'warehouse forklift boxes'],
+  [/welder/i,'welder welding sparks'],[/mechanic|fix things/i,'mechanic repairing car'],
+  [/construction|helper/i,'construction worker site'],[/plumber/i,'plumber pipes'],
+  [/electrician/i,'electrician wiring'],[/painter/i,'house painter wall'],
+  [/farmer|land/i,'farmer field crops'],[/rancher/i,'cattle ranch'],[/fisherman/i,'fisherman boat'],
+  [/driver|drive/i,'truck driver road'],[/delivery/i,'delivery courier package'],
+  [/waiter|restaurant/i,'waiter restaurant'],[/cook|kitchen/i,'cook kitchen'],
+  [/baker/i,'baker bread'],[/barista|coffee/i,'barista coffee shop'],
+  [/cashier|store|sales|sell/i,'cashier store counter'],[/hairstylist|salon/i,'hairdresser salon'],
+  [/security|guard/i,'security guard'],[/police/i,'police officer'],[/cleaner|clean\b/i,'cleaning worker'],
+  [/nanny|children/i,'child care'],[/office|assistant|administrative/i,'office desk work'],
+  [/human resources/i,'office meeting people'],[/logistics|purchasing/i,'logistics warehouse trucks'],
+  [/manager|supervisor/i,'supervisor factory clipboard'],[/lawyer/i,'lawyer office documents'],
+  [/engineer/i,'engineer blueprints'],[/accountant|reports/i,'accountant calculator documents'],
+  [/it\b|program/i,'programmer computer'],[/designer|design/i,'graphic designer desk'],
+  [/call center|customer service|emails|messages/i,'call center headset'],
+  [/photographer/i,'photographer camera'],[/musician|music/i,'musician playing'],
+  [/fitness|gym/i,'gym training'],[/homemaker|home/i,'home kitchen family'],
+  [/every day/i,'calendar week'],[/yesterday/i,'clock past time'],
+  [/i start at|what time|seven|eight|nine|ten/i,'alarm clock morning'],
+  [/family/i,'family together'],[/football/i,'soccer ball field'],[/cooking/i,'cooking food'],
+  [/traveling|travel/i,'travel airport'],[/reading/i,'reading book'],
+  [/my name is|hello|hi\b|nice to meet/i,'people greeting handshake'],
+  [/help people/i,'helping people work'],[/make products/i,'products manufacturing'],
+  [/move materials/i,'moving boxes warehouse'],[/meetings/i,'work meeting table'],
+  [/organize things/i,'organizing shelves'],[/measure|adjust/i,'measuring tools']
+];
+function terminoDe(t){
+  for(var i=0;i<TERMINOS.length;i++){if(TERMINOS[i][0].test(t))return TERMINOS[i][1];}
+  return t.replace(/^(i am|i work|i|my name is)\s+/i,'').replace(/[.?!]/g,'').trim();
+}
+
+function buscarEnLinea(texto,id){
+  var k=clave(texto);
+  var c=cacheImg();
+  if(c[k]==='no'){return;}
+  if(c[k]){poner_(id,c[k]);return;}
+  var q=encodeURIComponent(terminoDe(texto));
+  var url='https://api.openverse.org/v1/images/?q='+q+
+          '&license_type=commercial&page_size=3&mature=false&format=json';
+  fetch(url,{headers:{'Accept':'application/json'}})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(d){
+      var res=(d&&d.results)||[];
+      var u=null;
+      for(var i=0;i<res.length&&!u;i++){
+        u=res[i].thumbnail||res[i].url||null;
+      }
+      if(!u){guardarImg(k,'no');return;}
+      var im=new Image();
+      im.onload=function(){guardarImg(k,u);poner_(id,u);};
+      im.onerror=function(){guardarImg(k,'no');};
+      im.src=u;
+    })
+    .catch(function(){});
+}
+function poner_(id,u){
+  var caja=document.getElementById(id);
+  if(!caja)return;
+  caja.classList.add('con-medio');
+  caja.innerHTML='<img src="'+u+'" alt="">'+
+    '<button class="vis-x" title="Esta imagen no queda">✕</button>';
+  var b=caja.querySelector('.vis-x');
+  if(b)b.onclick=function(e){
+    e.stopPropagation();
+    // se descarta y se vuelve al símbolo; así una imagen mala no se queda pegada
+    var k=caja.getAttribute('data-frase');
+    if(k){var c=cacheImg();delete c[k];try{localStorage.setItem(IMG_CACHE_KEY,JSON.stringify(c));}catch(x){}}
+    caja.classList.remove('con-medio');
+    caja.innerHTML='<span class="vis-sim">'+(caja.getAttribute('data-sim')||'💭')+'</span>';
+  };
 }
 
 /* ═══════════ comparar lo dicho con la meta ═══════════ */
@@ -1667,7 +1923,8 @@ function bienvenida(){
     '<div class="qtxt">Ya tengo tu material, '+esc(P.nombre)+'.</div>'+
     '<div class="qsub">Estas son tus frases. No son de un libro: salieron de lo que me contaste.</div>'+
     MAT[0].items.filter(function(x){return x.k==='model';}).map(function(m){
-      return '<div class="heard"><div class="ht">'+esc(m.en)+'</div><div class="hl" style="margin:6px 0 0">'+esc(m.es)+'</div></div>';}).join('')+
+      return '<div class="heard"><div class="ht"><span class="pmini">'+simboloDe(m.en)+'</span> '+esc(m.en)+'</div>'+
+        '<div class="hl" style="margin:6px 0 0">'+esc(m.es)+'</div></div>';}).join('')+
     '<button class="btn" id="go" style="margin-top:6px">Empezar la sesión 1</button></div>';
   document.getElementById('go').onclick=function(){sIdx=0;it=0;attempts=[];t0=Date.now();correr();};
 }
@@ -1748,6 +2005,7 @@ function portadaSesion(){
   h+='<div class="prevlist"><span class="plbl">Lo que vas a oír hoy</span>'+
     modelos.map(function(m,i){
       return '<div class="pline"><button class="spk" data-i="'+i+'" aria-label="Escuchar">▶</button>'+
+        '<span class="pmini">'+simboloDe(m.en)+'</span>'+
         '<div><div class="pen">'+esc(m.en)+'</div><div class="pes">'+esc(m.es)+'</div></div></div>';
     }).join('')+'</div>'+
     (S.tip?'<div class="tipx">'+esc(S.tip)+'</div>':'')+
@@ -1786,6 +2044,7 @@ function paso(){
 
   if(x.k==='model'){
     h+='<div class="qlbl">Escucha y repite en voz alta</div>'+
+       visual(x.en,'vis-model')+
        '<div class="qtxt">'+esc(x.en)+'</div><div class="qsub">'+esc(x.es)+'</div>'+
        '<button class="btn ghost" id="oir" style="margin-bottom:10px">▶ Oírla otra vez</button>'+
        '<div id="res"></div>'+
@@ -1810,6 +2069,7 @@ function paso(){
   }
   APP.innerHTML=h+'</div>';
 
+  if(x.k==='model')buscarVisualCompleto(x.en,'vis-model');
   var oir=document.getElementById('oir');
   if(oir)oir.onclick=function(){say(x.k==='model'?x.en:x.q,'en-US');};
 

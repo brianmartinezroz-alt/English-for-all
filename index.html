@@ -325,7 +325,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v25 · 31 ago";
+var VERSION="v26 · 31 ago";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -455,20 +455,28 @@ function reproducir(url,cb,onFalla){
   if(p&&p.catch)p.catch(function(){if(!arranco)onFalla();});
   return a;
 }
+function nombresPosibles(texto,archivo){
+  // el mismo audio puede estar con nombre corto (es-01) o largo (la frase entera)
+  var n=[];
+  if(archivo)n.push(archivo);
+  var k=clave(texto);
+  if(n.indexOf(k)<0)n.push(k);
+  return n;
+}
 function decirConTuVoz(texto,lang,cb,archivo){
-  var k=archivo||clave(texto);
-  if(AUDIO_FALLA[k]){say2(texto,lang,cb);return;}
+  var nombres=nombresPosibles(texto,archivo);
+  if(nombres.every(function(k){return AUDIO_FALLA[k];})){say2(texto,lang,cb);return;}
   var combos=[];
-  (AUDIO_RUTA!==null?[AUDIO_RUTA]:RUTAS).forEach(function(r){
-    EXT.forEach(function(e){combos.push(r+k+e);});
+  nombres.forEach(function(k){
+    (AUDIO_RUTA!==null?[AUDIO_RUTA]:RUTAS).forEach(function(r){
+      EXT.forEach(function(e){combos.push({url:r+k+e,k:k,r:r});});
+    });
   });
   var n=0;
   (function intenta(){
-    if(n>=combos.length){AUDIO_FALLA[k]=1;say2(texto,lang,cb);return;}
-    var url=combos[n++];
-    reproducir(url,function(){
-      AUDIO_RUTA=url.slice(0,url.indexOf(k));AUDIO_HAY++;cb&&cb();
-    },intenta);
+    if(n>=combos.length){nombres.forEach(function(k){AUDIO_FALLA[k]=1;});say2(texto,lang,cb);return;}
+    var c=combos[n++];
+    reproducir(c.url,function(){AUDIO_RUTA=c.r;AUDIO_HAY++;cb&&cb();},intenta);
   })();
 }
 // habla siempre con la voz del navegador, sin buscar grabación
@@ -494,17 +502,19 @@ function buscarGrabacion(nombre,cb){
 
 // solo tu voz: si no hay grabación, no habla nadie
 function soloTuVoz(texto,cb,archivo){
-  var k=archivo||clave(texto);
-  if(AUDIO_FALLA[k]){cb&&cb(false);return;}
+  var nombres=nombresPosibles(texto,archivo);
+  if(nombres.every(function(k){return AUDIO_FALLA[k];})){cb&&cb(false);return;}
   var combos=[];
-  (AUDIO_RUTA!==null?[AUDIO_RUTA]:RUTAS).forEach(function(r){
-    EXT.forEach(function(e){combos.push(r+k+e);});
+  nombres.forEach(function(k){
+    (AUDIO_RUTA!==null?[AUDIO_RUTA]:RUTAS).forEach(function(r){
+      EXT.forEach(function(e){combos.push({url:r+k+e,r:r});});
+    });
   });
   var n=0;
   (function intenta(){
-    if(n>=combos.length){AUDIO_FALLA[k]=1;cb&&cb(false);return;}
-    var url=combos[n++];
-    reproducir(url,function(){AUDIO_RUTA=url.slice(0,url.indexOf(k));cb&&cb(true);},intenta);
+    if(n>=combos.length){nombres.forEach(function(k){AUDIO_FALLA[k]=1;});cb&&cb(false);return;}
+    var c=combos[n++];
+    reproducir(c.url,function(){AUDIO_RUTA=c.r;cb&&cb(true);},intenta);
   })();
 }
 

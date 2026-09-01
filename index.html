@@ -274,6 +274,38 @@
     color:var(--tenue);animation:rise .7s .42s ease both}
   .marca.out{opacity:0;transform:translateY(-6px);transition:opacity .3s ease,transform .3s ease}
 </style>
+<style>
+  .velb button{line-height:1.15;padding:10px 4px;font-size:12px}
+</style>
+<style>
+  /* ── caja de ayuda del modo guiado ── */
+  .guia{background:#FFF8E7;border:2px solid #E8C877;border-radius:14px;padding:16px 18px;margin-bottom:14px}
+  .guia-l{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    color:#8A6210;margin-bottom:8px}
+  .guia-t{font-size:17px;line-height:1.5;color:var(--tinta)}
+  .guia-s{font-size:14px;color:var(--tinta-2);margin-top:10px;padding-top:10px;border-top:1px solid #EFE0BC}
+  .guia-b{margin-top:12px;background:#fff;border:1px solid #E8C877;border-radius:22px;padding:10px 16px;
+    font-family:var(--body);font-size:14px;color:#8A6210;cursor:pointer}
+  .guia-b:hover{background:#FDF4E3}
+
+  /* ── modo guiado: todo más grande ── */
+  .guiado .qtxt{font-size:26px}
+  .guiado .qsub{font-size:15.5px}
+  .guiado .btn{font-size:17px;padding:18px}
+  .guiado .btn.ghost{font-size:15.5px;padding:15px}
+  .guiado .mic-big{font-size:18px;padding:23px}
+  .guiado .pick button{font-size:16.5px;padding:14px 18px}
+  .guiado .opt{font-size:18px;padding:16px 18px}
+  .guiado .tiny{font-size:13.5px}
+  .guiado .ht,.guiado .pen{font-size:19px}
+  .guiado .es,.guiado .pes{font-size:13.5px}
+  .guiado .vopt{padding:18px}
+  .guiado .volver{font-size:13px;padding:12px 4px}
+
+  .pick.vert{flex-direction:column}
+  .pick.vert button{width:100%;border-radius:12px}
+  .grande .qtxt{font-size:26px}
+</style>
 
 </head>
 <body>
@@ -293,7 +325,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v14 · 28 ago";
+var VERSION="v19 · 31 ago";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -304,7 +336,7 @@ function pack(o){try{return btoa(unescape(encodeURIComponent(JSON.stringify(o)))
 var ONLINE=(typeof google!=='undefined'&&google.script&&google.script.run);
 
 /* ═══════════ voz: hablar ═══════════ */
-var VOCES=[],VOZ_EN=null,VOZ_ES=null,RATE=0.78;
+var VOCES=[],VOZ_EN=null,VOZ_ES=null,RATE=0.85;
 
 function cargarVoces(cb){
   if(!('speechSynthesis' in window)){cb([]);return;}
@@ -325,28 +357,48 @@ function calidadVoz(v){
   if(/david|zira|mark|hazel|espeak|compact|pico/i.test(n))p-=4;
   return p;
 }
+function idVoz(v){return (v.name||'')+'|'+(v.lang||'');}
 function vocesIngles(){
   var en=VOCES.filter(function(v){return /^en(-|_)/i.test(v.lang);});
   en.sort(function(a,b){return calidadVoz(b)-calidadVoz(a);});
-  // sin repetir la misma voz, hasta 6
-  var vistos={},out=[];
+  // fuera duplicados exactos
+  var vistos={},unicas=[];
   en.forEach(function(v){
-    var k=(v.name||'').toLowerCase();
-    if(!vistos[k]){vistos[k]=1;out.push(v);}
+    var k=idVoz(v).toLowerCase();
+    if(!vistos[k]){vistos[k]=1;unicas.push(v);}
   });
+  // variedad real: máximo dos por país, sin repetir el nombre completo.
+  // Antes se comparaba solo la primera palabra y eso tiraba voces distintas
+  // ("English Australia" y "English India" quedaban como si fueran la misma).
+  var porPais={},nombres={},out=[];
+  unicas.forEach(function(v){
+    var p=(v.lang||'').toLowerCase();
+    var n=(v.name||'').replace(/^(Microsoft|Google|Apple)\s+/i,'')
+          .replace(/\s*-\s*English.*$/i,'').replace(/\s*\(.*\)$/,'')
+          .replace(/[^a-z]/gi,'').toLowerCase();
+    if(nombres[n])return;
+    if((porPais[p]||0)>=2)return;
+    porPais[p]=(porPais[p]||0)+1;nombres[n]=1;out.push(v);
+  });
+  // si aún caben, se agregan las que sobraron de países ya representados
+  unicas.forEach(function(v){if(out.length<6&&out.indexOf(v)<0)out.push(v);});
   return out.slice(0,6);
 }
 function etiquetaVoz(v){
   var pais={'en-us':'Estados Unidos','en-gb':'Inglaterra','en-au':'Australia','en-ca':'Canadá',
-            'en-in':'India','en-ie':'Irlanda','en-za':'Sudáfrica','en-nz':'Nueva Zelanda'}[v.lang.toLowerCase()]||v.lang;
-  return {nombre:v.name.replace(/^(Microsoft|Google|Apple)\s+/,'').split(' ')[0],pais:pais};
+            'en-in':'India','en-ie':'Irlanda','en-za':'Sudáfrica','en-nz':'Nueva Zelanda'}[(v.lang||'').toLowerCase()]||v.lang;
+  var n=(v.name||'Voz').replace(/^(Microsoft|Google|Apple)\s+/i,'')
+        .replace(/\s*-\s*English.*$/i,'').replace(/\s*\(.*\)$/,'').trim();
+  return {nombre:n||v.name,pais:pais};
 }
 function elegirVozES(){
   VOZ_ES=VOCES.filter(function(v){return /^es(-|_)/i.test(v.lang);})
               .sort(function(a,b){return (/mx|us/i.test(b.lang)?1:0)-(/mx|us/i.test(a.lang)?1:0);})[0]||null;
 }
-function aplicarVoz(uri){
-  VOZ_EN=VOCES.filter(function(v){return v.voiceURI===uri;})[0]||null;
+function aplicarVoz(id){
+  if(!id)return;
+  VOZ_EN=VOCES.filter(function(v){return idVoz(v)===id;})[0]
+       ||VOCES.filter(function(v){return v.voiceURI===id;})[0]||VOZ_EN;
 }
 
 function say(t,lang,cb){
@@ -356,19 +408,18 @@ function say(t,lang,cb){
     decirConTuVoz(t,lang,cb,GRABABLES[k]);
     return;
   }
-  if(!('speechSynthesis' in window)){cb&&cb();return;}
-  try{
-    speechSynthesis.cancel();
-    hablar(t,lang,cb);
-  }catch(e){cb&&cb();}
+  say2(t,lang,cb);
 }
 function hablar(t,lang,cb){
   var u=new SpeechSynthesisUtterance(t);
   var es=(lang==='es-MX');
-  u.lang=es?'es-MX':'en-US';
-  u.rate=es?.98:(RATE||0.78);
   var v=es?VOZ_ES:VOZ_EN;
-  if(v)u.voice=v;
+  // el idioma tiene que ser el de la voz elegida: si se fuerza en-US y la voz
+  // es británica o australiana, varios navegadores la ignoran y usan la de fábrica
+  if(v){u.voice=v;u.lang=v.lang;}
+  else{u.lang=es?'es-MX':'en-US';}
+  u.rate=es?Math.min(1.15,(RATE||0.85)+0.12):(RATE||0.85);
+  u.pitch=1;
   if(cb)u.onend=cb;
   speechSynthesis.speak(u);
 }
@@ -381,29 +432,54 @@ function decirSeguido(lista){
 
 
 /* ═══════════ tu voz grabada ═══════════ */
-// Si en la carpeta audio/ existe el archivo del saludo, se usa tu voz.
-// Si no está, se usa la voz del navegador. No hay que configurar nada.
-var AUDIO_BASE='audio/';
-var AUDIO_FALLA={};   // los que ya se sabe que no existen, para no reintentar
+// Busca el audio en audio/nombre.webm y, si no está, en nombre.webm (la raíz).
+// Así funciona aunque los archivos se hayan subido sueltos.
+var RUTAS=['audio/',''];
+var AUDIO_FALLA={};     // los que ya se sabe que no existen
+var AUDIO_RUTA=null;    // la ruta que sí sirvió, para no volver a probar
+var AUDIO_HAY=0;        // cuántas grabaciones se han encontrado
 function clave(t){
   return String(t).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 }
+function reproducir(url,cb,onFalla){
+  var a=new Audio(url),arranco=false;
+  try{a.playbackRate=Math.max(0.5,Math.min(1.6,(RATE||0.85)/0.85));}catch(e){}
+  a.onplaying=function(){arranco=true;};
+  a.onended=function(){cb&&cb();};
+  a.onerror=function(){if(!arranco)onFalla();};
+  var p=a.play();
+  if(p&&p.catch)p.catch(function(){if(!arranco)onFalla();});
+  return a;
+}
 function decirConTuVoz(texto,lang,cb,archivo){
   var k=archivo||clave(texto);
-  if(AUDIO_FALLA[k]){say(texto,lang,cb);return;}
-  var a=new Audio(AUDIO_BASE+k+'.webm');
-  var arrancó=false;
-  a.onplaying=function(){arrancó=true;};
-  a.onended=function(){cb&&cb();};
-  a.onerror=function(){
-    AUDIO_FALLA[k]=1;
-    if(!arrancó)say(texto,lang,cb);
-  };
-  var p=a.play();
-  if(p&&p.catch)p.catch(function(){
-    AUDIO_FALLA[k]=1;
-    if(!arrancó)say(texto,lang,cb);
-  });
+  if(AUDIO_FALLA[k]){say2(texto,lang,cb);return;}
+  var rutas=AUDIO_RUTA!==null?[AUDIO_RUTA]:RUTAS.slice();
+  var n=0;
+  (function intenta(){
+    if(n>=rutas.length){AUDIO_FALLA[k]=1;say2(texto,lang,cb);return;}
+    var r=rutas[n++];
+    reproducir(r+k+'.webm',function(){
+      AUDIO_RUTA=r;AUDIO_HAY++;cb&&cb();
+    },intenta);
+  })();
+}
+// habla siempre con la voz del navegador, sin buscar grabación
+function say2(t,lang,cb){
+  if(!('speechSynthesis' in window)){cb&&cb();return;}
+  try{speechSynthesis.cancel();hablar(t,lang,cb);}catch(e){cb&&cb();}
+}
+// comprueba si existe una grabación, sin reproducirla
+function buscarGrabacion(nombre,cb){
+  var n=0,rutas=RUTAS.slice();
+  (function intenta(){
+    if(n>=rutas.length){cb(false);return;}
+    var r=rutas[n++];
+    var a=new Audio(r+nombre+'.webm');
+    a.oncanplaythrough=function(){AUDIO_RUTA=r;cb(true,r);};
+    a.onerror=intenta;
+    a.load();
+  })();
 }
 
 /* ═══════════ voz: escuchar ═══════════ */
@@ -615,11 +691,22 @@ var APP=document.getElementById('app');
 var D=load(),P=D.perfil,MAT=null,sIdx=0,it=0,attempts=[],t0=0,recog=null;
 
 var vioMarca=false,vioSaludo=false;   // por visita, no se guardan
+function aplicarPreferencias(){
+  elegirVozES();
+  if(D.rate)RATE=D.rate;
+  var en=vocesIngles();
+  if(en.length){
+    var guardada=D.voz?en.filter(function(v){return idVoz(v)===D.voz||v.voiceURI===D.voz;})[0]:null;
+    VOZ_EN=guardada||VOZ_EN||en[0];
+  }
+}
 function router(){
   var tb=document.querySelector('.topbar');
   if(tb)tb.style.display='';
+  aplicarModo();
   if(!vioMarca){marca();return;}
   if(!vioSaludo){portada();return;}
+  if(D.experiencia===undefined){preguntaExperiencia();return;}
   if(!D.probado){pruebaSonido();return;}
   if(D.voz===undefined&&('speechSynthesis' in window)){vozPicker();return;}
   aplicarVoz(D.voz);elegirVozES();if(D.rate)RATE=D.rate;
@@ -853,7 +940,7 @@ function pruebaNivel(){
     if(i===3&&pts<6){cerrar();return;}
     if(i>=NIVEL_Q.length){cerrar();return;}
     var x=NIVEL_Q[i];
-    APP.innerHTML=atras()+'<div class="prog">'+NIVEL_Q.slice(0,pts>=6?NIVEL_Q.length:3).map(function(_,k){return '<i class="'+(k<=i?'on':'')+'"></i>';}).join('')+'</div>'+
+    APP.innerHTML=atras()+ayuda('Te voy a hacer una pregunta en inglés. Contesta como puedas: hablando o escribiendo. Si no sabes, toca "No sé todavía" y seguimos. No es examen.','tu material de práctica')+'<div class="prog">'+NIVEL_Q.slice(0,pts>=6?NIVEL_Q.length:3).map(function(_,k){return '<i class="'+(k<=i?'on':'')+'"></i>';}).join('')+'</div>'+
       '<div class="qcard"><div class="qlbl">Paso 3 de 5 · a ver qué tanto sabes'+(NIVEL_Q[i].avanzada?' · una más difícil':'')+'</div>'+
       '<div class="qtxt" id="nq"></div><div class="qsub" id="ne"></div>'+
       '<button class="btn ghost" id="oir" style="margin-bottom:8px">▶ Oír la pregunta</button>'+
@@ -884,6 +971,7 @@ function pruebaNivel(){
       var v=document.getElementById('tb').value.trim();
       if(v)califica(v);
     };
+    ligarAyuda('Te voy a hacer una pregunta en inglés. Contesta como puedas: hablando o escribiendo. Si no sabes, toca No sé todavía y seguimos. No es examen.');
     document.getElementById('nose').onclick=function(){resp.push({q:x.q,r:'',ok:false});i++;paso1();};
     ligarAtras(function(){
       if(i>0){var u=resp.pop();if(u&&u.ok)pts-=NIVEL_Q[i-1].vale;i--;paso1();}
@@ -932,6 +1020,65 @@ function pruebaNivel(){
 }
 
 
+
+/* ═══════════ modo guiado ═══════════ */
+// Para quien usa poco el celular: letra más grande, botones más grandes,
+// y en cada pantalla una caja fija que dice qué hacer y qué sigue.
+function guiado(){return !!D.guiado;}
+function aplicarModo(){
+  try{
+    var b=document.body;
+    if(guiado())b.className=(b.className||'').replace(/\bguiado\b/g,'')+' guiado';
+    else b.className=(b.className||'').replace(/\bguiado\b/g,'');
+  }catch(e){}
+}
+// caja de ayuda: qué hago aquí, y qué viene después
+function ayuda(txt,sigue){
+  if(!guiado())return '';
+  return '<div class="guia">'+
+    '<div class="guia-l">Qué hay que hacer aquí</div>'+
+    '<div class="guia-t" id="guiatxt">'+txt+'</div>'+
+    (sigue?'<div class="guia-s">Después de esto: '+sigue+'</div>':'')+
+    '<button class="guia-b" id="guiaoir">🔊 Escuchar otra vez</button>'+
+    '</div>';
+}
+function ligarAyuda(txt){
+  var b=document.getElementById('guiaoir');
+  if(b)b.onclick=function(e){
+    e.stopPropagation();
+    say2(String(txt).replace(/<[^>]+>/g,' '),'es-MX');
+  };
+}
+
+function preguntaExperiencia(){
+  var tb=document.querySelector('.topbar');
+  if(tb)tb.style.display='none';
+  var sel=null;
+  APP.innerHTML='<div class="qcard grande">'+
+    '<div class="qlbl">Antes de empezar</div>'+
+    '<div class="qtxt">¿Qué tanto usas el celular?</div>'+
+    '<div class="qsub">Con esto acomodo la pantalla para ti. No hay respuesta buena ni mala.</div>'+
+    '<div class="pick vert" id="pk">'+
+      '<button data-i="0">Lo uso todos los días, me sé mover bien</button>'+
+      '<button data-i="1">Más o menos, a veces me pierdo</button>'+
+      '<button data-i="2">Poco. Me cuesta trabajo y prefiero que me expliquen</button>'+
+    '</div>'+
+    '<button class="btn" id="ok" disabled>Continuar</button></div>';
+  say2('¿Qué tanto usas el celular? Escoge la que más se parezca a ti.','es-MX');
+  APP.querySelectorAll('#pk button').forEach(function(b){
+    b.onclick=function(){
+      APP.querySelectorAll('#pk button').forEach(function(x){x.classList.remove('sel');});
+      b.classList.add('sel');sel=+b.dataset.i;
+      document.getElementById('ok').disabled=false;
+    };
+  });
+  document.getElementById('ok').onclick=function(){
+    D.guiado=(sel>=1);D.experiencia=sel;
+    if(sel===2)D.rate=0.55;
+    save(D);aplicarModo();router();
+  };
+}
+
 /* ═══════════ marca · lo primero que se ve ═══════════ */
 function marca(){
   var tb=document.querySelector('.topbar');
@@ -949,12 +1096,7 @@ function marca(){
     '<div class="mk-sub">Práctica de inglés hablado</div>'+
     '<button class="btn sp-go" id="mkgo" style="margin-top:34px">Entrar</button>'+
     '</div>';
-  cargarVoces(function(){
-    elegirVozES();
-    if(D.rate)RATE=D.rate;
-    var en=vocesIngles();
-    if(en.length&&!VOZ_EN)VOZ_EN=(D.voz?en.filter(function(v){return v.voiceURI===D.voz;})[0]:null)||en[0];
-  });
+  cargarVoces(aplicarPreferencias);
   document.getElementById('mkgo').onclick=function(){
     vioMarca=true;
     var m=document.getElementById('mk');
@@ -1033,9 +1175,8 @@ function portada(){
   var hablado=false,avanzado=false;
   function saludar(s){
     hablado=true;
-    decirConTuVoz(s.en,'en-US',function(){
-      hablar(s.es.split('—')[0].trim(),'es-MX');
-    });
+    // solo el saludo en inglés: la traducción se lee en pantalla, no se narra
+    decirConTuVoz(s.en,'en-US');
   }
   function avanzar(){
     if(avanzado)return;
@@ -1072,11 +1213,7 @@ function portada(){
   pinta(g);
 
   cargarVoces(function(){
-    elegirVozES();
-    var en=vocesIngles();
-    if(en.length&&!VOZ_EN){
-      VOZ_EN=(D.voz?en.filter(function(v){return v.voiceURI===D.voz;})[0]:null)||en[0];
-    }
+    aplicarPreferencias();
     // se intenta de entrada; casi todos los navegadores lo bloquean hasta
     // que hay un toque, y para eso está el listener de abajo
     saludar(g);
@@ -1091,11 +1228,13 @@ function portada(){
 /* ═══════════ 1 · prueba de sonido y micrófono ═══════════ */
 function pruebaSonido(){
   var dg=diagnostico();
-  APP.innerHTML='<div class="qcard"><div class="qlbl">Paso 1 de 5 · prueba</div>'+
+  APP.innerHTML=atras()+ayuda('Vamos a probar dos cosas: que tú me escuches a mí, y que yo te escuche a ti. Toca el botón A, y luego el B.','escoger la voz con la que te voy a hablar')+
+    '<div class="qcard"><div class="qlbl">Paso 1 de 5 · prueba</div>'+
     '<div class="qtxt">Antes de empezar, probemos.</div>'+
     '<div class="qsub">Primero que me oigas tú. Luego que yo te oiga a ti.</div>'+
     '<div class="tst"><div class="tst-n">A</div><div class="tst-b">'+
       '<div class="tst-t">¿Me escuchas?</div>'+
+      '<div class="tst-r" id="rgrab" style="margin:0 0 10px"></div>'+
       '<button class="btn ghost" id="oirme">▶ Tócame para hablar</button>'+
       '<div class="tst-r" id="r1"></div></div></div>'+
     '<div class="tst"><div class="tst-n">B</div><div class="tst-b">'+
@@ -1107,6 +1246,13 @@ function pruebaSonido(){
     '<button class="btn" id="go" style="margin-top:14px">Continuar</button>'+
     '<p class="tiny">Si el micrófono no abre, puedes practicar igual: hablas en voz alta y escribes lo que dijiste.</p></div>';
 
+  buscarGrabacion('hello',function(hay,ruta){
+    var e=document.getElementById('rgrab');
+    if(!e)return;
+    e.innerHTML=hay
+      ? '<span class="ok2">Voz de Brian encontrada'+(ruta?' en '+(ruta||'la raíz'):'')+'.</span>'
+      : '<span class="no2">No encontré las grabaciones de Brian. Vas a oír la voz del navegador.</span>';
+  });
   document.getElementById('oirme').onclick=function(){
     document.getElementById('r1').innerHTML='<span class="ok2">Si oíste mi voz, vamos bien. Si no, súbele al volumen.</span>';
     say('Hola. Si me estás escuchando, ya quedó la primera parte.','es-MX');
@@ -1130,6 +1276,7 @@ function pruebaSonido(){
     });
   };
   document.getElementById('go').onclick=function(){D.probado=1;save(D);router();};
+  ligarAyuda('Vamos a probar dos cosas: que tú me escuches a mí, y que yo te escuche a ti. Toca el botón A, y luego el B.');
   ligarAtras(function(){vioSaludo=false;router();});
 }
 
@@ -1145,10 +1292,12 @@ function vozPicker(){
     return;
   }
   var sel=0;
-  APP.innerHTML=atras()+'<div class="qcard"><div class="qlbl">Paso 1 de 5 · voz</div>'+
+  APP.innerHTML=atras()+ayuda('Toca cada voz para oírla. Cuando encuentres la que entiendas mejor, toca el botón verde de abajo.','unas preguntas para conocerte')+
+  '<div class="qcard"><div class="qlbl">Paso 1 de 5 · voz</div>'+
     '<div class="qtxt">¿Cómo quieres que suene mi voz?</div>'+
     '<div class="qsub">Toca cada una para oírla. Escoge la que entiendas mejor, no la que suene más bonita. '+
     'En las partes que Brian grabó con su voz, vas a oírlo a él — esta voz es para lo demás.</div>'+
+    (en.length===1?'<div class="dgn" style="margin-bottom:12px"><b>Tu teléfono solo trae una voz en inglés</b>Por eso no hay de dónde escoger. La velocidad sí la puedes ajustar abajo.</div>':'')+
     '<div id="vl">'+en.map(function(v,i){
       var e=etiquetaVoz(v);
       return '<button class="vopt" data-i="'+i+'"><span class="vn">'+esc(e.nombre)+
@@ -1157,10 +1306,13 @@ function vozPicker(){
     }).join('')+'</div>'+
     '<div class="vel"><span>Qué tan rápido te hablo</span>'+
       '<div class="velb">'+
-      '<button data-r="0.65">Muy lento</button>'+
-      '<button data-r="0.78" class="on">Lento</button>'+
-      '<button data-r="0.92">Normal</button>'+
-      '</div></div>'+
+      '<button data-r="1.05">Rápido</button>'+
+      '<button data-r="0.85" class="on">Normal</button>'+
+      '<button data-r="0.65">Lento</button>'+
+      '<button data-r="0.45">Muy lento</button>'+
+      '</div>'+
+      '<p class="tiny" style="text-align:left;margin-top:8px">Toca cada uno para oír la diferencia.</p>'+
+      '</div>'+
     '<button class="btn" id="ok" style="margin-top:14px">Con esta voz</button>'+
     '<p class="tiny">Puedes cambiarla después desde el menú. Si todas suenan robóticas, escoge la que se entienda mejor — se va a arreglar pronto.</p></div>';
 
@@ -1171,20 +1323,21 @@ function vozPicker(){
     b.onclick=function(){
       sel=+b.dataset.i;marcar();
       VOZ_EN=en[sel];
-      say('Hello. I am your English tutor. Let us practice together.','en-US');
+      say2('Hello. My name is your English tutor and today we practice together.','en-US');
     };
   });
   marcar();
+  ligarAyuda('Toca cada voz para oírla. Cuando encuentres la que entiendas mejor, toca el botón verde de abajo.');
   APP.querySelectorAll('.velb button').forEach(function(b){
     b.onclick=function(){
       APP.querySelectorAll('.velb button').forEach(function(x){x.classList.remove('on');});
       b.classList.add('on');
       RATE=parseFloat(b.dataset.r);
-      say('This is how fast I will speak.','en-US');
+      say2('My name is Brian and I work at a school every day.','en-US');
     };
   });
   document.getElementById('ok').onclick=function(){
-    D.voz=en[sel].voiceURI;D.rate=RATE;save(D);
+    D.voz=idVoz(en[sel]);D.rate=RATE;save(D);
     aplicarVoz(D.voz);
     router();
   };
@@ -1204,7 +1357,10 @@ var epaso=0,edatos={};
 
 function entrevista(){
   var s=PASOS[epaso];
-  var h=atras()+'<div class="prog">'+PASOS.map(function(x,i){return '<i class="'+(i<=epaso?'on':'')+'"></i>';}).join('')+'</div>'+
+  var textoAyuda=(s.tipo==='pick')
+    ? 'Toca la respuesta que más se parezca a ti. Luego toca Continuar.'
+    : 'Escribe tu respuesta en el cuadro, o toca el botón para decirla en voz alta. Luego toca Continuar.';
+  var h=atras()+ayuda(textoAyuda,(epaso<PASOS.length-1?'la siguiente pregunta':'una prueba corta de inglés'))+'<div class="prog">'+PASOS.map(function(x,i){return '<i class="'+(i<=epaso?'on':'')+'"></i>';}).join('')+'</div>'+
     '<div class="qcard"><div class="qlbl">Paso 2 de 5 · pregunta '+(epaso+1)+' de '+PASOS.length+'</div>'+
     '<div class="qtxt">'+s.q+'</div>'+(s.sub?'<div class="qsub">'+s.sub+'</div>':'<div style="height:8px"></div>');
 
@@ -1226,6 +1382,7 @@ function entrevista(){
   }
   h+='<p class="tiny">Esto solo se pregunta una vez. Con tus respuestas armo tu material.</p></div>';
   APP.innerHTML=h;
+  ligarAyuda(textoAyuda);
   ligarAtras(function(){
     if(epaso>0){epaso--;entrevista();}
     else{D.voz=undefined;save(D);router();}
@@ -1374,7 +1531,8 @@ function bienvenida(){
 function menu(){
   var hechas={};
   D.sesiones.forEach(function(r){hechas[r.s]=(hechas[r.s]||0)+1;});
-  APP.innerHTML='<div class="qcard"><div class="qlbl">Hola de nuevo</div>'+
+  APP.innerHTML=ayuda('Toca la sesión con la que quieras seguir. Las verdes son las que te faltan.','practicar unos 20 minutos')+
+    '<div class="qcard"><div class="qlbl">Hola de nuevo</div>'+
     '<div class="qtxt">'+esc(P.nombre)+'</div>'+
     '<div class="qsub">Elige con cuál seguir. La 5 repite la pregunta de la 1 para comparar.</div>'+
     MAT.map(function(s,i){
@@ -1383,12 +1541,18 @@ function menu(){
         '<span class="ses-t">'+esc(s.t)+'</span></button>';
     }).join('')+
     '<button class="btn ghost" id="cambiarvoz" style="margin-top:6px">Cambiar mi voz</button>'+
-    '<button class="btn ghost" id="probarson" style="margin-top:6px">Probar sonido y micrófono</button></div>';
+    '<button class="btn ghost" id="probarson" style="margin-top:6px">Probar sonido y micrófono</button>'+
+    '<button class="btn ghost" id="modoguia" style="margin-top:6px">'+(guiado()?'Quitar las explicaciones':'Mostrar más explicaciones')+'</button></div>';
   APP.querySelectorAll('button[data-i]').forEach(function(b){
     b.onclick=function(){sIdx=+b.dataset.i;it=0;attempts=[];t0=Date.now();correr();};
   });
+  ligarAyuda('Toca la sesión con la que quieras seguir. Las verdes son las que te faltan.');
   document.getElementById('cambiarvoz').onclick=vozPicker;
   document.getElementById('probarson').onclick=function(){D.probado=0;save(D);router();};
+  document.getElementById('modoguia').onclick=function(){
+    D.guiado=!D.guiado;save(D);aplicarModo();menu();
+    say2(D.guiado?'Listo. Ahora te voy explicando qué hacer en cada pantalla.':'Listo, quité las explicaciones.','es-MX');
+  };
   say('Hola de nuevo, '+P.nombre+'. ¿Con cuál seguimos?','es-MX');
 }
 
@@ -1448,6 +1612,7 @@ function portadaSesion(){
     '</div>';
 
   APP.innerHTML=h;
+  ligarAyuda('Aquí te digo qué vamos a hacer hoy y qué frases vas a oír. Cuando estés listo, toca Empezar.');
   say('Hola '+P.nombre+'. '+S.enc,'es-MX');
   APP.querySelectorAll('.spk').forEach(function(b){
     b.onclick=function(){say(modelos[+b.dataset.i].en,'en-US');};
@@ -1466,7 +1631,13 @@ function paso(){
   var S=MAT[sIdx];
   if(it>=S.items.length){cierre();return;}
   var x=S.items[it];
-  var h=atras()+'<div class="prog">'+S.items.map(function(_,i){return '<i class="'+(i<=it?'on':'')+'"></i>';}).join('')+'</div><div class="qcard">';
+  var ayudas={
+    model:'Toca el botón verde y repite la frase en voz alta. Si no te sale, tócalo otra vez las veces que quieras.',
+    ask:'Te hago una pregunta en inglés. Toca el botón verde y contéstame hablando. Si no sabes, toca el botón de la pista.',
+    free:'Ahora di lo que puedas, con tus palabras. Cuando ya no tengas más que decir, toca "Ya dije todo lo que puedo".'
+  };
+  var quedan=S.items.length-it-1;
+  var h=atras()+ayuda(ayudas[x.k],(quedan>0?'quedan '+quedan+' ejercicios':'el cierre de la sesión'))+'<div class="prog">'+S.items.map(function(_,i){return '<i class="'+(i<=it?'on':'')+'"></i>';}).join('')+'</div><div class="qcard">';
 
   if(x.k==='model'){
     h+='<div class="qlbl">Escucha y repite en voz alta</div>'+
@@ -1532,6 +1703,7 @@ function paso(){
       HAY_MIC=false;grabarPaso(x,b);
     });
   };
+  ligarAyuda(ayudas[x.k]);
   document.getElementById('skip').onclick=function(){it++;paso();};
   ligarAtras(function(){
     if(it>0){it--;paso();}

@@ -341,7 +341,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v28 · 31 ago";
+var VERSION="v29 · 1 sep";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -690,7 +690,7 @@ function simboloDe(t){
 }
 // dibuja el apoyo visual; si hay archivo lo cambia después, sin trabar nada
 function visual(texto,id){
-  return '<div class="vis" id="'+id+'" data-frase="'+clave(texto)+'" data-sim="'+simboloDe(texto)+'">'+
+  return '<div class="vis" id="'+id+'" data-frase="'+clave(texto)+'" data-texto="'+esc(texto)+'" data-sim="'+simboloDe(texto)+'">'+
     '<span class="vis-sim">'+simboloDe(texto)+'</span></div>';
 }
 function buscarVisual(texto,id){
@@ -743,10 +743,69 @@ function buscarVisualCompleto(texto,id){
   buscarVisual(texto,id);
   setTimeout(function(){
     var caja=document.getElementById(id);
-    if(caja&&!caja.classList.contains('con-medio'))buscarEnLinea(texto,id);
+    if(caja&&caja.classList.contains('con-medio'))return;
+    if(buscarVideoEnLinea(texto,id)){
+      // si el video no llega en dos segundos, se cae a la imagen
+      setTimeout(function(){
+        var c2=document.getElementById(id);
+        if(c2&&!c2.classList.contains('con-medio'))buscarEnLinea(texto,id);
+      },2200);
+    }else{
+      buscarEnLinea(texto,id);
+    }
   },900);
 }
 
+
+
+/* ═══════════ video desde internet ═══════════ */
+// Pexels da video de calidad con permiso de uso comercial, pero pide una
+// llave gratuita. Si está vacía, se salta y quedan las imágenes.
+// Sácala en pexels.com/api — tarda dos minutos.
+var PEXELS_KEY='';
+var VID_CACHE_KEY='efa_vid_v1';
+function cacheVid(){try{return JSON.parse(localStorage.getItem(VID_CACHE_KEY)||'{}');}catch(e){return {};}}
+function guardarVid(k,u){try{var c=cacheVid();c[k]=u;localStorage.setItem(VID_CACHE_KEY,JSON.stringify(c));}catch(e){}}
+
+function buscarVideoEnLinea(texto,id){
+  if(!PEXELS_KEY)return false;
+  var k=clave(texto),c=cacheVid();
+  if(c[k]==='no')return false;
+  if(c[k]){ponerVideo_(id,c[k]);return true;}
+  var q=encodeURIComponent(terminoDe(texto));
+  fetch('https://api.pexels.com/videos/search?query='+q+'&per_page=3&orientation=landscape&size=small',
+        {headers:{Authorization:PEXELS_KEY}})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(d){
+      var v=(d&&d.videos&&d.videos[0])||null;
+      if(!v||!v.video_files){guardarVid(k,'no');return;}
+      // el archivo más ligero que sirva: mucha gente entra con datos
+      var arch=v.video_files
+        .filter(function(f){return f.file_type==='video/mp4'&&f.width&&f.width<=960;})
+        .sort(function(a,b){return a.width-b.width;})[0]||v.video_files[0];
+      if(!arch||!arch.link){guardarVid(k,'no');return;}
+      guardarVid(k,arch.link);
+      ponerVideo_(id,arch.link);
+    })
+    .catch(function(){});
+  return true;
+}
+function ponerVideo_(id,u){
+  var caja=document.getElementById(id);
+  if(!caja)return;
+  caja.classList.add('con-medio');
+  caja.innerHTML='<video src="'+u+'" autoplay muted loop playsinline></video>'+
+    '<button class="vis-x" title="No queda">✕</button>';
+  var b=caja.querySelector('.vis-x');
+  if(b)b.onclick=function(e){
+    e.stopPropagation();
+    var k=caja.getAttribute('data-frase');
+    if(k){var c=cacheVid();delete c[k];try{localStorage.setItem(VID_CACHE_KEY,JSON.stringify(c));}catch(x){}}
+    caja.classList.remove('con-medio');
+    caja.innerHTML='<span class="vis-sim">'+(caja.getAttribute('data-sim')||'💭')+'</span>';
+    buscarEnLinea(caja.getAttribute('data-texto')||'',id);
+  };
+}
 
 /* ═══════════ imágenes desde internet ═══════════ */
 // Openverse: buscador de imágenes de licencia libre, sin llave y filtrando

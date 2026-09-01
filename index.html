@@ -322,6 +322,10 @@
     border:0;background:rgba(0,0,0,.55);color:#fff;font-size:14px;cursor:pointer;line-height:1}
   .vis-x:hover{background:rgba(0,0,0,.8)}
 </style>
+<style>
+  .bubble-ia{background:var(--verde-suave);border:1px solid var(--verde);border-radius:12px;
+    padding:14px 16px;margin-bottom:12px;animation:aparece .3s ease both}
+</style>
 
 </head>
 <body>
@@ -341,7 +345,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v31 · 1 sep";
+var VERSION="v33 · 1 sep";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -1512,6 +1516,57 @@ function pruebaNivel(){
 
 
 
+
+/* ═══════════ tutor con IA ═══════════ */
+// La llave NUNCA va aquí: este archivo es público. Se pone en el Apps Script
+// y aquí solo va la dirección de ese servidor. Si está vacía, la app funciona
+// igual que antes, sin IA.
+var IA_ENDPOINT='';
+
+function hayIA(){return !!IA_ENDPOINT;}
+function pedirIA(accion,datos,ok,falla){
+  if(!hayIA()){falla&&falla();return;}
+  fetch(IA_ENDPOINT,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({accion:accion,datos:datos})
+  })
+  .then(function(r){return r.ok?r.json():null;})
+  .then(function(d){ if(d&&d.ok)ok&&ok(d.resultado); else falla&&falla(); })
+  .catch(function(){falla&&falla();});
+}
+function evaluarConIA(rec,cb){
+  if(!hayIA()){cb&&cb(null);return;}
+  pedirIA('evaluar',{
+    nombre:rec.nombre, nivel:(rec.perfil&&rec.perfil.nivel)||'',
+    trabajo:(rec.perfil&&rec.perfil.trabajo_es)||'',
+    sesion:rec.titulo,
+    intentos:(rec.intentos||[]).map(function(a){
+      return {tipo:a.tipo, meta:a.meta, dijo:a.oido, pct:a.pct};
+    })
+  },function(res){cb&&cb(res);},function(){cb&&cb(null);});
+}
+function repreguntarConIA(perfil,dicho,cb){
+  if(!hayIA()){cb&&cb(null);return;}
+  pedirIA('repreguntar',{nivel:perfil.nivel||'',trabajo:perfil.trabajo_es||'',dijo:dicho},
+    function(res){cb&&cb(res);},function(){cb&&cb(null);});
+}
+// la repregunta llega después, sin trabar la pantalla
+function pedirSeguimiento(dicho){
+  if(!hayIA()||!P)return;
+  repreguntarConIA(P,dicho,function(res){
+    if(!res||!res.pregunta)return;
+    var caja=document.getElementById('res')||document.getElementById('body');
+    if(!caja)return;
+    var d=document.createElement('div');
+    d.className='bubble-ia';
+    d.innerHTML='<div class="hl">Y dime…</div><div class="ht">'+esc(res.pregunta)+'</div>'+
+      (res.es?'<div class="pes">'+esc(res.es)+'</div>':'');
+    caja.insertBefore(d,caja.firstChild);
+    say(res.pregunta,'en-US');
+  });
+}
+
 /* ═══════════ modo guiado ═══════════ */
 // Para quien usa poco el celular: letra más grande, botones más grandes,
 // y en cada pantalla una caja fija que dice qué hacer y qué sigue.
@@ -2055,7 +2110,7 @@ function menu(){
     D.guiado=!D.guiado;save(D);aplicarModo();menu();
     say(D.guiado?'Listo. Ahora te voy explicando qué hacer en cada pantalla.':'Listo, quité las explicaciones.','es-MX');
   };
-  say('Hola de nuevo, '+P.nombre+'. ¿Con cuál seguimos?','es-MX');
+  say('Hola de nuevo. ¿Con cuál seguimos?','es-MX');
 }
 
 /* ═══════════ la sesión ═══════════ */
@@ -2116,7 +2171,7 @@ function portadaSesion(){
 
   APP.innerHTML=h;
   ligarAyuda('Aquí te digo qué vamos a hacer hoy y qué frases vas a oír. Cuando estés listo, toca Empezar.');
-  say('Hola '+P.nombre+'. '+S.enc,'es-MX');
+  say(S.enc,'es-MX');
   APP.querySelectorAll('.spk').forEach(function(b){
     b.onclick=function(){say(modelos[+b.dataset.i].en,'en-US');};
   });
@@ -2268,6 +2323,8 @@ function registrar(x,t){
   var meta=x.k==='model'?x.en:'';
   var cmp=meta?comparar(meta,t):null;
   attempts.push({tipo:x.k,meta:meta||x.q,oido:t,pct:cmp?cmp.pct:null});
+  // en la producción libre el tutor repregunta sobre lo que acaba de decir
+  if(x.k==='free')pedirSeguimiento(t);
   var r=document.getElementById('res');
   var h='<div class="heard"><div class="hl">te entendí</div><div class="ht">'+esc(t)+'</div>';
   if(cmp){
@@ -2311,8 +2368,31 @@ function cierre(){
   };
   D.sesiones.push(rec);save(D);
 
+  // la IA propone los tres errores; Brian los valida. Sin IA, no pasa nada.
+  if(hayIA()){
+    evaluarConIA(rec,function(res){
+      if(!res||!res.errores||!res.errores.length)return;
+      rec.errores_ia=res.errores;rec.nota_ia=res.nota||'';
+      var d=load();
+      if(d.sesiones&&d.sesiones.length){d.sesiones[d.sesiones.length-1]=rec;save(d);}
+      var caja=document.getElementById('extra');
+      if(!caja)return;
+      var h='<div class="card"><h3>Tres cosas para la próxima</h3>'+
+        '<p class="sub">Propuestas por el tutor. Brian las revisa antes de que cuenten.</p>';
+      res.errores.slice(0,3).forEach(function(e){
+        h+='<div class="att"><div class="tg">'+esc(e.correccion||'')+'</div>'+
+           '<div class="hd">'+esc(e.codigo||'')+' · dijiste: '+esc(e.dijo||'')+'</div></div>';
+      });
+      caja.insertAdjacentHTML('afterbegin',h+'</div>');
+    });
+  }
+
   var msg=libres.length?'Hablaste '+dichas.length+' veces y produjiste '+pal+' palabras.'
         :'Practicaste '+dichas.length+' frases. La próxima intentamos una tuya.';
+  // lo hablado va sin números, para que sea una frase fija con audio propio
+  var msgVoz=libres.length
+    ? 'Buen trabajo. Hablaste con tus propias palabras. Nos vemos en la siguiente.'
+    : 'Buen trabajo. Practicaste las frases de hoy. La próxima intentamos una tuya.';
 
   var h='<div class="qcard"><div class="qlbl">Cierre</div><div class="qtxt">Buen trabajo, '+esc(P.nombre)+'.</div>'+
     '<div class="qsub">'+msg+(prom!==null?' Tus repeticiones salieron al '+prom+'% de parecido con el modelo.':'')+'</div>'+
@@ -2328,7 +2408,7 @@ function cierre(){
     '<button class="p" id="mail">Enviar por correo</button><button id="cop">Copiar código</button></div>'+
     '<textarea class="code" id="cd" readonly'+(ONLINE?' hidden':'')+'></textarea></div>';
   APP.innerHTML=h;
-  say('Buen trabajo, '+P.nombre+'. '+msg+' Nos vemos en la siguiente.','es-MX');
+  say(msgVoz,'es-MX');
 
   var codigo=pack(rec);
   document.getElementById('cd').value=codigo;

@@ -346,7 +346,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v36 · 1 sep";
+var VERSION="v37 · 1 sep";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -464,13 +464,16 @@ function decirSeguido(lista){
 // Cada paquete es una carpeta con el catálogo completo generado con otra voz.
 // La app solo ofrece los que de verdad existen en el repositorio.
 var PAQUETES=[
-  {id:'audio',       nombre:'Brian',          nota:'la voz de tu maestro'},
-  {id:'audio-us',    nombre:'Estados Unidos', nota:'acento estadounidense'},
-  {id:'audio-uk',    nombre:'Inglaterra',     nota:'acento británico'},
-  {id:'audio-au',    nombre:'Australia',      nota:'acento australiano'},
-  {id:'audio-lento', nombre:'Más despacio',   nota:'para quien apenas empieza'}
+  {id:'audio',    nombre:'Brian',          nota:'la voz de tu maestro'},
+  {id:'audio-us', nombre:'Estados Unidos', nota:'el que más se oye en el trabajo'},
+  {id:'audio-uk', nombre:'Inglaterra',     nota:'acento británico'},
+  {id:'audio-ie', nombre:'Irlanda',        nota:'acento irlandés'},
+  {id:'audio-au', nombre:'Australia',      nota:'acento australiano'},
+  {id:'audio-in', nombre:'India',          nota:'muy común en el trabajo técnico'},
+  {id:'audio-ca', nombre:'Canadá',         nota:'acento canadiense'}
 ];
 var PAQUETE_ACTIVO=null;
+var VEL_AUDIO=1;   // 0.7 muy lento · 1 normal · 1.15 rápido
 var RUTAS=['audio/',''];
 function armarRutas(){
   var r=[];
@@ -503,6 +506,14 @@ function reproducir(url,onOk,onNoExiste,onBloqueado){
   callarTodo();
   var a=new Audio();
   a.preload='auto';
+  // la velocidad se ajusta aquí: un solo archivo sirve para todas.
+  // preservesPitch evita que suene a caricatura al bajarle.
+  try{
+    a.playbackRate=VEL_AUDIO;
+    if('preservesPitch' in a)a.preservesPitch=true;
+    if('mozPreservesPitch' in a)a.mozPreservesPitch=true;
+    if('webkitPreservesPitch' in a)a.webkitPreservesPitch=true;
+  }catch(e){}
   var resuelto=false;
   a.oncanplaythrough=function(){
     if(resuelto)return;resuelto=true;
@@ -1159,6 +1170,7 @@ function router(){
   if(!D.probado){pruebaSonido();return;}
   if(D.paquete===undefined){vozPicker();return;}
   if(PAQUETE_ACTIVO!==D.paquete){PAQUETE_ACTIVO=D.paquete;armarRutas();}
+  if(D.velAudio)VEL_AUDIO=D.velAudio;
   aplicarVoz(D.voz);elegirVozES();if(D.rate)RATE=D.rate;
   if(!P){entrevista();return;}
   MAT=materialDe(P);
@@ -1889,10 +1901,26 @@ function vozPicker(){
     '<div class="qtxt">¿Con qué voz quieres que te hable?</div>'+
     '<div class="qsub">Todas dicen lo mismo; cambia el acento y la velocidad.</div>'+
     '<div id="vl"><p class="tiny" style="text-align:left">Buscando voces…</p></div>'+
+    '<div class="vel"><span>Qué tan rápido te hablo</span>'+
+      '<div class="velb">'+
+      '<button data-v="0.7">Muy<br>lento</button>'+
+      '<button data-v="0.85">Lento</button>'+
+      '<button data-v="1" class="on">Normal</button>'+
+      '<button data-v="1.15">Rápido</button>'+
+      '</div>'+
+      '<p class="tiny" style="text-align:left;margin:8px 0 0">Toca uno y luego una voz, para oír la diferencia.</p></div>'+
     '<button class="btn" id="ok" disabled style="margin-top:12px">Con esta voz</button></div>';
   ligarAyuda(texto);
   ligarAtras(function(){irA('sonido');});
   var MUESTRA='hello', listos=[], faltan=PAQUETES.length, sel=null, yaCerro=false;
+  APP.querySelectorAll('.velb button').forEach(function(b){
+    b.onclick=function(){
+      APP.querySelectorAll('.velb button').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on');
+      VEL_AUDIO=parseFloat(b.dataset.v);D.velAudio=VEL_AUDIO;save(D);
+      if(sel!==null)soloTuVoz('Hello. This is how I am going to speak to you.',function(){});
+    };
+  });
   // si algún archivo no contesta, no se queda colgado: a los 3 segundos sigue
   setTimeout(function(){ if(!yaCerro){faltan=1;cerrar();} },3000);
   PAQUETES.forEach(function(p,idx){
@@ -1906,7 +1934,8 @@ function vozPicker(){
     })();
   });
   function elegir(id){
-    D.paquete=id;save(D);PAQUETE_ACTIVO=id;armarRutas();router();
+    D.paquete=id;D.velAudio=VEL_AUDIO;save(D);
+    PAQUETE_ACTIVO=id;armarRutas();router();
   }
   function cerrar(){
     if(yaCerro)return;

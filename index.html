@@ -327,6 +327,7 @@
     padding:14px 16px;margin-bottom:12px;animation:aparece .3s ease both}
 </style>
 
+
 </head>
 <body>
 <div class="shell">
@@ -345,7 +346,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v33 · 1 sep";
+var VERSION="v35 · 1 sep";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -357,6 +358,9 @@ var ONLINE=(typeof google!=='undefined'&&google.script&&google.script.run);
 
 /* ═══════════ voz: hablar ═══════════ */
 var VOCES=[],VOZ_EN=null,VOZ_ES=null,RATE=0.85;
+// Ninguna voz del navegador. Solo suenan los audios generados.
+// Si falta un audio, se queda en silencio en vez de meter la voz robótica.
+var VOZ_SINTETICA=false;
 
 function cargarVoces(cb){
   if(!('speechSynthesis' in window)){cb([]);return;}
@@ -447,17 +451,33 @@ function hablar(t,lang,cb){
   speechSynthesis.speak(u);
 }
 // varias frases seguidas, sin que se pisen
+// se dice una sola cosa a la vez; encolar era lo que empalmaba las voces
 function decirSeguido(lista){
-  if(!('speechSynthesis' in window))return;
-  try{speechSynthesis.cancel();}catch(e){}
-  lista.forEach(function(p){hablar(p[0],p[1]);});
+  if(!lista||!lista.length)return;
+  say(lista[0][0],lista[0][1]);
 }
 
 
 /* ═══════════ tu voz grabada ═══════════ */
 // Busca el audio en audio/nombre.webm y, si no está, en nombre.webm (la raíz).
 // Así funciona aunque los archivos se hayan subido sueltos.
+// Cada paquete es una carpeta con el catálogo completo generado con otra voz.
+// La app solo ofrece los que de verdad existen en el repositorio.
+var PAQUETES=[
+  {id:'audio',       nombre:'Brian',          nota:'la voz de tu maestro'},
+  {id:'audio-us',    nombre:'Estados Unidos', nota:'acento estadounidense'},
+  {id:'audio-uk',    nombre:'Inglaterra',     nota:'acento británico'},
+  {id:'audio-au',    nombre:'Australia',      nota:'acento australiano'},
+  {id:'audio-lento', nombre:'Más despacio',   nota:'para quien apenas empieza'}
+];
+var PAQUETE_ACTIVO=null;
 var RUTAS=['audio/',''];
+function armarRutas(){
+  var r=[];
+  if(PAQUETE_ACTIVO&&PAQUETE_ACTIVO!=='audio')r.push(PAQUETE_ACTIVO+'/');
+  r.push('audio/');r.push('');
+  RUTAS=r;AUDIO_RUTA=null;AUDIO_FALLA={};
+}
 var EXT=['.webm','.mp3'];   // sirve cualquiera de los dos formatos
 var AUDIO_FALLA={};     // los que ya se sabe que no existen
 var AUDIO_RUTA=null;    // la ruta que sí sirvió, para no volver a probar
@@ -537,6 +557,7 @@ function decirConTuVoz(texto,lang,cb,archivo){
 // habla siempre con la voz del navegador, sin buscar grabación
 function say2(t,lang,cb){
   callarTodo();
+  if(!VOZ_SINTETICA){cb&&cb();return;}   // silencio, nunca voz robótica
   if(!('speechSynthesis' in window)){cb&&cb();return;}
   try{hablar(t,lang,cb);}catch(e){cb&&cb();}
 }
@@ -812,7 +833,7 @@ function cacheVid(){try{return JSON.parse(localStorage.getItem(VID_CACHE_KEY)||'
 function guardarVid(k,u){try{var c=cacheVid();c[k]=u;localStorage.setItem(VID_CACHE_KEY,JSON.stringify(c));}catch(e){}}
 
 function buscarVideoEnLinea(texto,id){
-  if(!PEXELS_KEY)return false;
+  if(!PEXELS_KEY||!terminoDe(texto))return false;
   var k=clave(texto),c=cacheVid();
   if(c[k]==='no')return false;
   if(c[k]){ponerVideo_(id,c[k]);return true;}
@@ -863,18 +884,18 @@ var TERMINOS=[
   [/dentist/i,'dentist working patient'],[/nurse/i,'nurse hospital'],[/doctor/i,'doctor clinic'],
   [/teacher|teach/i,'teacher classroom students'],[/student|study/i,'student studying notebook'],
   [/machine operator|operate machines/i,'factory machine operator'],
-  [/factory|plant/i,'factory production line'],[/quality|check things/i,'quality inspection factory'],
+  [/factory|plant/i,'factory assembly line workers'],[/quality|check things/i,'quality control inspector factory'],
   [/maintenance/i,'maintenance technician tools'],[/warehouse|forklift/i,'warehouse forklift boxes'],
   [/welder/i,'welder welding sparks'],[/mechanic|fix things/i,'mechanic repairing car'],
   [/construction|helper/i,'construction worker site'],[/plumber/i,'plumber pipes'],
   [/electrician/i,'electrician wiring'],[/painter/i,'house painter wall'],
   [/farmer|land/i,'farmer field crops'],[/rancher/i,'cattle ranch'],[/fisherman/i,'fisherman boat'],
-  [/driver|drive/i,'truck driver road'],[/delivery/i,'delivery courier package'],
+  [/driver|drive/i,'truck driver cabin highway'],[/delivery/i,'delivery courier package'],
   [/waiter|restaurant/i,'waiter restaurant'],[/cook|kitchen/i,'cook kitchen'],
   [/baker/i,'baker bread'],[/barista|coffee/i,'barista coffee shop'],
   [/cashier|store|sales|sell/i,'cashier store counter'],[/hairstylist|salon/i,'hairdresser salon'],
   [/security|guard/i,'security guard'],[/police/i,'police officer'],[/cleaner|clean\b/i,'cleaning worker'],
-  [/nanny|children/i,'child care'],[/office|assistant|administrative/i,'office desk work'],
+  [/nanny|children/i,'child care'],[/office|assistant|administrative/i,'administrative office worker desk'],
   [/human resources/i,'office meeting people'],[/logistics|purchasing/i,'logistics warehouse trucks'],
   [/manager|supervisor/i,'supervisor factory clipboard'],[/lawyer/i,'lawyer office documents'],
   [/engineer/i,'engineer blueprints'],[/accountant|reports/i,'accountant calculator documents'],
@@ -882,21 +903,22 @@ var TERMINOS=[
   [/call center|customer service|emails|messages/i,'call center headset'],
   [/photographer/i,'photographer camera'],[/musician|music/i,'musician playing'],
   [/fitness|gym/i,'gym training'],[/homemaker|home/i,'home kitchen family'],
-  [/every day/i,'calendar week'],[/yesterday/i,'clock past time'],
-  [/i start at|what time|seven|eight|nine|ten/i,'alarm clock morning'],
-  [/family/i,'family together'],[/football/i,'soccer ball field'],[/cooking/i,'cooking food'],
+  [/every day/i,'wall calendar days'],[/yesterday/i,'vintage clock time passing'],
+  [/i start at|what time|seven|eight|nine|ten/i,'alarm clock bedside morning'],
+  [/family/i,'mexican family together home'],[/football/i,'soccer ball field'],[/cooking/i,'cooking food'],
   [/traveling|travel/i,'travel airport'],[/reading/i,'reading book'],
-  [/my name is|hello|hi\b|nice to meet/i,'people greeting handshake'],
-  [/help people/i,'helping people work'],[/make products/i,'products manufacturing'],
-  [/move materials/i,'moving boxes warehouse'],[/meetings/i,'work meeting table'],
+
+  [/help people/i,'worker helping customer'],[/make products/i,'products manufacturing'],
+  [/move materials/i,'moving boxes warehouse'],[/meetings/i,'team meeting office table'],
   [/organize things/i,'organizing shelves'],[/measure|adjust/i,'measuring tools']
 ];
 function terminoDe(t){
   for(var i=0;i<TERMINOS.length;i++){if(TERMINOS[i][0].test(t))return TERMINOS[i][1];}
-  return t.replace(/^(i am|i work|i|my name is)\s+/i,'').replace(/[.?!]/g,'').trim();
+  return null;   // sin término curado no se busca: una imagen que no corresponde estorba
 }
 
 function buscarEnLinea(texto,id){
+  if(!terminoDe(texto))return;
   var k=clave(texto);
   var c=cacheImg();
   if(c[k]==='no'){return;}
@@ -1113,7 +1135,8 @@ function router(){
   if(!vioSaludo){portada();return;}
   if(D.experiencia===undefined){preguntaExperiencia();return;}
   if(!D.probado){pruebaSonido();return;}
-  if(D.voz===undefined&&('speechSynthesis' in window)){vozPicker();return;}
+  if(D.paquete===undefined){vozPicker();return;}
+  if(PAQUETE_ACTIVO!==D.paquete){PAQUETE_ACTIVO=D.paquete;armarRutas();}
   aplicarVoz(D.voz);elegirVozES();if(D.rate)RATE=D.rate;
   if(!P){entrevista();return;}
   MAT=materialDe(P);
@@ -1836,68 +1859,55 @@ function pruebaSonido(){
 }
 
 function vozPicker(){
-  var en=vocesIngles();
-  if(!en.length){
-    D.voz=null;D.probado=1;save(D);
-    APP.innerHTML=atras()+'<div class="qcard"><div class="qlbl">Aviso</div>'+
-      '<div class="qtxt">Este navegador no tiene voces instaladas.</div>'+
-      '<div class="qsub">Vas a poder practicar igual, pero sin oírme. Para la experiencia completa, abre esto en Chrome.</div>'+
-      '<button class="btn" id="go">Seguir de todos modos</button></div>';
-    document.getElementById('go').onclick=function(){router();};
-    ligarAtras(function(){irA('sonido');});
-    return;
-  }
-  var sel=0;
-  APP.innerHTML=atras()+ayuda('Toca cada voz para oírla. Cuando encuentres la que entiendas mejor, toca el botón verde de abajo.','unas preguntas para conocerte')+
-  '<div class="qcard"><div class="qlbl">Paso 1 de 5 · voz</div>'+
-    '<div class="qtxt">¿Cómo quieres que suene mi voz?</div>'+
-    '<div class="qsub">Toca cada una para oírla. Escoge la que entiendas mejor, no la que suene más bonita. '+
-    'En las partes que Brian grabó con su voz, vas a oírlo a él — esta voz es para lo demás.</div>'+
-    (en.length===1?'<div class="dgn" style="margin-bottom:12px"><b>Tu teléfono solo trae una voz en inglés</b>Por eso no hay de dónde escoger. La velocidad sí la puedes ajustar abajo.</div>':'')+
-    '<div id="vl">'+en.map(function(v,i){
-      var e=etiquetaVoz(v);
-      return '<button class="vopt" data-i="'+i+'"><span class="vn">'+esc(e.nombre)+
-             (calidadVoz(v)>=3?'<em class="vnat">más natural</em>':'')+'</span>'+
-             '<span class="vp">'+esc(e.pais)+'</span><span class="vplay">▶</span></button>';
-    }).join('')+'</div>'+
-    '<div class="vel"><span>Qué tan rápido te hablo</span>'+
-      '<div class="velb">'+
-      '<button data-r="1.05">Rápido</button>'+
-      '<button data-r="0.85" class="on">Normal</button>'+
-      '<button data-r="0.65">Lento</button>'+
-      '<button data-r="0.45">Muy lento</button>'+
-      '</div>'+
-      '<p class="tiny" style="text-align:left;margin-top:8px">Toca cada uno para oír la diferencia.</p>'+
-      '</div>'+
-    '<button class="btn" id="ok" style="margin-top:14px">Con esta voz</button>'+
-    '<p class="tiny">Puedes cambiarla después desde el menú. Si todas suenan robóticas, escoge la que se entienda mejor — se va a arreglar pronto.</p></div>';
-
-  function marcar(){
-    APP.querySelectorAll('.vopt').forEach(function(b,i){b.classList.toggle('sel',i===sel);});
-  }
-  APP.querySelectorAll('.vopt').forEach(function(b){
-    b.onclick=function(){
-      sel=+b.dataset.i;marcar();
-      VOZ_EN=en[sel];
-      say2('Hello. My name is your English tutor and today we practice together.','en-US');
-    };
-  });
-  marcar();
-  ligarAyuda('Toca cada voz para oírla. Cuando encuentres la que entiendas mejor, toca el botón verde de abajo.');
-  APP.querySelectorAll('.velb button').forEach(function(b){
-    b.onclick=function(){
-      APP.querySelectorAll('.velb button').forEach(function(x){x.classList.remove('on');});
-      b.classList.add('on');
-      RATE=parseFloat(b.dataset.r);
-      say2('My name is Brian and I work at a school every day.','en-US');
-    };
-  });
-  document.getElementById('ok').onclick=function(){
-    D.voz=idVoz(en[sel]);D.rate=RATE;save(D);
-    aplicarVoz(D.voz);
-    router();
-  };
+  var tb=document.querySelector('.topbar');
+  if(tb)tb.style.display='';
+  var texto='Toca cada voz para oírla. Escoge la que entiendas mejor, no la que suene más bonita.';
+  APP.innerHTML=atras()+ayuda(texto,'unas preguntas para conocerte')+
+    '<div class="qcard"><div class="qlbl">Paso 1 de 5 · voz</div>'+
+    '<div class="qtxt">¿Con qué voz quieres que te hable?</div>'+
+    '<div class="qsub">Todas dicen lo mismo; cambia el acento y la velocidad.</div>'+
+    '<div id="vl"><p class="tiny" style="text-align:left">Buscando voces…</p></div>'+
+    '<button class="btn" id="ok" disabled style="margin-top:12px">Con esta voz</button></div>';
+  ligarAyuda(texto);
   ligarAtras(function(){irA('sonido');});
+  var MUESTRA='hello', listos=[], faltan=PAQUETES.length, sel=null, yaCerro=false;
+  // si algún archivo no contesta, no se queda colgado: a los 3 segundos sigue
+  setTimeout(function(){ if(!yaCerro){faltan=1;cerrar();} },3000);
+  PAQUETES.forEach(function(p,idx){
+    var n=0;
+    (function intenta(){
+      if(n>=EXT.length){cerrar();return;}
+      var a=new Audio(p.id+'/'+MUESTRA+EXT[n++]);
+      a.oncanplaythrough=function(){listos[idx]=p;cerrar();};
+      a.onerror=intenta;
+      try{a.load();}catch(e){cerrar();}
+    })();
+  });
+  function elegir(id){
+    D.paquete=id;save(D);PAQUETE_ACTIVO=id;armarRutas();router();
+  }
+  function cerrar(){
+    if(yaCerro)return;
+    if(--faltan>0)return;
+    yaCerro=true;
+    var hay=listos.filter(Boolean);
+    if(hay.length<=1){elegir(hay.length?hay[0].id:'audio');return;}
+    document.getElementById('vl').innerHTML=hay.map(function(p,i){
+      return '<button class="vopt" data-i="'+i+'"><span class="vn">'+esc(p.nombre)+'</span>'+
+             '<span class="vp">'+esc(p.nota)+'</span><span class="vplay">▶</span></button>';
+    }).join('');
+    APP.querySelectorAll('.vopt').forEach(function(b){
+      b.onclick=function(){
+        sel=+b.dataset.i;
+        APP.querySelectorAll('.vopt').forEach(function(x){x.classList.remove('sel');});
+        b.classList.add('sel');
+        document.getElementById('ok').disabled=false;
+        PAQUETE_ACTIVO=hay[sel].id;armarRutas();
+        soloTuVoz('Hello. This is how I am going to speak to you.',function(){});
+      };
+    });
+    document.getElementById('ok').onclick=function(){ if(sel!==null)elegir(hay[sel].id); };
+  }
 }
 
 /* ═══════════ entrevista inicial ═══════════ */
@@ -1941,7 +1951,7 @@ function entrevista(){
   ligarAyuda(textoAyuda);
   ligarAtras(function(){
     if(epaso>0){epaso--;entrevista();}
-    else{irA(vocesIngles().length?'voz':'sonido');}
+    else{irA('voz');}
   });
 
   if(epaso===0){
@@ -2070,10 +2080,7 @@ function mandarPerfil(){
 
 function bienvenida(){
   MAT=materialDe(P);
-  decirSeguido([
-    ['Listo, '+P.nombre+'. Ya tengo tu material.','es-MX'],
-    ['Estas son tus frases. Salieron de lo que me contaste.','es-MX']
-  ]);
+  say('Estas son tus frases. Salieron de lo que me contaste.','es-MX');
   APP.innerHTML='<div class="qcard"><div class="qlbl">Paso 5 de 5 · tu material</div>'+
     '<div class="qtxt">Ya tengo tu material, '+esc(P.nombre)+'.</div>'+
     '<div class="qsub">Estas son tus frases. No son de un libro: salieron de lo que me contaste.</div>'+
@@ -2097,14 +2104,15 @@ function menu(){
         '<span class="ses-n">Sesión '+(i+1)+(hechas[i]?' · hecha ✓':'')+'</span>'+
         '<span class="ses-t">'+esc(s.t)+'</span></button>';
     }).join('')+
-    '<button class="btn ghost" id="cambiarvoz" style="margin-top:6px">Cambiar mi voz</button>'+
+    '<button class="btn ghost" id="cambiarvoz" style="margin-top:6px">Cambiar la voz</button>'+
     '<button class="btn ghost" id="probarson" style="margin-top:6px">Probar sonido y micrófono</button>'+
     '<button class="btn ghost" id="modoguia" style="margin-top:6px">'+(guiado()?'Quitar las explicaciones':'Mostrar más explicaciones')+'</button></div>';
   APP.querySelectorAll('button[data-i]').forEach(function(b){
     b.onclick=function(){sIdx=+b.dataset.i;it=0;attempts=[];t0=Date.now();correr();};
   });
   ligarAyuda('Toca la sesión con la que quieras seguir. Las verdes son las que te faltan.');
-  document.getElementById('cambiarvoz').onclick=vozPicker;
+  var cv=document.getElementById('cambiarvoz');
+  if(cv)cv.onclick=function(){D.paquete=undefined;save(D);vozPicker();};
   document.getElementById('probarson').onclick=function(){D.probado=0;save(D);router();};
   document.getElementById('modoguia').onclick=function(){
     D.guiado=!D.guiado;save(D);aplicarModo();menu();

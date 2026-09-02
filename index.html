@@ -346,7 +346,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v35 · 1 sep";
+var VERSION="v36 · 1 sep";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -827,13 +827,13 @@ function buscarVisualCompleto(texto,id){
 // Pexels da video de calidad con permiso de uso comercial, pero pide una
 // llave gratuita. Si está vacía, se salta y quedan las imágenes.
 // Sácala en pexels.com/api — tarda dos minutos.
-var PEXELS_KEY='7XkPW1AAsPQZydxmmmonBQInUZrZIIoMmGAFiGe6SVjthBWETzBlisAZ';
+var PEXELS_KEY='';
 var VID_CACHE_KEY='efa_vid_v1';
 function cacheVid(){try{return JSON.parse(localStorage.getItem(VID_CACHE_KEY)||'{}');}catch(e){return {};}}
 function guardarVid(k,u){try{var c=cacheVid();c[k]=u;localStorage.setItem(VID_CACHE_KEY,JSON.stringify(c));}catch(e){}}
 
 function buscarVideoEnLinea(texto,id){
-  if(!PEXELS_KEY||!terminoDe(texto))return false;
+  if(!PEXELS_KEY)return false;
   var k=clave(texto),c=cacheVid();
   if(c[k]==='no')return false;
   if(c[k]){ponerVideo_(id,c[k]);return true;}
@@ -881,6 +881,11 @@ function guardarImg(k,u){try{var c=cacheImg();c[k]=u;localStorage.setItem(IMG_CA
 
 // término de búsqueda limpio: buscar la frase entera da resultados malos
 var TERMINOS=[
+  [/^hello|^hi\b|^hey|nice to meet you|good to see you|welcome/i,'two people greeting smiling office'],
+  [/good morning/i,'morning sunrise city'],
+  [/good afternoon/i,'afternoon workplace'],
+  [/good evening/i,'evening city lights'],
+  [/how are you|how is it going|how have you been/i,'two coworkers talking friendly'],
   [/dentist/i,'dentist working patient'],[/nurse/i,'nurse hospital'],[/doctor/i,'doctor clinic'],
   [/teacher|teach/i,'teacher classroom students'],[/student|study/i,'student studying notebook'],
   [/machine operator|operate machines/i,'factory machine operator'],
@@ -912,13 +917,30 @@ var TERMINOS=[
   [/move materials/i,'moving boxes warehouse'],[/meetings/i,'team meeting office table'],
   [/organize things/i,'organizing shelves'],[/measure|adjust/i,'measuring tools']
 ];
+// Si no hay término curado, se arma uno con la propia frase: se le quita el
+// "I am a" o el "I work at" y se le agrega contexto para que la búsqueda
+// devuelva una foto de esa cosa y no de cualquier cosa.
+function terminoDerivado(t){
+  var x=String(t).replace(/[.?!]/g,'').trim();
+  var m;
+  if((m=x.match(/^I am (?:a|an)\s+(.+)$/i)))            return m[1]+' at work';
+  if((m=x.match(/^I am\s+(.+)$/i)))                      return m[1]+' person';
+  if((m=x.match(/^I work (?:at|in|on|from)\s+(?:a|an|the)?\s*(.+)$/i))) return m[1]+' workplace';
+  if((m=x.match(/^I work\s+(.+)$/i)))                    return m[1]+' work';
+  if((m=x.match(/^I like\s+(.+)$/i)))                    return m[1];
+  if((m=x.match(/^I study English\s+(.+)$/i)))           return 'learning english class';
+  if((m=x.match(/^I start\s+(.+)$/i)))                   return 'morning clock start work';
+  if((m=x.match(/^My name is\s+/i)))                     return 'two people talking introduction';
+  if((m=x.match(/^I\s+(.+)$/i)))                         return m[1]+' at work';
+  if(/\?$/.test(String(t)))                              return 'two people having a conversation';
+  return x;
+}
 function terminoDe(t){
   for(var i=0;i<TERMINOS.length;i++){if(TERMINOS[i][0].test(t))return TERMINOS[i][1];}
-  return null;   // sin término curado no se busca: una imagen que no corresponde estorba
+  return terminoDerivado(t);
 }
 
 function buscarEnLinea(texto,id){
-  if(!terminoDe(texto))return;
   var k=clave(texto);
   var c=cacheImg();
   if(c[k]==='no'){return;}

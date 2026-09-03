@@ -326,6 +326,11 @@
   .bubble-ia{background:var(--verde-suave);border:1px solid var(--verde);border-radius:12px;
     padding:14px 16px;margin-bottom:12px;animation:aparece .3s ease both}
 </style>
+<style>
+  .ctxbox{background:var(--crema);border-left:3px solid var(--verde);border-radius:0 10px 10px 0;
+    padding:13px 15px;margin-bottom:14px;font-size:14.5px;line-height:1.5;color:var(--tinta-2)}
+  .guiado .ctxbox{font-size:16px}
+</style>
 
 
 </head>
@@ -346,7 +351,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v37 · 1 sep";
+var VERSION="v38 · 2 sep";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -820,68 +825,11 @@ function buscarVisualCompleto(texto,id){
   setTimeout(function(){
     var caja=document.getElementById(id);
     if(caja&&caja.classList.contains('con-medio'))return;
-    if(buscarVideoEnLinea(texto,id)){
-      // si el video no llega en dos segundos, se cae a la imagen
-      setTimeout(function(){
-        var c2=document.getElementById(id);
-        if(c2&&!c2.classList.contains('con-medio'))buscarEnLinea(texto,id);
-      },2200);
-    }else{
-      buscarEnLinea(texto,id);
-    }
+    buscarEnLinea(texto,id);
   },900);
 }
 
 
-
-/* ═══════════ video desde internet ═══════════ */
-// Pexels da video de calidad con permiso de uso comercial, pero pide una
-// llave gratuita. Si está vacía, se salta y quedan las imágenes.
-// Sácala en pexels.com/api — tarda dos minutos.
-var PEXELS_KEY='';
-var VID_CACHE_KEY='efa_vid_v1';
-function cacheVid(){try{return JSON.parse(localStorage.getItem(VID_CACHE_KEY)||'{}');}catch(e){return {};}}
-function guardarVid(k,u){try{var c=cacheVid();c[k]=u;localStorage.setItem(VID_CACHE_KEY,JSON.stringify(c));}catch(e){}}
-
-function buscarVideoEnLinea(texto,id){
-  if(!PEXELS_KEY)return false;
-  var k=clave(texto),c=cacheVid();
-  if(c[k]==='no')return false;
-  if(c[k]){ponerVideo_(id,c[k]);return true;}
-  var q=encodeURIComponent(terminoDe(texto));
-  fetch('https://api.pexels.com/videos/search?query='+q+'&per_page=3&orientation=landscape&size=small',
-        {headers:{Authorization:PEXELS_KEY}})
-    .then(function(r){return r.ok?r.json():null;})
-    .then(function(d){
-      var v=(d&&d.videos&&d.videos[0])||null;
-      if(!v||!v.video_files){guardarVid(k,'no');return;}
-      // el archivo más ligero que sirva: mucha gente entra con datos
-      var arch=v.video_files
-        .filter(function(f){return f.file_type==='video/mp4'&&f.width&&f.width<=960;})
-        .sort(function(a,b){return a.width-b.width;})[0]||v.video_files[0];
-      if(!arch||!arch.link){guardarVid(k,'no');return;}
-      guardarVid(k,arch.link);
-      ponerVideo_(id,arch.link);
-    })
-    .catch(function(){});
-  return true;
-}
-function ponerVideo_(id,u){
-  var caja=document.getElementById(id);
-  if(!caja)return;
-  caja.classList.add('con-medio');
-  caja.innerHTML='<video src="'+u+'" autoplay muted loop playsinline></video>'+
-    '<button class="vis-x" title="No queda">✕</button>';
-  var b=caja.querySelector('.vis-x');
-  if(b)b.onclick=function(e){
-    e.stopPropagation();
-    var k=caja.getAttribute('data-frase');
-    if(k){var c=cacheVid();delete c[k];try{localStorage.setItem(VID_CACHE_KEY,JSON.stringify(c));}catch(x){}}
-    caja.classList.remove('con-medio');
-    caja.innerHTML='<span class="vis-sim">'+(caja.getAttribute('data-sim')||'💭')+'</span>';
-    buscarEnLinea(caja.getAttribute('data-texto')||'',id);
-  };
-}
 
 /* ═══════════ imágenes desde internet ═══════════ */
 // Openverse: buscador de imágenes de licencia libre, sin llave y filtrando
@@ -1119,7 +1067,7 @@ function materialDe(p){
   ];
 
   // el nivel decide cuánto modelo se da y qué tanto se le exige
-  return base.map(function(ses){
+  return base.map(function(ses,idx){
     var mods=ses.items.filter(function(x){return x.k==='model';});
     var resto=ses.items.filter(function(x){return x.k!=='model';});
     var it;
@@ -1131,6 +1079,13 @@ function materialDe(p){
       it=mods.slice(0,2).concat(resto);
       it.push({k:'free',q:'Tell me more. Why?',es:'Explícame por qué. Alárgate más que en la respuesta anterior.'});
     }
+    // antes de la producción libre: usar lo aprendido en una situación real
+    var sits=situacionesDe(p,idx).map(function(x){
+      return {k:'sit',ctx:x.ctx,q:x.dice,es:'Contéstale.',pista:x.pista};
+    });
+    var libres=it.filter(function(x){return x.k==='free';});
+    var resto2=it.filter(function(x){return x.k!=='free';});
+    it=resto2.concat(sits).concat(libres);
     return {t:ses.t,obj:ses.obj,tip:ses.tip,enc:ses.enc,items:it};
   });
 }
@@ -1251,6 +1206,49 @@ function saludoDelDia(vuelve){
   if(D.saludosVistos.indexOf(s.en)<0)D.saludosVistos.push(s.en);
   save(D);
   return s;
+}
+
+
+/* ═══════════ situaciones ═══════════ */
+// Practicar la frase suelta no basta. Aquí la persona la usa donde tocaría usarla.
+// Si el servidor de IA está encendido, la situación se arma con su perfil.
+function situacionesDe(p,n){
+  var t=(p.trabajo_es||'tu trabajo');
+  var base=[
+    [ // sesión 1
+      {ctx:'Llega alguien nuevo a tu área y te saluda.',dice:'Hi! I am Sarah. What is your name?',
+       pista:'My name is '+p.nombre+'.'},
+      {ctx:'Te pregunta a qué te dedicas.',dice:'Nice to meet you. What do you do?',
+       pista:(p.trabajo_en||'I have a job.')}
+    ],
+    [ // sesión 2
+      {ctx:'Un compañero quiere saber tu horario.',dice:'What time do you start?',
+       pista:(p.hora_en?'I start '+p.hora_en.replace(/^I start /,'')+'.':'I start at seven.')},
+      {ctx:'Te pregunta qué haces en el día.',dice:'And what do you do every day?',
+       pista:(p.accion_en||'I work every day.')}
+    ],
+    [ // sesión 3
+      {ctx:'Un cliente extranjero visita la planta y te saluda.',dice:'Good morning. How are you?',
+       pista:'I am fine, thank you. And you?'},
+      {ctx:'Quiere saber dónde trabajas exactamente.',dice:'Where do you work?',
+       pista:(p.lugar_en||'I work here.')},
+      {ctx:'Te pregunta si trabajas todos los días.',dice:'Do you work every day?',
+       pista:'Yes, I do.'}
+    ],
+    [ // sesión 4
+      {ctx:'En el descanso, alguien te pregunta qué te gusta.',dice:'What do you like?',
+       pista:(p.gusto_en||'I like my family.')},
+      {ctx:'Te pregunta por qué estudias inglés.',dice:'Why are you learning English?',
+       pista:(p.meta_en||'I study English for my job.')}
+    ],
+    [ // sesión 5
+      {ctx:'Te presentan con el gerente de un cliente.',dice:'Hello. Tell me about yourself.',
+       pista:'My name is '+p.nombre+'. '+(p.trabajo_en||'')},
+      {ctx:'Quiere saber de tu día de ayer.',dice:'What did you do yesterday?',
+       pista:'Yesterday I worked.'}
+    ]
+  ];
+  return base[n]||base[0];
 }
 
 /* ═══════════ interpretar lo que escribieron ═══════════ */
@@ -2252,7 +2250,8 @@ function paso(){
   var ayudas={
     model:'Toca el botón verde y repite la frase en voz alta. Si no te sale, tócalo otra vez las veces que quieras.',
     ask:'Te hago una pregunta en inglés. Toca el botón verde y contéstame hablando. Si no sabes, toca el botón de la pista.',
-    free:'Ahora di lo que puedas, con tus palabras. Cuando ya no tengas más que decir, toca "Ya dije todo lo que puedo".'
+    free:'Ahora di lo que puedas, con tus palabras. Cuando ya no tengas más que decir, toca "Ya dije todo lo que puedo".',
+    sit:'Imagina que estás en esa situación. Alguien te habla en inglés y tú le contestas. Usa lo que acabas de practicar.'
   };
   var quedan=S.items.length-it-1;
   var h=atras()+ayuda(ayudas[x.k],(quedan>0?'quedan '+quedan+' ejercicios':'el cierre de la sesión'))+'<div class="prog">'+S.items.map(function(_,i){return '<i class="'+(i<=it?'on':'')+'"></i>';}).join('')+'</div><div class="qcard">';
@@ -2266,6 +2265,16 @@ function paso(){
        '<button class="mic-big" id="mic"><span class="ring2"></span> Tocar y repetir</button>'+
        '<p class="tiny">Habla claro y sin prisa. Si el micrófono falla, hay un botón para seguir.</p>'+
        '<button class="btn ghost" id="skip" style="margin-top:10px">Ya la dije · siguiente</button>';
+  }else if(x.k==='sit'){
+    h+='<div class="qlbl">Situación · contesta hablando</div>'+
+       '<div class="ctxbox">'+esc(x.ctx)+'</div>'+
+       visual(x.q,'vis-model')+
+       '<div class="qtxt">'+esc(x.q)+'</div><div class="qsub">'+esc(x.es)+'</div>'+
+       '<button class="btn ghost" id="oir" style="margin-bottom:10px">▶ Oír lo que te dicen</button>'+
+       '<div id="res"></div>'+
+       '<button class="mic-big" id="mic"><span class="ring2"></span> Tocar y contestar</button>'+
+       '<button class="btn ghost" id="pista" style="margin-top:10px">No sé · dame la pista</button>'+
+       '<button class="btn ghost" id="skip" style="margin-top:8px">Saltar esta</button>';
   }else if(x.k==='ask'){
     h+='<div class="qlbl">Te pregunto · contesta hablando</div>'+
        '<div class="qtxt">'+esc(x.q)+'</div><div class="qsub">'+esc(x.es)+'</div>'+
@@ -2285,6 +2294,7 @@ function paso(){
   APP.innerHTML=h+'</div>';
 
   if(x.k==='model')buscarVisualCompleto(x.en,'vis-model');
+  if(x.k==='sit')buscarVisualCompleto(x.ctx,'vis-model');
   var oir=document.getElementById('oir');
   if(oir)oir.onclick=function(){say(x.k==='model'?x.en:x.q,'en-US');};
 
@@ -2410,7 +2420,7 @@ function registrar(x,t){
 function cierre(){
   var S=MAT[sIdx];
   var dichas=attempts.filter(function(a){return a.oido&&a.tipo!=='pista';});
-  var libres=attempts.filter(function(a){return a.tipo==='free'&&a.oido;});
+  var libres=attempts.filter(function(a){return (a.tipo==='free'||a.tipo==='sit')&&a.oido;});
   var conPct=attempts.filter(function(a){return a.pct!==null&&a.pct!==undefined;});
   var prom=conPct.length?Math.round(conPct.reduce(function(s,a){return s+a.pct;},0)/conPct.length):null;
   var pistas=attempts.filter(function(a){return a.tipo==='pista';}).length;

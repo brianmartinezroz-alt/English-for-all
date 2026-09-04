@@ -387,7 +387,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v42 · 2 sep";
+var VERSION="v43 · 4 sep";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -956,7 +956,7 @@ function materialDe(p){
      enc:'Hoy vas a decir quién eres, en qué trabajas y dónde. Son tus frases, hechas con lo que tú me contaste. Primero las oyes, luego las repites.',
      items:[
        {k:'model',en:yo,es:'Me llamo '+p.nombre+'.'},
-       {k:'model',en:trab,es:'Soy '+p.trabajo_es+'.'},
+       {k:'model',en:trab,es:'Soy '+limpiarOficio(p.trabajo_es)+'.'},
        {k:'model',en:lug,es:'Trabajo en '+p.lugar_es+'.'},
        {k:'ask',q:'What is your name?',es:'¿Cómo te llamas? Contesta con la primera frase.',pista:yo},
        {k:'ask',q:'What do you do?',es:'¿A qué te dedicas?',pista:trab},
@@ -1004,7 +1004,7 @@ function materialDe(p){
      tip:'No repases antes. La gracia es ver qué te sale solo.',
      enc:'Hoy no hay nada nuevo. Te voy a hacer la misma pregunta de la primera sesión. Así los dos vemos cuánto cambió.',
      items:[
-       {k:'model',en:yo+' '+trab,es:'Me llamo '+p.nombre+'. Soy '+p.trabajo_es+'.'},
+       {k:'model',en:yo+' '+trab,es:'Me llamo '+p.nombre+'. Soy '+limpiarOficio(p.trabajo_es)+'.'},
        {k:'model',en:lug+' '+acc,es:'Trabajo en '+p.lugar_es+'. '+p.accion_es+'.'},
        {k:'ask',q:'Who are you and what do you do?',es:'¿Quién eres y a qué te dedicas?',pista:yo+' '+trab},
        {k:'free',q:'Tell me about you.',es:'La misma de la sesión 1. Todo lo que puedas ahora.'}
@@ -1239,6 +1239,36 @@ function situacionesDe(p,n){
     ]
   ];
   return base[n]||base[0];
+}
+
+
+// La gente no contesta con el dato pelón: dice "me llamo Brian" o "soy chef".
+// Aquí se quitan esos arranques para quedarnos con lo que importa.
+function limpiarNombre(v){
+  var t=String(v||'').replace(/[.,;:!¡?¿]/g,' ').trim();
+  // se van los arranques y las muletillas, estén donde estén
+  var basura=/^(hola|buenos|buenas|d[ií]as|tardes|noches|me|mi|yo|nombre|es|llamo|soy|este|pues|bueno|eh|mmm|ah|my|name|is|i|am|im|a|el|la|se[ñn]or|se[ñn]ora)$/i;
+  var p=t.split(/\s+/).filter(Boolean).filter(function(w){
+    return !basura.test(w.replace(/[^A-Za-zÁÉÍÓÚÑÜáéíóúñü]/g,''));
+  })[0]||'';
+  p=p.replace(/[^A-Za-zÁÉÍÓÚÑÜáéíóúñü]/g,'');
+  if(!p)return '';
+  return p.charAt(0).toUpperCase()+p.slice(1).toLowerCase();
+}
+function limpiarOficio(v){
+  return String(v||'').trim()
+    .replace(/^(pues[,\s]*|este[,\s]*|bueno[,\s]*)/i,'')
+    .replace(/^(yo\s+)?(soy|trabajo\s+de|trabajo\s+como|me\s+dedico\s+a|mi\s+trabajo\s+es)\s+/i,'')
+    .replace(/^(un|una|el|la)\s+/i,'')
+    .replace(/[.;]+$/,'')
+    .trim();
+}
+function limpiarAccion(v){
+  return String(v||'').trim()
+    .replace(/^(pues[,\s]*|este[,\s]*|bueno[,\s]*)/i,'')
+    .replace(/^(yo\s+)?(hago|me\s+dedico\s+a)\s+/i,'')
+    .replace(/[.;]+$/,'')
+    .trim();
 }
 
 /* ═══════════ interpretar lo que escribieron ═══════════ */
@@ -2034,9 +2064,20 @@ function entrevista(){
         return;
       }
       if(s.id==='nombre'){
-        edatos.nombre=v.split(/\s+/)[0].replace(/[^\wÁÉÍÓÚÑáéíóúñ]/g,'');
+        var n=limpiarNombre(v);
+        if(!n){
+          var av2=document.getElementById('avisovacio');
+          if(!av2){
+            av2=document.createElement('div');
+            av2.id='avisovacio';av2.className='tst-r';
+            av2.innerHTML='<span class="no2">No entendí tu nombre. Escríbelo solo, sin nada más.</span>';
+            document.getElementById('tx').parentNode.insertBefore(av2,document.getElementById('tx').nextSibling);
+          }
+          return;
+        }
+        edatos.nombre=n;
       }else{
-        edatos[s.id+'_es']=v;
+        edatos[s.id+'_es']=(s.id==='trabajo')?limpiarOficio(v):(s.id==='accion'?limpiarAccion(v):v);
         edatos[s.id+'_en']=null;   // lo traduce el analizador
       }
       avanzar();

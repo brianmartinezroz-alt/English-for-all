@@ -387,7 +387,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v43 · 4 sep";
+var VERSION="v44 · 4 sep";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -530,7 +530,10 @@ function clave(t){
   return String(t).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 }
 var AUDIO_ACTUAL=null;
+var TURNO=0;   // cada vez que se calla todo, cambia el turno.
+               // Lo que venga del servidor con un turno viejo se descarta.
 function callarTodo(){
+  TURNO++;
   try{speechSynthesis.cancel();}catch(e){}
   if(AUDIO_ACTUAL){
     try{
@@ -545,6 +548,7 @@ function callarTodo(){
 // para el resto de la sesión.
 function reproducir(url,onOk,onNoExiste,onBloqueado){
   callarTodo();
+  var miTurno=TURNO;
   var a=new Audio();
   a.preload='auto';
   // la velocidad se ajusta aquí: un solo archivo sirve para todas.
@@ -558,6 +562,7 @@ function reproducir(url,onOk,onNoExiste,onBloqueado){
   var resuelto=false;
   a.oncanplaythrough=function(){
     if(resuelto)return;resuelto=true;
+    if(miTurno!==TURNO)return;   // llegó tarde
     AUDIO_ACTUAL=a;
     a.onended=function(){onOk&&onOk();};
     var p=a.play();
@@ -587,9 +592,11 @@ function nombresPosibles(texto,archivo){
 var VOZ_CACHE={};
 function vozDelServidor(texto,lang,cb,onFalla){
   if(!VOZ_ENDPOINT){onFalla&&onFalla();return;}
+  var miTurno=TURNO;
   var k=clave(texto)+'|'+(PAQUETE_ACTIVO||'audio');
   if(VOZ_CACHE[k]==='no'){onFalla&&onFalla();return;}
   if(VOZ_CACHE[k]){
+    if(miTurno!==TURNO)return;
     reproducir(VOZ_CACHE[k],function(){cb&&cb();},function(){onFalla&&onFalla();},function(){cb&&cb();});
     return;
   }
@@ -600,6 +607,7 @@ function vozDelServidor(texto,lang,cb,onFalla){
       if(!d||!d.ok||!d.audio){VOZ_CACHE[k]='no';onFalla&&onFalla();return;}
       var url='data:audio/mpeg;base64,'+d.audio;
       VOZ_CACHE[k]=url;
+      if(miTurno!==TURNO)return;   // ya cambió de pantalla: no suena
       reproducir(url,function(){cb&&cb();},function(){onFalla&&onFalla();},function(){cb&&cb();});
     })
     .catch(function(){VOZ_CACHE[k]='no';onFalla&&onFalla();});
@@ -2300,7 +2308,8 @@ function portadaSesion(){
 
   APP.innerHTML=h;
   ligarAyuda('Aquí te digo qué vamos a hacer hoy y qué frases vas a oír. Cuando estés listo, toca Empezar.');
-  say(S.enc,'es-MX');
+  // el encuadre se dice, no solo se lee
+  setTimeout(function(){say(S.enc,'es-MX');},250);
   APP.querySelectorAll('.spk').forEach(function(b){
     b.onclick=function(){say(modelos[+b.dataset.i].en,'en-US');};
   });

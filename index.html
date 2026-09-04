@@ -344,6 +344,29 @@
     text-transform:uppercase;letter-spacing:.1em;cursor:pointer;padding:0 2px}
   .mini-x:hover{text-decoration:underline}
 </style>
+<style>
+  .oirfila{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+  .oirb{flex:1;min-width:130px;background:var(--verde-suave);border:1px solid var(--verde);
+    color:var(--verde-hondo);border-radius:24px;padding:13px 14px;font-family:var(--body);
+    font-size:14px;font-weight:600;cursor:pointer}
+  .oirb:hover{background:var(--verde);color:#fff}
+  .oirb.alt{background:var(--papel);border-color:var(--linea);color:var(--tinta-2)}
+  .oirb.alt:hover{background:var(--crema-2);color:var(--tinta);border-color:var(--tinta-2)}
+  .guiado .oirb{font-size:16px;padding:16px}
+  .varbox{background:var(--crema);border:1px dashed var(--linea);border-radius:12px;padding:13px 15px;margin-bottom:12px}
+  .varbox span{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--tenue);margin-bottom:9px}
+  .varb{display:block;width:100%;text-align:left;background:var(--papel);border:1px solid var(--linea);
+    border-radius:10px;padding:11px 13px;margin-bottom:6px;font-family:var(--display);font-size:16px;
+    color:var(--tinta);cursor:pointer}
+  .varb:hover{border-color:var(--verde);background:var(--verde-suave)}
+  .varb i{font-style:normal;float:right;color:var(--verde-hondo)}
+</style>
+<style>
+  .hoy{display:inline-block;background:var(--verde);color:#fff;border-radius:20px;padding:6px 14px;
+    font-size:13.5px;font-weight:600;margin-bottom:12px}
+  .guiado .hoy{font-size:15px;padding:8px 16px}
+</style>
 
 
 </head>
@@ -364,7 +387,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v40 · 2 sep";
+var VERSION="v42 · 2 sep";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -560,6 +583,28 @@ function nombresPosibles(texto,archivo){
   if(n.indexOf(k)<0)n.push(k);
   return n;
 }
+// pide el audio al servidor y lo reproduce; se guarda para no volver a pedirlo
+var VOZ_CACHE={};
+function vozDelServidor(texto,lang,cb,onFalla){
+  if(!VOZ_ENDPOINT){onFalla&&onFalla();return;}
+  var k=clave(texto)+'|'+(PAQUETE_ACTIVO||'audio');
+  if(VOZ_CACHE[k]==='no'){onFalla&&onFalla();return;}
+  if(VOZ_CACHE[k]){
+    reproducir(VOZ_CACHE[k],function(){cb&&cb();},function(){onFalla&&onFalla();},function(){cb&&cb();});
+    return;
+  }
+  fetch(VOZ_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({texto:texto,idioma:(lang==='es-MX'?'es':'en'),paquete:PAQUETE_ACTIVO||'audio'})})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(d){
+      if(!d||!d.ok||!d.audio){VOZ_CACHE[k]='no';onFalla&&onFalla();return;}
+      var url='data:audio/mpeg;base64,'+d.audio;
+      VOZ_CACHE[k]=url;
+      reproducir(url,function(){cb&&cb();},function(){onFalla&&onFalla();},function(){cb&&cb();});
+    })
+    .catch(function(){VOZ_CACHE[k]='no';onFalla&&onFalla();});
+}
+
 function decirConTuVoz(texto,lang,cb,archivo){
   var nombres=nombresPosibles(texto,archivo);
   if(nombres.every(function(k){return AUDIO_FALLA[k];})){say2(texto,lang,cb);return;}
@@ -573,7 +618,8 @@ function decirConTuVoz(texto,lang,cb,archivo){
   (function intenta(){
     if(n>=combos.length){
       nombres.forEach(function(k){AUDIO_FALLA[k]=1;});
-      say2(texto,lang,cb);return;
+      vozDelServidor(texto,lang,cb,function(){say2(texto,lang,cb);});
+      return;
     }
     var c=combos[n++];
     reproducir(c.url,
@@ -618,7 +664,11 @@ function soloTuVoz(texto,cb,archivo){
   });
   var n=0;
   (function intenta(){
-    if(n>=combos.length){nombres.forEach(function(k){AUDIO_FALLA[k]=1;});cb&&cb(false);return;}
+    if(n>=combos.length){
+      nombres.forEach(function(k){AUDIO_FALLA[k]=1;});
+      vozDelServidor(texto,'en-US',function(){cb&&cb(true);},function(){cb&&cb(false);});
+      return;
+    }
     var c=combos[n++];
     reproducir(c.url,
       function(){AUDIO_RUTA=c.r;cb&&cb(true);},
@@ -828,130 +878,12 @@ function buscarVisual_(texto,id){
 }
 
 // primero busca en tu carpeta img/; si no hay nada, va a internet
+// solo tus archivos en img/. Nada de buscadores: daban imágenes que no correspondían.
 function buscarVisualCompleto(texto,id){
-  var k=clave(texto);
-  var c=cacheImg();
-  if(c[k]&&c[k]!=='no'){poner_(id,c[k]);return;}
-  var yaHubo=false;
-  var original=document.getElementById(id);
   buscarVisual(texto,id);
-  setTimeout(function(){
-    var caja=document.getElementById(id);
-    if(caja&&caja.classList.contains('con-medio'))return;
-    buscarEnLinea(texto,id);
-  },900);
 }
 
 
-
-/* ═══════════ imágenes desde internet ═══════════ */
-// Openverse: buscador de imágenes de licencia libre, sin llave y filtrando
-// por uso comercial. Se guarda la elegida para no volver a buscarla.
-var IMG_CACHE_KEY='efa_img_v1';
-function cacheImg(){try{return JSON.parse(localStorage.getItem(IMG_CACHE_KEY)||'{}');}catch(e){return {};}}
-function guardarImg(k,u){try{var c=cacheImg();c[k]=u;localStorage.setItem(IMG_CACHE_KEY,JSON.stringify(c));}catch(e){}}
-
-// término de búsqueda limpio: buscar la frase entera da resultados malos
-var TERMINOS=[
-  [/^hello|^hi\b|^hey|nice to meet you|good to see you|welcome/i,'two people greeting smiling office'],
-  [/good morning/i,'morning sunrise city'],
-  [/good afternoon/i,'afternoon workplace'],
-  [/good evening/i,'evening city lights'],
-  [/how are you|how is it going|how have you been/i,'two coworkers talking friendly'],
-  [/dentist/i,'dentist working patient'],[/nurse/i,'nurse hospital'],[/doctor/i,'doctor clinic'],
-  [/teacher|teach/i,'teacher classroom students'],[/student|study/i,'student studying notebook'],
-  [/machine operator|operate machines/i,'factory machine operator'],
-  [/factory|plant/i,'factory assembly line workers'],[/quality|check things/i,'quality control inspector factory'],
-  [/maintenance/i,'maintenance technician tools'],[/warehouse|forklift/i,'warehouse forklift boxes'],
-  [/welder/i,'welder welding sparks'],[/mechanic|fix things/i,'mechanic repairing car'],
-  [/construction|helper/i,'construction worker site'],[/plumber/i,'plumber pipes'],
-  [/electrician/i,'electrician wiring'],[/painter/i,'house painter wall'],
-  [/farmer|land/i,'farmer field crops'],[/rancher/i,'cattle ranch'],[/fisherman/i,'fisherman boat'],
-  [/driver|drive/i,'truck driver cabin highway'],[/delivery/i,'delivery courier package'],
-  [/waiter|restaurant/i,'waiter restaurant'],[/cook|kitchen/i,'cook kitchen'],
-  [/baker/i,'baker bread'],[/barista|coffee/i,'barista coffee shop'],
-  [/cashier|store|sales|sell/i,'cashier store counter'],[/hairstylist|salon/i,'hairdresser salon'],
-  [/security|guard/i,'security guard'],[/police/i,'police officer'],[/cleaner|clean\b/i,'cleaning worker'],
-  [/nanny|children/i,'child care'],[/office|assistant|administrative/i,'administrative office worker desk'],
-  [/human resources/i,'office meeting people'],[/logistics|purchasing/i,'logistics warehouse trucks'],
-  [/manager|supervisor/i,'supervisor factory clipboard'],[/lawyer/i,'lawyer office documents'],
-  [/engineer/i,'engineer blueprints'],[/accountant|reports/i,'accountant calculator documents'],
-  [/it\b|program/i,'programmer computer'],[/designer|design/i,'graphic designer desk'],
-  [/call center|customer service|emails|messages/i,'call center headset'],
-  [/photographer/i,'photographer camera'],[/musician|music/i,'musician playing'],
-  [/fitness|gym/i,'gym training'],[/homemaker|home/i,'home kitchen family'],
-  [/every day/i,'wall calendar days'],[/yesterday/i,'vintage clock time passing'],
-  [/i start at|what time|seven|eight|nine|ten/i,'alarm clock bedside morning'],
-  [/family/i,'mexican family together home'],[/football/i,'soccer ball field'],[/cooking/i,'cooking food'],
-  [/traveling|travel/i,'travel airport'],[/reading/i,'reading book'],
-
-  [/help people/i,'worker helping customer'],[/make products/i,'products manufacturing'],
-  [/move materials/i,'moving boxes warehouse'],[/meetings/i,'team meeting office table'],
-  [/organize things/i,'organizing shelves'],[/measure|adjust/i,'measuring tools']
-];
-// Si no hay término curado, se arma uno con la propia frase: se le quita el
-// "I am a" o el "I work at" y se le agrega contexto para que la búsqueda
-// devuelva una foto de esa cosa y no de cualquier cosa.
-function terminoDerivado(t){
-  var x=String(t).replace(/[.?!]/g,'').trim();
-  var m;
-  if((m=x.match(/^I am (?:a|an)\s+(.+)$/i)))            return m[1]+' at work';
-  if((m=x.match(/^I am\s+(.+)$/i)))                      return m[1]+' person';
-  if((m=x.match(/^I work (?:at|in|on|from)\s+(?:a|an|the)?\s*(.+)$/i))) return m[1]+' workplace';
-  if((m=x.match(/^I work\s+(.+)$/i)))                    return m[1]+' work';
-  if((m=x.match(/^I like\s+(.+)$/i)))                    return m[1];
-  if((m=x.match(/^I study English\s+(.+)$/i)))           return 'learning english class';
-  if((m=x.match(/^I start\s+(.+)$/i)))                   return 'morning clock start work';
-  if((m=x.match(/^My name is\s+/i)))                     return 'two people talking introduction';
-  if((m=x.match(/^I\s+(.+)$/i)))                         return m[1]+' at work';
-  if(/\?$/.test(String(t)))                              return 'two people having a conversation';
-  return x;
-}
-function terminoDe(t){
-  for(var i=0;i<TERMINOS.length;i++){if(TERMINOS[i][0].test(t))return TERMINOS[i][1];}
-  return terminoDerivado(t);
-}
-
-function buscarEnLinea(texto,id){
-  var k=clave(texto);
-  var c=cacheImg();
-  if(c[k]==='no'){return;}
-  if(c[k]){poner_(id,c[k]);return;}
-  var q=encodeURIComponent(terminoDe(texto));
-  var url='https://api.openverse.org/v1/images/?q='+q+
-          '&license_type=commercial&page_size=3&mature=false&format=json';
-  fetch(url,{headers:{'Accept':'application/json'}})
-    .then(function(r){return r.ok?r.json():null;})
-    .then(function(d){
-      var res=(d&&d.results)||[];
-      var u=null;
-      for(var i=0;i<res.length&&!u;i++){
-        u=res[i].thumbnail||res[i].url||null;
-      }
-      if(!u){guardarImg(k,'no');return;}
-      var im=new Image();
-      im.onload=function(){guardarImg(k,u);poner_(id,u);};
-      im.onerror=function(){guardarImg(k,'no');};
-      im.src=u;
-    })
-    .catch(function(){});
-}
-function poner_(id,u){
-  var caja=document.getElementById(id);
-  if(!caja)return;
-  caja.classList.add('con-medio');
-  caja.innerHTML='<img src="'+u+'" alt="">'+
-    '<button class="vis-x" title="Esta imagen no queda">✕</button>';
-  var b=caja.querySelector('.vis-x');
-  if(b)b.onclick=function(e){
-    e.stopPropagation();
-    // se descarta y se vuelve al símbolo; así una imagen mala no se queda pegada
-    var k=caja.getAttribute('data-frase');
-    if(k){var c=cacheImg();delete c[k];try{localStorage.setItem(IMG_CACHE_KEY,JSON.stringify(c));}catch(x){}}
-    caja.classList.remove('con-medio');
-    caja.innerHTML='<span class="vis-sim">'+(caja.getAttribute('data-sim')||'💭')+'</span>';
-  };
-}
 
 /* ═══════════ comparar lo dicho con la meta ═══════════ */
 function norm(s){return String(s).toLowerCase().replace(/[.,!?¿¡;:"']/g,'').replace(/\s+/g,' ').trim();}
@@ -1018,7 +950,7 @@ function materialDe(p){
   var met=frase(p.meta_en&&p.meta_en.replace(/^I study English /,''),'I study English')||'I study English for my job.';
 
   var base=[
-    {t:'Tú, en tres frases',
+    {t:'Tú, en tres frases', hoy:'aprendemos a presentarnos',
      obj:'Decir tu nombre, tu trabajo y dónde trabajas, sin leer.',
      tip:'Busca un lugar sin ruido. Si tienes audífonos con micrófono, mejor.',
      enc:'Hoy vas a decir quién eres, en qué trabajas y dónde. Son tus frases, hechas con lo que tú me contaste. Primero las oyes, luego las repites.',
@@ -1030,7 +962,7 @@ function materialDe(p){
        {k:'ask',q:'What do you do?',es:'¿A qué te dedicas?',pista:trab},
        {k:'free',q:'Tell me about you.',es:'Dime quién eres. Todo lo que puedas.'}
      ]},
-    {t:'Lo que haces todos los días',
+    {t:'Lo que haces todos los días', hoy:'aprendemos a contar tu rutina',
      obj:'Contar qué haces y a qué hora empiezas, contestando en voz alta.',
      tip:'Si algo no te sale a la primera, dilo otra vez. Nadie te está calificando el intento.',
      enc:'Ahora tu rutina. Vamos a usar lo de ayer y le sumamos lo que haces y a qué hora.',
@@ -1042,7 +974,7 @@ function materialDe(p){
        {k:'ask',q:'What time do you start?',es:'¿A qué hora empiezas?',pista:hor},
        {k:'free',q:'Tell me about your day.',es:'Cuéntame tu día.'}
      ]},
-    {t:'Conversación: que te pregunten',
+    {t:'Conversación: que te pregunten', hoy:'practicamos contestar preguntas',
      obj:'Contestar cinco preguntas sin ver el texto, y hacer una pregunta tú.',
      tip:'Esta es la más parecida a una conversación real. Va a costar más, y eso está bien.',
      enc:'Hoy es puro contestar. Yo pregunto, tú respondes en voz alta. Si no sale, pides la pista y ya.',
@@ -1055,7 +987,7 @@ function materialDe(p){
        {k:'ask',q:'Do you work every day?',es:'Contesta: Yes, I do. / No, I do not.',pista:'Yes, I do.'},
        {k:'free',q:'Now ask me a question.',es:'Ahora pregúntame tú algo a mí. Lo que sea.'}
      ]},
-    {t:'Lo que te gusta',
+    {t:'Lo que te gusta', hoy:'aprendemos a dar tu opinión',
      obj:'Decir qué te gusta y para qué quieres el inglés, con tus palabras.',
      tip:'Aquí no hay respuesta correcta. Lo que digas es tuyo.',
      enc:'Hoy opiniones. Es donde deja de sonar a repetir frases y empieza a sonar a tú.',
@@ -1067,7 +999,7 @@ function materialDe(p){
        {k:'ask',q:'Why do you study English?',es:'¿Para qué estudias inglés?',pista:met},
        {k:'free',q:'Tell me what you like and why.',es:'Dime qué te gusta y por qué.'}
      ]},
-    {t:'Repaso · la misma pregunta del día uno',
+    {t:'Repaso · la misma pregunta del día uno', hoy:'repasamos todo lo que ya sabes',
      obj:'Contestar la misma pregunta de la sesión 1 — y notar la diferencia.',
      tip:'No repases antes. La gracia es ver qué te sale solo.',
      enc:'Hoy no hay nada nuevo. Te voy a hacer la misma pregunta de la primera sesión. Así los dos vemos cuánto cambió.',
@@ -1098,8 +1030,9 @@ function materialDe(p){
     });
     var libres=it.filter(function(x){return x.k==='free';});
     var resto2=it.filter(function(x){return x.k!=='free';});
-    it=resto2.concat(sits).concat(libres);
-    return {t:ses.t,obj:ses.obj,tip:ses.tip,enc:ses.enc,items:it};
+    // primero lo que falló ayer, luego lo nuevo
+    it=repasoDeErrores().concat(resto2).concat(sits).concat(libres);
+    return {t:ses.t,hoy:ses.hoy,obj:ses.obj,tip:ses.tip,enc:ses.enc,items:it};
   });
 }
 
@@ -1247,6 +1180,23 @@ function variantesDe(en,p){
     v=['I work every day.','I work from Monday to Friday.'];
   }
   return v.filter(function(x,i,a){return a.indexOf(x)===i;});
+}
+
+// Lo que salió mal la vez pasada se vuelve a practicar al día siguiente.
+function repasoDeErrores(){
+  var d=load();
+  if(!d.sesiones||!d.sesiones.length)return [];
+  var ult=d.sesiones[d.sesiones.length-1];
+  var flojas=(ult.intentos||[]).filter(function(a){
+    return a.tipo==='model'&&a.pct!==null&&a.pct!==undefined&&a.pct<80&&a.meta;
+  });
+  var vistos={},out=[];
+  flojas.forEach(function(a){
+    if(vistos[a.meta])return;
+    vistos[a.meta]=1;
+    out.push({k:'model',en:a.meta,es:'Esta te costó la vez pasada. Vamos otra vez.',repaso:true});
+  });
+  return out.slice(0,3);
 }
 
 /* ═══════════ situaciones ═══════════ */
@@ -1617,6 +1567,9 @@ function pruebaNivel(){
 // y aquí solo va la dirección de ese servidor. Si está vacía, la app funciona
 // igual que antes, sin IA.
 var IA_ENDPOINT='';
+// Si pones aquí la dirección del servidor de voz, la app pide el audio al vuelo
+// y ya no hace falta subir un solo archivo. El servidor lo genera y lo guarda.
+var VOZ_ENDPOINT='';
 
 function hayIA(){return !!IA_ENDPOINT;}
 function pedirIA(accion,datos,ok,falla){
@@ -2197,7 +2150,8 @@ function menu(){
     }).join('')+
     '<button class="btn ghost" id="cambiarvoz" style="margin-top:6px">Cambiar la voz</button>'+
     '<button class="btn ghost" id="corregirdatos" style="margin-top:6px">Corregir mi nombre o mi trabajo</button>'+
-    '<button class="btn ghost" id="corregir" style="margin-top:6px">Corregir mi nombre o mis datos</button>'+
+    '<button class="btn ghost" id="solonombre" style="margin-top:6px">Cambiar solo mi nombre</button>'+
+    '<button class="btn ghost" id="corregir" style="margin-top:6px">Corregir todos mis datos</button>'+
     '<button class="btn ghost" id="probarson" style="margin-top:6px">Probar sonido y micrófono</button>'+
     '<button class="btn ghost" id="modoguia" style="margin-top:6px">'+(guiado()?'Quitar las explicaciones':'Mostrar más explicaciones')+'</button></div>';
   APP.querySelectorAll('button[data-i]').forEach(function(b){
@@ -2206,6 +2160,22 @@ function menu(){
   ligarAyuda('Toca la sesión con la que quieras seguir. Las verdes son las que te faltan.');
   var cv=document.getElementById('cambiarvoz');
   if(cv)cv.onclick=function(){D.paquete=undefined;save(D);vozPicker();};
+  document.getElementById('solonombre').onclick=function(){
+    APP.innerHTML=atras()+'<div class="qcard"><div class="qlbl">Solo el nombre</div>'+
+      '<div class="qtxt">¿Cómo te llamas?</div>'+
+      '<div class="qsub">Lo demás se queda igual.</div>'+
+      '<textarea class="typebox" id="tx">'+esc(P.nombre||'')+'</textarea>'+
+      '<button class="btn" id="okn">Guardar</button></div>';
+    ligarAtras(function(){menu();});
+    document.getElementById('okn').onclick=function(){
+      var v=document.getElementById('tx').value.trim();
+      if(!v)return;
+      P.nombre=v.split(/\s+/)[0];
+      D.perfil=P;save(D);
+      MAT=materialDe(P);
+      menu();
+    };
+  };
   document.getElementById('corregir').onclick=function(){
     // se conservan las sesiones ya hechas; solo se rehacen las respuestas
     epaso=0;
@@ -2247,9 +2217,11 @@ function portadaSesion(){
   var preg=S.items.filter(function(x){return x.k==='ask';}).length;
   var libres=S.items.filter(function(x){return x.k==='free';}).length;
   var u=ultimoDato();
+  var rep=repasoDeErrores();
 
   var h='<div class="qcard">'+
     '<div class="qlbl">Sesión '+(sIdx+1)+' de '+MAT.length+'</div>'+
+    '<div class="hoy">Hoy '+esc(S.hoy||('practicamos '+S.t.toLowerCase()))+'</div>'+
     '<div class="qtxt" style="font-size:26px">Sesión '+(sIdx+1)+' · '+esc(S.t)+'</div>'+
     '<div class="qsub">Hola '+esc(P.nombre)+'. '+esc(S.enc)+'</div>'+
 
@@ -2257,6 +2229,10 @@ function portadaSesion(){
 
     '';
 
+  if(rep.length){
+    h+='<div class="prev"><span>Empezamos repasando</span>'+rep.length+
+       ' frase'+(rep.length>1?'s':'')+' que te costó la vez pasada. Se practica primero y luego seguimos.</div>';
+  }
   if(u){
     var t={
       repetir:'La vez pasada <em>'+esc(u.meta||'')+'</em> te salió al '+u.pct+'%. Hoy la volvemos a tocar.',
@@ -2316,12 +2292,14 @@ function paso(){
     h+='<div class="qlbl">Escucha y repite en voz alta</div>'+
        visual(x.en,'vis-model')+
        '<div class="qtxt">'+esc(x.en)+'</div><div class="qsub">'+esc(x.es)+'</div>'+
-       (vars.length>1?'<div class="varbox"><span>También se dice así</span>'+
+       (vars.length>1?'<div class="varbox"><span>Todas estas sirven · tócalas para oírlas y repítelas</span>'+
          vars.filter(function(v){return v!==x.en;}).map(function(v,vi){
            return '<button class="varb" data-v="'+vi+'">'+esc(v)+' <i>▶</i></button>';
          }).join('')+'</div>':'')+
-       '<button class="btn ghost" id="oir" style="margin-bottom:8px">▶ Oírla en inglés</button>'+
-       '<button class="btn ghost" id="oires" style="margin-bottom:10px">▶ Oír qué significa</button>'+
+       '<div class="oirfila">'+
+         '<button class="oirb" id="oir">🔊 Oírla otra vez</button>'+
+         '<button class="oirb alt" id="oires">🇲🇽 Qué significa</button>'+
+       '</div>'+
        '<div id="res"></div>'+
        '<button class="mic-big" id="mic"><span class="ring2"></span> Tocar y repetir</button>'+
        '<p class="tiny">Habla claro y sin prisa. Si el micrófono falla, hay un botón para seguir.</p>'+
@@ -2331,8 +2309,10 @@ function paso(){
        '<div class="ctxbox">'+esc(x.ctx)+'</div>'+
        visual(x.q,'vis-model')+
        '<div class="qtxt">'+esc(x.q)+'</div><div class="qsub">'+esc(x.es)+'</div>'+
-       '<button class="btn ghost" id="oir" style="margin-bottom:8px">▶ Oír lo que te dicen</button>'+
-       '<button class="btn ghost" id="oires" style="margin-bottom:10px">▶ Oír qué significa</button>'+
+       '<div class="oirfila">'+
+         '<button class="oirb" id="oir">🔊 Oír lo que te dicen</button>'+
+         '<button class="oirb alt" id="oires">🇲🇽 Qué significa</button>'+
+       '</div>'+
        '<div id="res"></div>'+
        '<button class="mic-big" id="mic"><span class="ring2"></span> Tocar y contestar</button>'+
        '<button class="btn ghost" id="pista" style="margin-top:10px">No sé · dame la pista</button>'+
@@ -2340,8 +2320,10 @@ function paso(){
   }else if(x.k==='ask'){
     h+='<div class="qlbl">Te pregunto · contesta hablando</div>'+
        '<div class="qtxt">'+esc(x.q)+'</div><div class="qsub">'+esc(x.es)+'</div>'+
-       '<button class="btn ghost" id="oir" style="margin-bottom:8px">▶ Oír la pregunta</button>'+
-       '<button class="btn ghost" id="oires" style="margin-bottom:10px">▶ Oír qué significa</button>'+
+       '<div class="oirfila">'+
+         '<button class="oirb" id="oir">🔊 Oír la pregunta</button>'+
+         '<button class="oirb alt" id="oires">🇲🇽 Qué significa</button>'+
+       '</div>'+
        '<div id="res"></div>'+
        '<button class="mic-big" id="mic"><span class="ring2"></span> Tocar y contestar</button>'+
        '<button class="btn ghost" id="pista" style="margin-top:10px">No sé · dame la pista</button>'+

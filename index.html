@@ -331,6 +331,19 @@
     padding:13px 15px;margin-bottom:14px;font-size:14.5px;line-height:1.5;color:var(--tinta-2)}
   .guiado .ctxbox{font-size:16px}
 </style>
+<style>
+  .varbox{background:var(--crema);border:1px dashed var(--linea);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+  .varbox span{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--tenue);margin-bottom:9px}
+  .varb{display:block;width:100%;text-align:left;background:var(--papel);border:1px solid var(--linea);
+    border-radius:8px;padding:10px 12px;margin-bottom:6px;font-family:var(--display);font-size:15px;
+    color:var(--tinta);cursor:pointer}
+  .varb:hover{border-color:var(--verde);background:var(--verde-suave)}
+  .varb i{font-style:normal;float:right;color:var(--verde-hondo);font-size:12px}
+  .mini-x{background:none;border:0;color:var(--coral);font-family:var(--mono);font-size:9px;
+    text-transform:uppercase;letter-spacing:.1em;cursor:pointer;padding:0 2px}
+  .mini-x:hover{text-decoration:underline}
+</style>
 
 
 </head>
@@ -351,7 +364,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v38 · 2 sep";
+var VERSION="v40 · 2 sep";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -1209,6 +1222,33 @@ function saludoDelDia(vuelve){
 }
 
 
+
+/* ═══════════ variantes ═══════════ */
+// Una idea se dice de varias formas. Aprender solo una deja a la persona
+// atorada cuando le contestan distinto. Cada frase modelo lleva sus variantes.
+function variantesDe(en,p){
+  var v=[];
+  var n=p&&p.nombre?p.nombre:'';
+  if(/^My name is /i.test(en)){
+    v=['I am '+n+'.',"I'm "+n+'.','My name is '+n+'.'];
+  }else if(/^I am (a|an) /i.test(en)){
+    var of=en.replace(/^I am /i,'').replace(/\.$/,'');
+    v=['I am '+of+'.',"I'm "+of+'.','I work as '+of+'.'];
+  }else if(/^I work at |^I work in /i.test(en)){
+    var lu=en.replace(/^I work /i,'').replace(/\.$/,'');
+    v=['I work '+lu+'.','My job is '+lu+'.'];
+  }else if(/^I start /i.test(en)){
+    var ho=en.replace(/^I start /i,'').replace(/\.$/,'');
+    v=['I start '+ho+'.','I begin '+ho+'.','My shift starts '+ho+'.'];
+  }else if(/^I like /i.test(en)){
+    var gu=en.replace(/^I like /i,'').replace(/\.$/,'');
+    v=['I like '+gu+'.','I enjoy '+gu+'.'];
+  }else if(/^I work every day/i.test(en)){
+    v=['I work every day.','I work from Monday to Friday.'];
+  }
+  return v.filter(function(x,i,a){return a.indexOf(x)===i;});
+}
+
 /* ═══════════ situaciones ═══════════ */
 // Practicar la frase suelta no basta. Aquí la persona la usa donde tocaría usarla.
 // Si el servidor de IA está encendido, la situación se arma con su perfil.
@@ -1980,11 +2020,13 @@ function entrevista(){
     '<div class="qtxt">'+s.q+'</div>'+(s.sub?'<div class="qsub">'+s.sub+'</div>':'<div style="height:8px"></div>');
 
   if(s.tipo==='libre'){
-    h+='<textarea class="typebox" id="tx" placeholder="'+s.ph+'" style="min-height:80px"></textarea>'+
+    h+='<textarea class="typebox" id="tx" placeholder="'+s.ph+'" style="min-height:80px">'+
+       esc(edatos[s.id+'_es']||'')+'</textarea>'+
        (HAY_MIC?'<button class="btn ghost" id="dic"><span class="pulse"></span> Decirlo en voz alta</button>':'')+
        '<button class="btn" id="ok" style="margin-top:8px">Continuar</button>';
   }else if(s.tipo==='texto'){
-    h+='<textarea class="typebox" id="tx" placeholder="'+s.ph+'"></textarea>'+
+    h+='<textarea class="typebox" id="tx" placeholder="'+s.ph+'">'+
+       esc(s.id==='nombre'?(edatos.nombre||''):'')+'</textarea>'+
        (HAY_MIC?'<button class="btn ghost" id="dic"><span class="pulse"></span> Decirlo en voz alta</button>':'')+
        '<button class="btn" id="ok" style="margin-top:8px">Continuar</button>';
   }else{
@@ -2154,6 +2196,8 @@ function menu(){
         '<span class="ses-t">'+esc(s.t)+'</span></button>';
     }).join('')+
     '<button class="btn ghost" id="cambiarvoz" style="margin-top:6px">Cambiar la voz</button>'+
+    '<button class="btn ghost" id="corregirdatos" style="margin-top:6px">Corregir mi nombre o mi trabajo</button>'+
+    '<button class="btn ghost" id="corregir" style="margin-top:6px">Corregir mi nombre o mis datos</button>'+
     '<button class="btn ghost" id="probarson" style="margin-top:6px">Probar sonido y micrófono</button>'+
     '<button class="btn ghost" id="modoguia" style="margin-top:6px">'+(guiado()?'Quitar las explicaciones':'Mostrar más explicaciones')+'</button></div>';
   APP.querySelectorAll('button[data-i]').forEach(function(b){
@@ -2162,7 +2206,18 @@ function menu(){
   ligarAyuda('Toca la sesión con la que quieras seguir. Las verdes son las que te faltan.');
   var cv=document.getElementById('cambiarvoz');
   if(cv)cv.onclick=function(){D.paquete=undefined;save(D);vozPicker();};
+  document.getElementById('corregir').onclick=function(){
+    // se conservan las sesiones ya hechas; solo se rehacen las respuestas
+    epaso=0;
+    edatos={nombre:P.nombre,trabajo_es:P.trabajo_es,accion_es:P.accion_es,
+            hora_es:P.hora_es,hora_en:P.hora_en,gusto_es:P.gusto_es,gusto_en:P.gusto_en,
+            meta_es:P.meta_es,meta_en:P.meta_en};
+    entrevista();
+  };
   document.getElementById('probarson').onclick=function(){D.probado=0;save(D);router();};
+  document.getElementById('corregirdatos').onclick=function(){
+    epaso=0;edatos={};D.perfil=null;P=null;save(D);entrevista();
+  };
   document.getElementById('modoguia').onclick=function(){
     D.guiado=!D.guiado;save(D);aplicarModo();menu();
     say(D.guiado?'Listo. Ahora te voy explicando qué hacer en cada pantalla.':'Listo, quité las explicaciones.','es-MX');
@@ -2257,10 +2312,16 @@ function paso(){
   var h=atras()+ayuda(ayudas[x.k],(quedan>0?'quedan '+quedan+' ejercicios':'el cierre de la sesión'))+'<div class="prog">'+S.items.map(function(_,i){return '<i class="'+(i<=it?'on':'')+'"></i>';}).join('')+'</div><div class="qcard">';
 
   if(x.k==='model'){
+    var vars=variantesDe(x.en,P);
     h+='<div class="qlbl">Escucha y repite en voz alta</div>'+
        visual(x.en,'vis-model')+
        '<div class="qtxt">'+esc(x.en)+'</div><div class="qsub">'+esc(x.es)+'</div>'+
-       '<button class="btn ghost" id="oir" style="margin-bottom:10px">▶ Oírla otra vez</button>'+
+       (vars.length>1?'<div class="varbox"><span>También se dice así</span>'+
+         vars.filter(function(v){return v!==x.en;}).map(function(v,vi){
+           return '<button class="varb" data-v="'+vi+'">'+esc(v)+' <i>▶</i></button>';
+         }).join('')+'</div>':'')+
+       '<button class="btn ghost" id="oir" style="margin-bottom:8px">▶ Oírla en inglés</button>'+
+       '<button class="btn ghost" id="oires" style="margin-bottom:10px">▶ Oír qué significa</button>'+
        '<div id="res"></div>'+
        '<button class="mic-big" id="mic"><span class="ring2"></span> Tocar y repetir</button>'+
        '<p class="tiny">Habla claro y sin prisa. Si el micrófono falla, hay un botón para seguir.</p>'+
@@ -2270,7 +2331,8 @@ function paso(){
        '<div class="ctxbox">'+esc(x.ctx)+'</div>'+
        visual(x.q,'vis-model')+
        '<div class="qtxt">'+esc(x.q)+'</div><div class="qsub">'+esc(x.es)+'</div>'+
-       '<button class="btn ghost" id="oir" style="margin-bottom:10px">▶ Oír lo que te dicen</button>'+
+       '<button class="btn ghost" id="oir" style="margin-bottom:8px">▶ Oír lo que te dicen</button>'+
+       '<button class="btn ghost" id="oires" style="margin-bottom:10px">▶ Oír qué significa</button>'+
        '<div id="res"></div>'+
        '<button class="mic-big" id="mic"><span class="ring2"></span> Tocar y contestar</button>'+
        '<button class="btn ghost" id="pista" style="margin-top:10px">No sé · dame la pista</button>'+
@@ -2278,7 +2340,8 @@ function paso(){
   }else if(x.k==='ask'){
     h+='<div class="qlbl">Te pregunto · contesta hablando</div>'+
        '<div class="qtxt">'+esc(x.q)+'</div><div class="qsub">'+esc(x.es)+'</div>'+
-       '<button class="btn ghost" id="oir" style="margin-bottom:10px">▶ Oír la pregunta</button>'+
+       '<button class="btn ghost" id="oir" style="margin-bottom:8px">▶ Oír la pregunta</button>'+
+       '<button class="btn ghost" id="oires" style="margin-bottom:10px">▶ Oír qué significa</button>'+
        '<div id="res"></div>'+
        '<button class="mic-big" id="mic"><span class="ring2"></span> Tocar y contestar</button>'+
        '<button class="btn ghost" id="pista" style="margin-top:10px">No sé · dame la pista</button>'+
@@ -2293,10 +2356,23 @@ function paso(){
   }
   APP.innerHTML=h+'</div>';
 
-  if(x.k==='model')buscarVisualCompleto(x.en,'vis-model');
+  if(x.k==='model'){
+    buscarVisualCompleto(x.en,'vis-model');
+    var otras=variantesDe(x.en,P).filter(function(v){return v!==x.en;});
+    APP.querySelectorAll('.varb').forEach(function(b2){
+      b2.onclick=function(e){e.stopPropagation();say(otras[+b2.dataset.v],'en-US');};
+    });
+  }
   if(x.k==='sit')buscarVisualCompleto(x.ctx,'vis-model');
   var oir=document.getElementById('oir');
   if(oir)oir.onclick=function(){say(x.k==='model'?x.en:x.q,'en-US');};
+  var oires=document.getElementById('oires');
+  // primero el inglés, luego el español: el orden importa para que asocie
+  if(oires)oires.onclick=function(){
+    say(x.k==='model'?x.en:x.q,'en-US',function(){
+      setTimeout(function(){say(x.es||x.ctx||'','es-MX');},350);
+    });
+  };
 
   // el tutor explica en español la primera vez que aparece cada tipo de ejercicio
   var guias={

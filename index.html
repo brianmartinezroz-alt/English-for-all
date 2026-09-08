@@ -379,11 +379,6 @@
   .ygb{width:100%;background:var(--papel);border:1px solid var(--linea);border-radius:22px;padding:12px;
     margin-bottom:12px;font-family:var(--body);font-size:14px;font-weight:600;color:var(--tinta-2);cursor:pointer}
   .ygb:hover{border-color:var(--verde);color:var(--verde-hondo)}
-  .ygmini{flex:0 0 auto;width:44px;background:var(--papel);border:1px solid var(--linea);
-    border-radius:10px;font-size:16px;cursor:pointer;margin-bottom:6px}
-  .ygmini:hover{border-color:var(--verde)}
-  .varfila{display:flex;gap:6px;align-items:stretch}
-  .varfila .varb{flex:1}
   .ygbox{background:var(--crema);border:1px solid var(--linea);border-radius:12px;padding:14px;margin-bottom:14px}
   .ygbox #yg-widget{min-height:220px;border-radius:8px;overflow:hidden}
   .ygnota{font-size:10.5px;color:var(--tenue);margin:10px 0;line-height:1.5}
@@ -488,7 +483,19 @@
   .acb:hover{border-color:var(--verde);color:var(--verde-hondo)}
   .acb.on{background:var(--verde);border-color:var(--verde);color:#fff;font-weight:600}
   .guiado .acb{font-size:15px;padding:14px 10px}
+</style><style>
+  .debrian{background:var(--verde-suave);border:1px solid var(--verde);border-radius:12px;
+    padding:14px 15px;margin-bottom:14px}
+  .debrian span{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--verde-hondo);margin-bottom:8px}
+  .db-msg{font-family:var(--display);font-size:16px;line-height:1.45;color:var(--tinta);margin-bottom:8px}
+  .db-n{font-size:13px;color:var(--tinta-2);line-height:1.5}
+  .db-marca{background:#FFF8E7;border-left:3px solid #C08A22;border-radius:0 8px 8px 0;
+    padding:10px 13px;margin-bottom:12px;font-size:13.5px;color:#8A6210}
+  .guiado .db-msg{font-size:18px}
+  .guiado .db-marca{font-size:15px}
 </style>
+
 
 
 </head>
@@ -509,7 +516,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v62 · 7 sep";
+var VERSION="v65 · 8 sep";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -627,15 +634,12 @@ function decirSeguido(lista){
 // Cada paquete es una carpeta con el catálogo completo generado con otra voz.
 // La app solo ofrece los que de verdad existen en el repositorio.
 var PAQUETES=[
-  {id:'audio',    nombre:'Brian',          nota:'la voz de tu maestro'},
   {id:'audio-us', nombre:'Estados Unidos', nota:'el que más se oye en el trabajo'},
   {id:'audio-uk', nombre:'Inglaterra',     nota:'acento británico'},
-  {id:'audio-ie', nombre:'Irlanda',        nota:'acento irlandés'},
   {id:'audio-au', nombre:'Australia',      nota:'acento australiano'},
-  {id:'audio-in', nombre:'India',          nota:'muy común en el trabajo técnico'},
-  {id:'audio-ca', nombre:'Canadá',         nota:'acento canadiense'}
+  {id:'audio-in', nombre:'India',          nota:'muy común en el trabajo técnico'}
 ];
-var PAQUETE_ACTIVO=null;
+var PAQUETE_ACTIVO='audio-us';   // por defecto, sin pasar por el selector
 var VEL_AUDIO=1;   // 0.7 muy lento · 1 normal · 1.15 rápido
 var RUTAS=['audio/',''];
 function armarRutas(){
@@ -712,10 +716,17 @@ function nombresPosibles(texto,archivo){
 }
 // pide el audio al servidor y lo reproduce; se guarda para no volver a pedirlo
 var VOZ_CACHE={};
+// Hombre o mujer según la frase, siempre igual para la misma frase.
+// Así no suena todo con la misma voz, pero tampoco cambia cada vez.
+function sexoDeLaFrase(t){
+  var n=0,x=String(t);
+  for(var i=0;i<x.length;i++)n+=x.charCodeAt(i);
+  return (n%2===0)?'f':'m';
+}
 function vozDelServidor(texto,lang,cb,onFalla){
   if(!VOZ_ENDPOINT){onFalla&&onFalla();return;}
   var miTurno=TURNO;
-  var k=clave(texto)+'|'+(PAQUETE_ACTIVO||'audio');
+  var k=clave(texto)+'|'+(PAQUETE_ACTIVO||'audio-us')+'|'+sexoDeLaFrase(texto);
   if(VOZ_CACHE[k]==='no'){onFalla&&onFalla();return;}
   if(VOZ_CACHE[k]){
     if(miTurno!==TURNO)return;
@@ -723,7 +734,8 @@ function vozDelServidor(texto,lang,cb,onFalla){
     return;
   }
   fetch(VOZ_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify({texto:texto,idioma:(lang==='es-MX'?'es':'en'),paquete:PAQUETE_ACTIVO||'audio'})})
+    body:JSON.stringify({texto:texto,idioma:(lang==='es-MX'?'es':'en'),
+      paquete:PAQUETE_ACTIVO||'audio-us',sexo:sexoDeLaFrase(texto)})})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){
       if(!d||!d.ok||!d.audio){VOZ_CACHE[k]='no';onFalla&&onFalla();return;}
@@ -1175,7 +1187,7 @@ function materialDe(p){
     // números y horas: donde más se falla en A1
     if(idx===1||idx===2)resto2=resto2.concat([ejercicioNumeros(),ejercicioNumeros()]);
     // primero lo que falló ayer, luego lo nuevo
-    it=tocaHoy(3).concat(resto2).concat(sits).concat(libres);
+    it=frasesDeBrian().concat(tocaHoy(3)).concat(resto2).concat(sits).concat(libres);
     return {t:ses.t,hoy:ses.hoy,obj:ses.obj,tip:ses.tip,enc:ses.enc,items:it};
   });
 }
@@ -1633,16 +1645,14 @@ function serieDe(en,p){
 // Oír la frase en bocas distintas es lo que entrena el oído. En vez de
 // depender de videos ajenos con publicidad, se usan los paquetes de voz
 // que ya tenemos: la misma frase en americano, británico, australiano.
-function acentosDisponibles(){
-  return PAQUETES.filter(function(p){return p.id!=='audio';});
-}
+function acentosDisponibles(){ return PAQUETES; }
 function botonVideo(frase){
   return '<button class="ygb" data-fr="'+esc(frase)+'">🌎 Oírla en otros acentos</button>';
 }
-function abrirVideo(frase){
-  var caja=document.getElementById('res')||document.getElementById('body')||APP;
+function abrirVideo(frase,boton){
   var viejo=document.getElementById('ygbox');
-  if(viejo)viejo.remove();
+  if(viejo){viejo.remove();return;}   // segundo toque: se cierra
+  var caja=(boton&&boton.parentNode)||document.getElementById('res')||APP;
   var lista=acentosDisponibles();
   var d=document.createElement('div');
   d.id='ygbox';d.className='ygbox';
@@ -1656,7 +1666,9 @@ function abrirVideo(frase){
     '</div>'+
     '<button class="compb full" id="actodos" style="margin-top:8px">▶ Oírla en todos, uno tras otro</button>'+
     '<button class="btn ghost" id="ygcerrar" style="margin-top:8px">Cerrar</button>';
-  caja.insertBefore(d,caja.firstChild);
+  // aparece justo debajo del botón que lo abrió
+  if(boton&&boton.nextSibling)caja.insertBefore(d,boton.nextSibling);
+  else caja.appendChild(d);
   document.getElementById('ygcerrar').onclick=function(e){e.stopPropagation();d.remove();};
 
   function conAcento(id,cb){
@@ -1683,13 +1695,13 @@ function abrirVideo(frase){
       btns.forEach(function(x){x.classList.remove('on');});
       if(btns[i])btns[i].classList.add('on');
       var id=lista[i].id;i++;
-      conAcento(id,function(){setTimeout(siguiente,600);});
+      conAcento(id,function(){setTimeout(siguiente,250);});
     })();
   };
 }
 function ligarVideo(){
   APP.querySelectorAll('.ygb').forEach(function(b){
-    b.onclick=function(e){e.stopPropagation();abrirVideo(b.dataset.fr);};
+    b.onclick=function(e){e.stopPropagation();abrirVideo(b.dataset.fr,b);};
   });
 }
 
@@ -1752,6 +1764,38 @@ function ejercicioNumeros(){
   var a=NUMEROS[p[0]],b=NUMEROS[p[1]];
   var bien=Math.random()<0.5?a:b;
   return {k:'num',en:bien.en,es:'¿Cuál oíste?',ops:[a,b],bien:bien};
+}
+
+
+/* ═══════════ lo que Brian corrigió ═══════════ */
+// El bucle: Brian firma en la hoja y escribe la corrección; la app la recoge
+// y esa frase entra en la práctica siguiente, marcada como suya. Sin esto,
+// la firma se queda en la hoja y el alumno nunca la ve.
+var DE_BRIAN=[];
+function pedirCorrecciones(cb){
+  if(!DATOS_ENDPOINT||!P||!P.nombre){cb&&cb([]);return;}
+  fetch(DATOS_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({accion:'correcciones',nombre:P.nombre})})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(d){
+      var c=(d&&d.ok&&d.correcciones)||[];
+      DE_BRIAN=c;
+      try{var g=load();g.deBrian=c;save(g);D=g;}catch(e){}
+      cb&&cb(c);
+    })
+    .catch(function(){
+      try{DE_BRIAN=(load().deBrian)||[];}catch(e){DE_BRIAN=[];}
+      cb&&cb(DE_BRIAN);
+    });
+}
+function frasesDeBrian(){
+  return DE_BRIAN.filter(function(x){return x.frase;}).slice(0,3).map(function(x){
+    return {k:'model',en:x.frase,es:'Esta te la corrigió Brian. Vamos con la forma buena.',deBrian:true};
+  });
+}
+function mensajeDeBrian(){
+  var m=DE_BRIAN.filter(function(x){return x.mensaje;})[0];
+  return m?m.mensaje:'';
 }
 
 /* ═══════════ repetición espaciada ═══════════ */
@@ -2954,6 +2998,21 @@ function menu(){
     say(D.guiado?'Listo. Ahora te voy explicando qué hacer en cada pantalla.':'Listo, quité las explicaciones.','es-MX');
   };
   say('Hola de nuevo. ¿Con cuál seguimos?','es-MX');
+  pedirCorrecciones(function(c){
+    if(!c.length)return;
+    MAT=materialDe(P);
+    var msg=mensajeDeBrian();
+    var n=c.filter(function(x){return x.frase;}).length;
+    var caja=APP.querySelector('.qcard');
+    if(!caja)return;
+    caja.insertAdjacentHTML('afterbegin',
+      '<div class="debrian"><span>Brian revisó tu sesión</span>'+
+      (msg?'<div class="db-msg">'+esc(msg)+'</div>':'')+
+      (n?'<div class="db-n">Te dejó '+n+' frase'+(n>1?'s':'')+' para practicar. '+
+         'Aparecen al empezar la siguiente sesión.</div>':'')+
+      '</div>');
+    if(msg)say(msg,'es-MX');
+  });
 }
 
 /* ═══════════ la sesión ═══════════ */
@@ -3071,7 +3130,8 @@ function paso(){
   if(x.k==='model'){
     var vars=variantesDe(x.en,P);
     var vez=(intentosDe[clave(x.en)]||0);
-    h+='<div class="qlbl">Escucha y repite en voz alta</div>'+
+    h+='<div class="qlbl">'+(x.deBrian?'Corrección de Brian':'Escucha y repite en voz alta')+'</div>'+
+       (x.deBrian?'<div class="db-marca">✍️ Brian te corrigió esta frase. Practícala así.</div>':'')+
        '<div class="volumen"><span class="vol-n">'+(vez===0?'1':vez===1?'2':'3')+'</span>'+
        '<span class="vol-t">'+(vez===0
          ? 'Esta primera vez, dila bajito. Casi en secreto. Solo para que la boca agarre la forma.'
@@ -3084,8 +3144,7 @@ function paso(){
        botonVideo(x.en)+
        (vars.length>1?'<div class="varbox"><span>Todas estas sirven · tócalas para oírlas y repítelas</span>'+
          vars.filter(function(v){return v!==x.en;}).map(function(v,vi){
-           return '<div class="varfila"><button class="varb" data-v="'+vi+'">'+esc(v)+' <i>▶</i></button>'+
-                  '<button class="ygmini ygb" data-fr="'+esc(v)+'" title="Ver a alguien decirlo">🎬</button></div>';
+           return '<button class="varb" data-v="'+vi+'">'+esc(v)+' <i>▶</i></button>';
          }).join('')+'</div>':'')+
        '<div class="oirfila">'+
          '<button class="oirb" id="oir">🔊 Oírla otra vez</button>'+

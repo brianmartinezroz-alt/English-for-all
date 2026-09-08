@@ -674,6 +674,32 @@
   .pmun{width:52px;height:60px;display:block;margin:0 auto}
   .prenda .pico{display:block;height:60px;margin-bottom:4px}
 </style>
+<style>
+  /* ── el recorrido guiado ── */
+  .tutor{position:fixed;inset:0;z-index:80}
+  .tutor-velo{position:fixed;inset:0;display:block}
+  .tutor-aro{animation:latir 1.9s ease-in-out infinite}
+  @keyframes latir{0%,100%{opacity:.95}50%{opacity:.35}}
+  .tutor-globo{position:fixed;left:16px;right:16px;background:var(--papel);
+    border-radius:16px;padding:16px 18px 14px;
+    box-shadow:0 10px 34px rgba(16,14,12,.34);animation:asoma .28s ease}
+  @keyframes asoma{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .tutor-pico{position:absolute;width:0;height:0;border:11px solid transparent}
+  .tutor-pico.arriba{top:-22px;border-bottom-color:var(--papel)}
+  .tutor-pico.abajo{bottom:-22px;border-top-color:var(--papel)}
+  .tutor-cuenta{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--tenue,#8A837A);margin-bottom:5px}
+  .tutor-t{font-family:var(--display);font-size:20px;color:var(--tinta);margin-bottom:5px}
+  .tutor-x{font-size:14.5px;line-height:1.55;color:var(--suave,#57534E);margin-bottom:14px}
+  .tutor-bs{display:flex;gap:10px}
+  .tutor-b{flex:1;padding:12px;border-radius:11px;border:0;background:var(--verde);
+    color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+  .tutor-b.fant{flex:0 0 auto;padding:12px 18px;background:none;color:var(--tenue,#8A837A);
+    border:1px solid var(--linea);font-weight:400}
+  @media (prefers-reduced-motion:reduce){
+    .tutor-aro{animation:none}.tutor-globo{animation:none}
+  }
+</style>
 
 
 
@@ -700,7 +726,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v71 · 8 sep";
+var VERSION="v72 · 8 sep";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -2117,6 +2143,7 @@ function pintarCajon(){
     '<div class="cj-sec">Practicar</div>'+
     '<button class="cj-b" data-a="mapa">'+ico('camino')+' El camino</button>'+
     '<button class="cj-b" data-a="leccion">'+ico('chispa')+' Pedir una lección</button>'+
+    '<button class="cj-b" data-a="tutorial">'+ico('volver')+' Ver otra vez el recorrido</button>'+
     '<div class="cj-sec">Cómo voy</div>'+
     '<button class="cj-b" data-a="avance">'+ico('curva')+' Mi avance y mi curva</button>'+
     '<button class="cj-b" data-a="avatar">'+ico('persona')+' Mi avatar</button>'+
@@ -2134,6 +2161,7 @@ function pintarCajon(){
       var a=b.getAttribute('data-a');
       if(a==='personalizar')personalizar();
       else if(a==='mapa')mapa();
+      else if(a==='tutorial'){ mapa(); setTimeout(arrancarTutor,300); }
       else if(a==='leccion')pantallaLeccion();
       else if(a==='avance')perfilAlumno();
       else if(a==='avatar')perfilAlumno();
@@ -2684,6 +2712,103 @@ function yaPersonalizo(){
   return !!(P&&a.sexo&&D.probado);
 }
 
+
+/* ═══════════ el recorrido guiado de la primera vez ═══════════ */
+// Un operador que abre esto por primera vez no tiene por qué adivinar nada.
+// Se le apaga la pantalla, se le ilumina UNA cosa y se le dice qué es.
+// Se puede saltar en cualquier momento y volver a verlo desde el cajón.
+
+var TUTOR_PASO=0, TUTOR_VIVO=false;
+
+function pasosTutor(){
+  return [
+    {donde:null, titulo:'Este es tu camino',
+     txt:'Cada casilla es una práctica corta, de unos 20 minutos. No hay que terminarlo hoy ni esta semana.'},
+    {donde:'#losetaAqui', titulo:'Aquí vas tú',
+     txt:'Tu muñeco está parado en la casilla que te toca. Cuando termines una práctica, brinca solo a la siguiente.'},
+    {donde:'.lo.rep', titulo:'Las casillas color miel',
+     txt:'Cada cinco paradas cae una de repaso. No es material nuevo: son TUS frases, las que se te han atorado. Por eso no hace falta regresar.'},
+    {donde:'#menub', titulo:'Aquí está todo lo demás',
+     txt:'Tus datos, tu avance, el color de la app y el acento con el que quieres oír. Ábrelo cuando quieras.'},
+    {donde:'#seguir', titulo:'Y se empieza por aquí',
+     txt:'Este botón te lleva a lo que toca hoy. Nada más.'}
+  ];
+}
+
+function arrancarTutor(){
+  if(TUTOR_VIVO)return;
+  TUTOR_VIVO=true; TUTOR_PASO=0;
+  var v=document.createElement('div');
+  v.id='tutor'; v.className='tutor';
+  v.setAttribute('role','dialog');
+  v.setAttribute('aria-label','Recorrido de la primera vez');
+  document.body.appendChild(v);
+  pintarTutor();
+}
+
+function cerrarTutor(){
+  TUTOR_VIVO=false;
+  var v=document.getElementById('tutor');
+  if(v&&v.remove)v.remove();
+  try{ var d=load(); d.tutorVisto=true; save(d); D=d; }catch(e){}
+}
+
+function pintarTutor(){
+  var v=document.getElementById('tutor');
+  if(!v)return;
+  var pasos=pasosTutor();
+  if(TUTOR_PASO>=pasos.length){ cerrarTutor(); return; }
+  var p=pasos[TUTOR_PASO];
+
+  // dónde está la cosa que hay que iluminar
+  var r=null;
+  if(p.donde){
+    var o=document.querySelector(p.donde);
+    if(o&&o.getBoundingClientRect){
+      var b=o.getBoundingClientRect();
+      if(b.width||b.height)r={x:b.left,y:b.top,w:b.width,h:b.height};
+    }
+  }
+  var alto=(window.innerHeight||700), ancho=(window.innerWidth||380);
+  var abajo = r ? (r.y+r.h/2 < alto*0.55) : true;   // el globo va del lado libre
+
+  var hoyo='';
+  if(r){
+    var pad=10;
+    var cx=r.x+r.w/2, cy=r.y+r.h/2;
+    var rx=Math.max(r.w,44)/2+pad, ry=Math.max(r.h,44)/2+pad;
+    hoyo='<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+rx+'" ry="'+ry+'" fill="black"/>';
+  }
+
+  v.innerHTML=
+    '<svg class="tutor-velo" width="'+ancho+'" height="'+alto+'" aria-hidden="true">'+
+      '<defs><mask id="agujero">'+
+        '<rect width="'+ancho+'" height="'+alto+'" fill="white"/>'+hoyo+
+      '</mask></defs>'+
+      '<rect width="'+ancho+'" height="'+alto+'" fill="rgba(16,14,12,.72)" mask="url(#agujero)"/>'+
+      (r?'<ellipse cx="'+(r.x+r.w/2)+'" cy="'+(r.y+r.h/2)+'" '+
+         'rx="'+(Math.max(r.w,44)/2+10)+'" ry="'+(Math.max(r.h,44)/2+10)+'" '+
+         'fill="none" stroke="#35C08F" stroke-width="2.5" class="tutor-aro"/>':'')+
+    '</svg>'+
+    '<div class="tutor-globo" style="'+(abajo?'top:'+((r?r.y+r.h:alto*0.42)+26)+'px':'bottom:'+(alto-(r?r.y:alto*0.5)+26)+'px')+'">'+
+      (r?'<span class="tutor-pico '+(abajo?'arriba':'abajo')+'" style="left:'+
+         Math.max(22,Math.min(ancho-42,r.x+r.w/2-12))+'px"></span>':'')+
+      '<div class="tutor-cuenta">'+(TUTOR_PASO+1)+' de '+pasos.length+'</div>'+
+      '<div class="tutor-t">'+esc(p.titulo)+'</div>'+
+      '<div class="tutor-x">'+esc(p.txt)+'</div>'+
+      '<div class="tutor-bs">'+
+        '<button class="tutor-b fant" id="tsalta">Saltar</button>'+
+        '<button class="tutor-b" id="tsig">'+(TUTOR_PASO===pasos.length-1?'Listo':'Siguiente')+'</button>'+
+      '</div>'+
+    '</div>';
+
+  var sg=document.getElementById('tsig');
+  if(sg)sg.onclick=function(){ TUTOR_PASO++; pintarTutor(); };
+  var sl=document.getElementById('tsalta');
+  if(sl)sl.onclick=cerrarTutor;
+  say(p.titulo+'. '+p.txt,'es-MX');
+}
+
 /* ═══════════ pantalla del mapa ═══════════ */
 function mapa(){
   var c=progreso();
@@ -2737,7 +2862,10 @@ function mapa(){
   });
 
   // si acaba de avanzar, el muñeco brinca a su nueva loseta
-  if(!yaPersonalizo()){
+  // la primera vez que ve el tablero, se le explica con el dedo encima
+  if(!D.tutorVisto&&!TUTOR_VIVO&&document.body&&document.body.appendChild){
+    setTimeout(arrancarTutor,420);
+  }else if(!yaPersonalizo()){
     say('Este es tu camino. Toca el botón para armar tu personaje y tus frases.','es-MX');
   }else if(SALTAR_DESDE&&SALTAR_DESDE<c.parada){
     var de=SALTAR_DESDE; SALTAR_DESDE=0;

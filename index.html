@@ -553,6 +553,127 @@
     padding:12px 14px;margin-top:12px;font-size:13px;color:var(--tinta-2);line-height:1.5}
   .ganados span{display:block;font-family:var(--display);font-size:21px;color:var(--verde-hondo);margin-bottom:4px}
 </style>
+<style>
+  /* ── botón de menú ── */
+  .menub{flex:0 0 auto;width:38px;height:38px;background:none;border:0;cursor:pointer;
+    display:flex;flex-direction:column;justify-content:center;gap:5px;padding:0 8px 0 0}
+  .menub span{display:block;height:2px;background:var(--tinta-2);border-radius:2px;transition:.2s}
+  .menub:hover span{background:var(--verde-hondo)}
+  .topbar{align-items:center}
+
+  /* ── el cajón ── */
+  .velo{position:fixed;inset:0;background:rgba(20,18,16,.42);opacity:0;pointer-events:none;
+    transition:opacity .22s;z-index:40}
+  .velo.on{opacity:1;pointer-events:auto}
+  .cajon{position:fixed;top:0;left:0;bottom:0;width:82%;max-width:320px;background:var(--papel);
+    border-right:1px solid var(--linea);transform:translateX(-102%);transition:transform .24s ease;
+    z-index:41;overflow-y:auto;padding:20px 0 26px;box-shadow:2px 0 24px rgba(20,18,16,.10)}
+  .cajon.on{transform:translateX(0)}
+
+  .cj-cab{display:flex;gap:12px;align-items:center;padding:0 20px 14px}
+  .cj-av{flex:0 0 44px;height:44px;border-radius:50%;background:var(--verde-suave);
+    border:1px solid var(--verde);display:flex;align-items:center;justify-content:center;font-size:22px}
+  .cj-n{font-family:var(--display);font-size:17px;color:var(--tinta);line-height:1.2}
+  .cj-s{font-size:12px;color:var(--tenue);margin-top:2px}
+  .cj-pts{margin:0 20px 16px;background:var(--crema);border-radius:10px;padding:10px 12px;
+    font-size:12.5px;color:var(--tinta-2)}
+  .cj-pts b{font-family:var(--display);font-size:15px;color:var(--verde-hondo)}
+
+  .cj-sec{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--tenue);padding:14px 20px 7px}
+  .cj-b{display:flex;align-items:center;gap:11px;width:100%;background:none;border:0;
+    padding:12px 20px;font-family:var(--body);font-size:14.5px;color:var(--tinta);
+    text-align:left;cursor:pointer}
+  .cj-b i{font-style:normal;font-size:17px;flex:0 0 22px}
+  .cj-b:hover{background:var(--verde-suave);color:var(--verde-hondo)}
+  .cj-pie{margin:20px 20px 0;padding-top:14px;border-top:1px solid var(--linea);
+    font-size:11px;color:var(--tenue);line-height:1.6}
+
+  /* ── colores de la app ── */
+  .temas{display:flex;flex-wrap:wrap;gap:8px}
+  .tema{flex:1 1 44%;background:var(--papel);border:1px solid var(--linea);border-radius:12px;
+    padding:12px 10px;font-family:var(--body);font-size:13px;color:var(--tinta-2);cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:7px}
+  .tema.on{border-color:var(--verde);background:var(--verde-suave);color:var(--verde-hondo);font-weight:600}
+  .tm-m{width:40px;height:26px;border-radius:6px;border:1px solid;display:flex;
+    align-items:center;justify-content:center}
+  .tm-m i{width:14px;height:6px;border-radius:3px;display:block}
+
+  /* ── paradas anteriores ── */
+  .repl{display:flex;flex-direction:column;gap:6px;max-height:52vh;overflow-y:auto}
+  .repb{display:flex;align-items:center;gap:11px;background:var(--crema);border:1px solid var(--linea);
+    border-radius:10px;padding:11px 13px;font-family:var(--body);font-size:14px;color:var(--tinta);
+    cursor:pointer;text-align:left}
+  .repb:hover{border-color:var(--verde);background:var(--verde-suave)}
+  .rp-n{flex:0 0 26px;height:26px;border-radius:50%;color:#fff;font-family:var(--mono);font-size:11px;
+    display:flex;align-items:center;justify-content:center}
+
+  /* ── mis datos ── */
+  .datl{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+  .datf{background:var(--crema);border-radius:10px;padding:11px 13px;font-size:14px;color:var(--tinta)}
+  .datf span{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--tenue);margin-bottom:4px}
+
+  .guiado .cj-b{font-size:16.5px;padding:14px 20px}
+</style>
+<style>
+  /* ── el tablero ── */
+  .tabwrap{position:relative;margin:4px -6px 14px}
+  .tab{width:100%;height:auto;display:block;border-radius:14px;overflow:hidden;
+    background:var(--crema);border:1px solid var(--linea)}
+  .lo{cursor:pointer}
+  .lo.fut{cursor:default}
+  .lo.aqui polygon{transition:transform .16s ease}
+  .lo.aterriza{animation:hundir .26s ease}
+  @keyframes hundir{0%{transform:translateY(0)}40%{transform:translateY(5px)}100%{transform:translateY(0)}}
+  #muneco{transition:none}
+  .aqui-pill{position:absolute;right:10px;top:44%;background:var(--papel);
+    border:1px solid var(--linea);border-radius:13px;padding:5px 12px;
+    font-size:12px;color:var(--tinta);pointer-events:none;
+    box-shadow:0 1px 4px rgba(20,18,16,.08)}
+  @media (prefers-reduced-motion:reduce){
+    .lo.aterriza{animation:none}
+  }
+</style>
+<style>
+  .miMuneco{display:flex;justify-content:center;margin:2px 0 10px}
+  .munecoGde{width:118px;height:118px;display:block}
+  .cj-av{width:52px;height:52px;display:flex;align-items:center;justify-content:center;
+    background:none;border:0;padding:0;overflow:hidden}
+  .cj-av svg{display:block}
+  /* el creador del personaje */
+  .pers{display:flex;justify-content:center;margin:6px 0 14px}
+  .pers svg{width:150px;height:150px}
+  .opcs{display:flex;gap:8px;margin-bottom:12px}
+  .opcs button{flex:1;background:var(--papel);border:1.5px solid var(--linea);
+    border-radius:12px;padding:11px 6px;font-size:14px;color:var(--tinta);cursor:pointer}
+  .opcs button.sel{border-color:var(--verde);background:var(--verde-suave,#EAF7F1);font-weight:600}
+  .pelos{display:flex;gap:8px;justify-content:center;margin-bottom:14px}
+  .pelos button{width:34px;height:34px;border-radius:50%;border:2px solid transparent;cursor:pointer}
+  .pelos button.sel{border-color:var(--tinta)}
+</style>
+<style>
+  .avisito{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);
+    max-width:min(420px,88vw);background:var(--tinta);color:var(--papel);
+    padding:12px 16px;border-radius:12px;font-size:13.5px;line-height:1.45;
+    z-index:60;box-shadow:0 6px 22px rgba(20,18,16,.24);transition:opacity .5s}
+  .avisito.fuera{opacity:0}
+  .lo.rep polygon:first-child{filter:saturate(1.1)}
+</style>
+<style>
+  .cj-b.cj-urge{background:var(--verde);color:#fff;border-color:var(--verde);
+    margin:4px 12px 10px;font-weight:600}
+  .cj-b.cj-urge i{filter:none}
+</style>
+<style>
+  .ico{display:inline-block;vertical-align:-4px;margin-right:10px;flex:0 0 auto;
+    stroke:currentColor;opacity:.9}
+  .cj-b{display:flex;align-items:center}
+  .cj-b .ico{margin-right:12px}
+  .plan-i .ico{margin:0;vertical-align:-3px}
+  .pmun{width:52px;height:60px;display:block;margin:0 auto}
+  .prenda .pico{display:block;height:60px;margin-bottom:4px}
+</style>
 
 
 
@@ -560,11 +681,16 @@
 <body>
 <div class="shell">
   <div class="topbar">
+    <button class="menub" id="menub" aria-label="Abrir el menú">
+      <span></span><span></span><span></span>
+    </button>
     <div>
       <div class="kicker" id="kick">Práctica de inglés hablado</div>
       <div class="brand">English For All <em>/</em> Speaking</div>
     </div>
   </div>
+  <div class="velo" id="velo"></div>
+  <nav class="cajon" id="cajon" aria-label="Menú"></nav>
   <div class="wrapc" id="app"></div>
 </div>
 
@@ -574,7 +700,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v66 · 8 sep";
+var VERSION="v71 · 8 sep";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -1281,15 +1407,23 @@ function router(){
   }
   if(!vioMarca){marca();return;}
   if(!vioSaludo){portada();return;}
-  if(D.experiencia===undefined){preguntaExperiencia();return;}
-  if(!D.probado){pruebaSonido();return;}
-  if(D.paquete===undefined){vozPicker();return;}
+
+  // De aquí en adelante ya no se le pide nada para entrar: ve su tablero.
+  // Las preguntas, la prueba de voz y el personaje viven en el cajón.
   if(PAQUETE_ACTIVO!==D.paquete){PAQUETE_ACTIVO=D.paquete;armarRutas();}
   if(D.velAudio)VEL_AUDIO=D.velAudio;
   aplicarVoz(D.voz);elegirVozES();if(D.rate)RATE=D.rate;
-  if(!P){entrevista();return;}
-  MAT=materialDe(P);
-  if(sIdx===null){mapa();return;}
+
+  if(PERSONALIZANDO){ seguirPersonalizacion(); return; }
+
+  // Si el perfil guardado quedó a medias, no lo dejamos en pantalla muerta:
+  // se le pide otra vez, en vez de reventar en silencio.
+  MAT=null;
+  if(P){
+    try{ MAT=materialDe(P); }
+    catch(e){ MAT=null; P=null; D.perfil=null; save(D); }
+  }
+  if(sIdx===null||!P||!MAT){mapa();return;}
   correr();
 }
 
@@ -1503,7 +1637,7 @@ function bloqueComparar(meta){
   return '<div class="compbox">'+
     '<div class="hl">Óyelo seguido: primero como se dice, luego como lo dijiste</div>'+
     '<div class="compfila">'+
-      '<button class="compb" id="cmpmodelo">🔊 Así se dice</button>'+
+      '<button class="compb" id="cmpmodelo">'+ico('bocina',16)+' Así se dice</button>'+
       '<button class="compb mia" id="cmpmia">🎙️ Así lo dijiste</button>'+
     '</div>'+
     '<button class="compb full" id="cmpambos">▶ Uno tras otro</button>'+
@@ -1705,7 +1839,7 @@ function serieDe(en,p){
 // que ya tenemos: la misma frase en americano, británico, australiano.
 function acentosDisponibles(){ return PAQUETES; }
 function botonVideo(frase){
-  return '<button class="ygb" data-fr="'+esc(frase)+'">🌎 Oírla en otros acentos</button>';
+  return '<button class="ygb" data-fr="'+esc(frase)+'">'+ico('globo',17)+' Oírla en otros acentos</button>';
 }
 function abrirVideo(frase,boton){
   var viejo=document.getElementById('ygbox');
@@ -1863,21 +1997,55 @@ function marcaReloj(){ return '<div class="reloj" id="reloj">'+MINUTOS+':00</div
 // Sesenta paradas, iguales para todos. Lo que cambia es dónde entra cada
 // quien según su nivel: ver el camino recorrido detrás motiva más que
 // empezar de cero sabiendo que ya sabes.
-var PARADAS=60;
+var PARADAS=72;          // 60 de contenido + 12 de repaso
+var CADA=6;              // cada sexta casilla es repaso: 5 normales y una de vuelta
+
+// ¿esta casilla es de repaso?
+function esRepaso(n){ return n%CADA===0; }
+// a qué sesión de contenido corresponde una casilla que no es de repaso
+function contenidoDe(n){ return n-Math.floor(n/CADA); }
 var TRAMOS=[
-  {desde:1,  hasta:12, nombre:'En tu área',        sub:'Presentarte y decir qué haces',        color:'#1D9E75'},
-  {desde:13, hasta:30, nombre:'Con tu equipo',     sub:'Turnos, rutina y pedir cosas',         color:'#137A59'},
-  {desde:31, hasta:45, nombre:'Llega un cliente',  sub:'Atender una visita a la planta',       color:'#C08A22'},
-  {desde:46, hasta:54, nombre:'Por teléfono',      sub:'Llamadas y correos del trabajo',       color:'#D85A30'},
-  {desde:55, hasta:60, nombre:'Fuera de México',   sub:'Viajar y presentarte con un cliente',  color:'#0F5D45'}
+  {desde:1,  hasta:14, nombre:'En tu área',        sub:'Presentarte y decir qué haces',        color:'#1D9E75'},
+  {desde:15, hasta:36, nombre:'Con tu equipo',     sub:'Turnos, rutina y pedir cosas',         color:'#137A59'},
+  {desde:37, hasta:54, nombre:'Llega un cliente',  sub:'Atender una visita a la planta',       color:'#C08A22'},
+  {desde:55, hasta:64, nombre:'Por teléfono',      sub:'Llamadas y correos del trabajo',       color:'#D85A30'},
+  {desde:65, hasta:72, nombre:'Fuera de México',   sub:'Viajar y presentarte con un cliente',  color:'#0F5D45'}
 ];
+
+// El piso de cada tramo. Cambiar de zona se ve en el suelo, no en un letrero:
+// el alumno cruza el arco y el mundo debajo de sus pies es otro.
+var AMBIENTES=[
+  {piso:'#D5D2C0', pisoIzq:'#B2AF9C', pisoDer:'#A3A08D',   // planta: concreto
+   loseta:'#E2DECC', lIzq:'#C3BFAD', lDer:'#B3AF9D', num:'#8A8776',
+   arco:'#B08A56', pill:'#0F6E56', pillTx:'#EAF7F1', props:'maquina'},
+  {piso:'#C8D3CE', pisoIzq:'#A6B1AC', pisoDer:'#97A29D',   // equipo: piso lavado
+   loseta:'#DDE7E2', lIzq:'#BCC6C1', lDer:'#ACB6B1', num:'#7A8580',
+   arco:'#6E8079', pill:'#137A59', pillTx:'#EAF7F1', props:'banco'},
+  {piso:'#EFD9B0', pisoIzq:'#CDAF80', pisoDer:'#BE9F70',   // cliente: recepción
+   loseta:'#F6E7C6', lIzq:'#DCC9A2', lDer:'#CBB891', num:'#9C7C4E',
+   arco:'#9C7C4E', pill:'#8A6210', pillTx:'#FAEEDA', props:'escritorio'},
+  {piso:'#E7D2C6', pisoIzq:'#C4AFA3', pisoDer:'#B5A094',   // teléfono: oficina
+   loseta:'#F3E2D8', lIzq:'#D4C3B9', lDer:'#C4B3A9', num:'#99674B',
+   arco:'#B2705A', pill:'#993C1D', pillTx:'#FAECE7', props:'telefono'},
+  {piso:'#C6D6D2', pisoIzq:'#A3B3AF', pisoDer:'#94A4A0',   // fuera: aeropuerto
+   loseta:'#DCE9E5', lIzq:'#BAC7C3', lDer:'#AAB7B3', num:'#6F817C',
+   arco:'#0F5D45', pill:'#04342C', pillTx:'#E1F5EE', props:'maleta'}
+];
+function ambienteDe(n){
+  for(var i=0;i<TRAMOS.length;i++)if(n>=TRAMOS[i].desde&&n<=TRAMOS[i].hasta)return AMBIENTES[i];
+  return AMBIENTES[0];
+}
+function idxTramo(n){
+  for(var i=0;i<TRAMOS.length;i++)if(n>=TRAMOS[i].desde&&n<=TRAMOS[i].hasta)return i;
+  return 0;
+}
 function tramoDe(n){
   for(var i=0;i<TRAMOS.length;i++)if(n>=TRAMOS[i].desde&&n<=TRAMOS[i].hasta)return TRAMOS[i];
   return TRAMOS[0];
 }
 // dónde arranca cada quien
 function paradaInicial(nivel_n){
-  return [1,12,30,45,45][nivel_n||0];
+  return [1,14,35,53,53][nivel_n||0];   // corridos porque el mapa creció con los repasos
 }
 function progreso(){
   var d=load();
@@ -1909,6 +2077,7 @@ function sumarPuntos(rec){
     ganados+=15+Math.min(seguidos,5)*5;
   }
   c.puntos+=ganados;
+  SALTAR_DESDE=c.parada;             // de aquí brinca el muñeco al volver al mapa
   c.parada=Math.min(c.parada+1,PARADAS);
   c.maxima=Math.max(c.maxima,c.parada);
   guardarProgreso(c);
@@ -1926,6 +2095,595 @@ function diasSeguidos(dias){
 function puntosLibres(){var c=progreso();return c.puntos-(c.gastados||0);}
 
 
+
+/* ═══════════ el cajón de la izquierda ═══════════ */
+// Todo lo que no es practicar vive aquí: su avance, su avatar, el aspecto
+// de la app, las paradas anteriores. Se abre por encima, como en Claude.
+var CAJON_ABIERTO=false;
+function pintarCajon(){
+  var c=document.getElementById('cajon');
+  if(!c)return;
+  var pr=progreso();
+  var nv=(P&&P.nivel)||'';
+  c.innerHTML=
+    '<div class="cj-cab">'+
+      '<div class="cj-av">'+iconoAvatar()+'</div>'+
+      '<div><div class="cj-n">'+esc((P&&P.nombre)||'Tu cuenta')+'</div>'+
+      '<div class="cj-s">'+(nv?esc(nv)+' · ':'')+'parada '+pr.parada+' de '+PARADAS+'</div></div>'+
+    '</div>'+
+    '<div class="cj-pts"><b>'+puntosLibres()+'</b> puntos · <b>'+diasSeguidos(pr.dias)+'</b> días seguidos</div>'+
+    (yaPersonalizo()?'':'<button class="cj-b cj-urge" data-a="personalizar">'+
+       ico('estrella')+' Arma tu personaje y tu material</button>')+
+    '<div class="cj-sec">Practicar</div>'+
+    '<button class="cj-b" data-a="mapa">'+ico('camino')+' El camino</button>'+
+    '<button class="cj-b" data-a="leccion">'+ico('chispa')+' Pedir una lección</button>'+
+    '<div class="cj-sec">Cómo voy</div>'+
+    '<button class="cj-b" data-a="avance">'+ico('curva')+' Mi avance y mi curva</button>'+
+    '<button class="cj-b" data-a="avatar">'+ico('persona')+' Mi avatar</button>'+
+    '<button class="cj-b" data-a="personaje">'+ico('tijeras')+' Cambiar mi personaje</button>'+
+    '<button class="cj-b" data-a="oirme">'+ico('audifonos')+' Óyete el primer día y hoy</button>'+
+    '<div class="cj-sec">Ajustes</div>'+
+    '<button class="cj-b" data-a="aspecto">'+ico('paleta')+' Colores de la app</button>'+
+    '<button class="cj-b" data-a="voz">'+ico('globo')+' Acento y velocidad</button>'+
+    '<button class="cj-b" data-a="perfil">'+ico('nota')+' Mis datos</button>'+
+    '<div class="cj-pie">English For All · '+VERSION+'<br>Tu maestro: Brian Martínez</div>';
+
+  c.querySelectorAll('.cj-b').forEach(function(b){
+    b.onclick=function(){
+      cerrarCajon();
+      var a=b.getAttribute('data-a');
+      if(a==='personalizar')personalizar();
+      else if(a==='mapa')mapa();
+      else if(a==='leccion')pantallaLeccion();
+      else if(a==='avance')perfilAlumno();
+      else if(a==='avatar')perfilAlumno();
+      else if(a==='personaje')pantallaPersonaje(function(){mapa();});
+      else if(a==='oirme')perfilAlumno();
+      else if(a==='aspecto')pantallaAspecto();
+      else if(a==='voz')pantallaVoz();
+      else if(a==='perfil')pantallaDatos();
+    };
+  });
+}
+function abrirCajon(){
+  pintarCajon();
+  document.getElementById('cajon').classList.add('on');
+  document.getElementById('velo').classList.add('on');
+  CAJON_ABIERTO=true;
+}
+function cerrarCajon(){
+  var c=document.getElementById('cajon'),v=document.getElementById('velo');
+  if(c)c.classList.remove('on');
+  if(v)v.classList.remove('on');
+  CAJON_ABIERTO=false;
+}
+function iconoAvatar(){
+  // su muñeco, con lo que traiga puesto: es su foto de perfil
+  return munecoFoto(progreso().avatar||{},52);
+}
+
+/* ═══════════ colores de la app ═══════════ */
+var TEMAS=[
+  {id:'crema',  nombre:'Papel',    fondo:'#F5F1E8', papel:'#FDFBF6', tinta:'#2A2724', verde:'#1D9E75'},
+  {id:'noche',  nombre:'Noche',    fondo:'#1C1B19', papel:'#26241F', tinta:'#F2EDE3', verde:'#35C08F'},
+  {id:'claro',  nombre:'Claro',    fondo:'#FFFFFF', papel:'#FAFAF8', tinta:'#1F1E1C', verde:'#1D9E75'},
+  {id:'arena',  nombre:'Arena',    fondo:'#F3EADA', papel:'#FDF8EF', tinta:'#33291C', verde:'#B4762A'},
+  {id:'planta', nombre:'Planta',   fondo:'#EDF1F0', papel:'#F9FBFA', tinta:'#1E2A26', verde:'#0F6E56'}
+];
+function aplicarTema(id){
+  var t=TEMAS.filter(function(x){return x.id===id;})[0]||TEMAS[0];
+  var r=document.documentElement;
+  if(r&&r.style&&r.style.setProperty){
+    r.style.setProperty('--crema',t.fondo);
+    r.style.setProperty('--papel',t.papel);
+    r.style.setProperty('--tinta',t.tinta);
+    r.style.setProperty('--verde',t.verde);
+  }
+  var d=load();d.tema=id;save(d);D=d;
+}
+function pantallaAspecto(){
+  var actual=(load().tema)||'crema';
+  APP.innerHTML=atras()+'<div class="qcard"><div class="qlbl">Colores de la app</div>'+
+    '<div class="qtxt">Escoge cómo se ve</div>'+
+    '<div class="qsub">Si practicas de noche o con mucha luz, cambia bastante.</div>'+
+    '<div class="temas">'+TEMAS.map(function(t){
+      return '<button class="tema'+(t.id===actual?' on':'')+'" data-t="'+t.id+'">'+
+        '<span class="tm-m" style="background:'+t.fondo+';border-color:'+t.verde+'">'+
+        '<i style="background:'+t.verde+'"></i></span>'+esc(t.nombre)+'</button>';
+    }).join('')+'</div></div>';
+  ligarAtras(function(){mapa();});
+  APP.querySelectorAll('.tema').forEach(function(b){
+    b.onclick=function(){
+      aplicarTema(b.getAttribute('data-t'));
+      pantallaAspecto();
+    };
+  });
+}
+
+/* ═══════════ repasar una parada anterior ═══════════ */
+function pantallaRepasar(){
+  var c=progreso();
+  var h=atras()+'<div class="qcard"><div class="qlbl">Paradas anteriores</div>'+
+    '<div class="qtxt">Repasa lo que quieras</div>'+
+    '<div class="qsub">Volver atrás no te quita nada. Sirve para asentar.</div>'+
+    '<div class="repl">';
+  for(var n=1;n<=c.parada;n++){
+    var t=tramoDe(n);
+    h+='<button class="repb" data-n="'+n+'"><span class="rp-n" style="background:'+t.color+'">'+n+'</span>'+
+       '<span class="rp-t">'+esc(t.nombre)+'</span></button>';
+  }
+  h+='</div></div>';
+  APP.innerHTML=h;
+  ligarAtras(function(){mapa();});
+  APP.querySelectorAll('.repb').forEach(function(b){
+    b.onclick=function(){
+      var n=+b.getAttribute('data-n');
+      sIdx=(n-1)%MAT.length;it=0;attempts=[];t0=Date.now();correr();
+    };
+  });
+}
+
+/* ═══════════ acento y velocidad ═══════════ */
+function pantallaVoz(){
+  APP.innerHTML=atras()+'<div class="qcard"><div class="qlbl">Acento y velocidad</div>'+
+    '<div class="qtxt">Cómo quieres oír el inglés</div>'+
+    '<div class="acfila">'+PAQUETES.map(function(p){
+      return '<button class="acb'+(p.id===PAQUETE_ACTIVO?' on':'')+'" data-id="'+p.id+'">'+esc(p.nombre)+'</button>';
+    }).join('')+'</div>'+
+    '<div class="qsub" style="margin-top:16px">Velocidad</div>'+
+    '<div class="acfila">'+[['0.7','Despacio'],['0.85','Normal'],['1','Rápido']].map(function(v){
+      return '<button class="acb'+(String(VEL_AUDIO)===v[0]?' on':'')+'" data-v="'+v[0]+'">'+v[1]+'</button>';
+    }).join('')+'</div></div>';
+  ligarAtras(function(){mapa();});
+  APP.querySelectorAll('.acb').forEach(function(b){
+    b.onclick=function(){
+      if(b.getAttribute('data-id')){PAQUETE_ACTIVO=b.getAttribute('data-id');armarRutas();}
+      if(b.getAttribute('data-v'))VEL_AUDIO=parseFloat(b.getAttribute('data-v'));
+      var d=load();d.paquete=PAQUETE_ACTIVO;d.vel=VEL_AUDIO;save(d);D=d;
+      pantallaVoz();
+      say('Así se va a oír.','en-US');
+    };
+  });
+}
+
+/* ═══════════ mis datos ═══════════ */
+function pantallaDatos(){
+  APP.innerHTML=atras()+'<div class="qcard"><div class="qlbl">Mis datos</div>'+
+    '<div class="qtxt">'+esc((P&&P.nombre)||'')+'</div>'+
+    '<div class="datl">'+
+      ['trabajo_es|A qué te dedicas','accion_es|Qué haces cada día','hora_es|A qué hora entras',
+       'gusto_es|Qué te gusta','meta_es|Para qué quieres el inglés'].map(function(par){
+        var k=par.split('|')[0], et=par.split('|')[1];
+        return '<div class="datf"><span>'+et+'</span>'+esc((P&&P[k])||'—')+'</div>';
+      }).join('')+
+    '</div>'+
+    '<button class="btn ghost" id="rehacer" style="margin-top:14px">Cambiar mis datos</button>'+
+    '<button class="btn ghost" id="solonombre2" style="margin-top:6px">Cambiar solo mi nombre</button>'+
+    '</div>';
+  ligarAtras(function(){mapa();});
+  document.getElementById('rehacer').onclick=function(){ E={}; eIdx=0; entrevista(); };
+  document.getElementById('solonombre2').onclick=function(){ soloNombre(); };
+}
+
+/* ═══════════ el tablero: losetas con grosor, visto desde arriba ═══════════ */
+// Nada de esto son imágenes: se dibuja por código, así que no pesa ni depende
+// de ningún servidor. El volumen es falso pero convincente: cada loseta lleva
+// su cara de arriba y sus dos caras laterales, más oscuras.
+var TW=32, TH=16, TD=13;          // media anchura, media altura, grosor
+var COLX=[60,124,188,252];        // las cuatro columnas del serpenteo
+
+// Dónde cae cada parada. Sube en zigzag: cuatro a la derecha, cuatro a la
+// izquierda. Así el pulgar siempre alcanza y no se sale de la pantalla.
+function celda(n,base){
+  var k=n-base;
+  var fila=Math.floor(k/4), col=k%4;
+  if(fila%2===1)col=3-col;
+  return {x:COLX[col], y:0-fila*64-(col*0)};
+}
+function posicion(n,base,alto){
+  // cada parada sube 32 px: da la escalera diagonal, no filas planas.
+  // La x va y viene entre cuatro columnas, así el camino serpentea.
+  var k=n-base, fila=Math.floor(k/4), col=k%4;
+  if(fila%2===1)col=3-col;
+  return {x:COLX[col], y:alto-84-k*32};
+}
+
+function losetaSVG(cx,cy,arriba,izq,der,dentro,alzada){
+  var d=alzada?8:0; cy-=d;
+  return '<polygon points="'+(cx-TW)+','+cy+' '+cx+','+(cy-TH)+' '+(cx+TW)+','+cy+' '+cx+','+(cy+TH)+'" fill="'+arriba+'"/>'+
+    '<polygon points="'+(cx-TW)+','+cy+' '+(cx-TW)+','+(cy+TD)+' '+cx+','+(cy+TH+TD)+' '+cx+','+(cy+TH)+'" fill="'+izq+'"/>'+
+    '<polygon points="'+(cx+TW)+','+cy+' '+(cx+TW)+','+(cy+TD)+' '+cx+','+(cy+TH+TD)+' '+cx+','+(cy+TH)+'" fill="'+der+'"/>'+
+    (dentro||'');
+}
+function palomita(cx,cy,alzada){
+  var d=alzada?8:0;
+  return '<path d="M'+(cx-8)+' '+(cy-d)+'l6 6 12-12" stroke="#EAF7F1" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+}
+// la flecha de "esto ya lo viste": marca las casillas de repaso
+function flechaRepaso(cx,cy,color){
+  return '<path d="M'+(cx-7)+' '+(cy+1)+'a7 5.5 0 1 1 3 4.4" stroke="'+color+
+    '" stroke-width="2.2" fill="none" stroke-linecap="round"/>'+
+    '<path d="M'+(cx-10)+' '+(cy-3)+'l3 4 4-2.5" stroke="'+color+
+    '" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+}
+function numeroEn(cx,cy,n,color){
+  return '<text x="'+cx+'" y="'+(cy+5)+'" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="'+color+'">'+n+'</text>';
+}
+
+// El muñeco. Lleva puesto lo que haya comprado: casco, chaleco, bata.
+function munecoSVG(cx,cy,a,escala){
+  a=a||{}; var e=escala||1;
+  var PIEL=a.piel||'#E0A878', PELO=a.pelo_color||'#3B2A1C';
+  var mujer=(a.sexo==='m'), largo=(a.corte==='largo');
+  var h='<g transform="translate('+cx+','+cy+') scale('+e+') translate('+(-cx)+','+(-cy)+')">';
+  h+='<ellipse cx="'+cx+'" cy="'+(cy+2)+'" rx="14" ry="6" fill="#000" opacity="0.16"/>';
+
+  // ── la base: es lo único con lo que empieza ──
+  // botas
+  h+='<path d="M'+(cx-9)+' '+(cy-6)+'h8v6h-9a1 1 0 0 1 1-6z" fill="#5A4227"/>';
+  h+='<path d="M'+(cx+1)+' '+(cy-6)+'h8a1 1 0 0 1 1 6h-9z" fill="#5A4227"/>';
+  // pantalón de mezclilla
+  h+='<path d="M'+(cx-9)+' '+(cy-22)+'h18v10l-1 6h-6l-1-8h-2l-1 8h-6l-1-6z" fill="#3E6D9E"/>';
+  h+='<path d="M'+(cx-9)+' '+(cy-22)+'h18v3h-18z" fill="#2F5680"/>';
+  // playera blanca
+  var torso=(a.bata?'#F4F2ED':(a.camisa?'#DCE6F0':'#F9F7F2'));
+  h+='<path d="M'+(cx-10)+' '+(cy-22)+'v-14a10 10 0 0 1 20 0v14z" fill="'+torso+'"/>';
+  h+='<path d="M'+(cx-10)+' '+(cy-24)+'h20v2h-20z" fill="#000" opacity=".06"/>';
+  // brazos
+  h+='<rect x="'+(cx-14)+'" y="'+(cy-35)+'" width="5" height="14" rx="2.5" fill="'+torso+'"/>';
+  h+='<rect x="'+(cx+9)+'" y="'+(cy-35)+'" width="5" height="14" rx="2.5" fill="'+torso+'"/>';
+  h+='<circle cx="'+(cx-11.5)+'" cy="'+(cy-22)+'" r="2.6" fill="'+PIEL+'"/>';
+  h+='<circle cx="'+(cx+11.5)+'" cy="'+(cy-22)+'" r="2.6" fill="'+PIEL+'"/>';
+
+  // ── lo que se gana con puntos ──
+  if(a.chaleco){
+    h+='<path d="M'+(cx-10)+' '+(cy-22)+'v-13h20v13z" fill="#F3C34E"/>';
+    h+='<path d="M'+(cx-3)+' '+(cy-35)+'h6v13h-6z" fill="'+torso+'"/>';
+    h+='<path d="M'+(cx-10)+' '+(cy-28)+'h20v2.5h-20z" fill="#EAEDEF"/>';
+  }
+  if(a.bata){
+    h+='<path d="M'+(cx-11)+' '+(cy-22)+'v-14a11 11 0 0 1 22 0v14z" fill="#FBFAF7"/>';
+    h+='<path d="M'+(cx-0.8)+' '+(cy-34)+'h1.6v12h-1.6z" fill="#DAD6CC"/>';
+  }
+  // cabeza
+  h+='<circle cx="'+cx+'" cy="'+(cy-45)+'" r="9" fill="'+PIEL+'"/>';
+  h+='<path d="M'+(cx-3)+' '+(cy-37)+'h6v3h-6z" fill="'+PIEL+'"/>';
+  // cabello: corto o largo, para hombre o mujer
+  if(largo){
+    h+='<path d="M'+(cx-9.5)+' '+(cy-45)+'a9.5 9.5 0 0 1 19 0v14h-4v-11h-11v11h-4z" fill="'+PELO+'"/>';
+  }else{
+    h+='<path d="M'+(cx-9.5)+' '+(cy-44)+'a9.5 9.5 0 0 1 19 0q-9.5 -4.5 -19 0z" fill="'+PELO+'"/>';
+    h+='<path d="M'+(cx+6)+' '+(cy-50)+'q4 1 3.5 6.5l-2.5 .5z" fill="'+PELO+'"/>';
+  }
+  if(mujer&&!largo)h+='<circle cx="'+(cx+8)+'" cy="'+(cy-48)+'" r="2.4" fill="#D85A30"/>';
+  // cara
+  h+='<circle cx="'+(cx-3.4)+'" cy="'+(cy-45)+'" r="1.4" fill="#3B2F22"/>';
+  h+='<circle cx="'+(cx+3.4)+'" cy="'+(cy-45)+'" r="1.4" fill="#3B2F22"/>';
+  h+='<path d="M'+(cx-2.6)+' '+(cy-41)+'q2.6 2.2 5.2 0" stroke="#3B2F22" stroke-width="1.1" fill="none" stroke-linecap="round"/>';
+
+  if(a.cofia)  h+='<path d="M'+(cx-10)+' '+(cy-49)+'a10 8 0 0 1 20 0z" fill="#F2F0EA" stroke="#D9D5CA"/>';
+  if(a.casco){
+    h+='<path d="M'+(cx-10.5)+' '+(cy-48)+'a10.5 9 0 0 1 21 0z" fill="#D85A30"/>';
+    h+='<rect x="'+(cx-12)+'" y="'+(cy-49)+'" width="24" height="3.6" rx="1.8" fill="#B8481F"/>';
+  }
+  if(a.lentes) h+='<rect x="'+(cx-8)+'" y="'+(cy-48)+'" width="16" height="6" rx="3" fill="#9FE1CB" opacity=".8"/>';
+  if(a.gafete) h+='<rect x="'+(cx+2)+'" y="'+(cy-30)+'" width="7" height="9" rx="1.5" fill="#EDE7D6" stroke="#B9B098"/>';
+  if(a.maleta){
+    h+='<rect x="'+(cx+13)+'" y="'+(cy-16)+'" width="11" height="14" rx="2" fill="#0F5D45"/>';
+    h+='<rect x="'+(cx+17)+'" y="'+(cy-20)+'" width="3" height="5" rx="1.5" fill="#0A4636"/>';
+  }
+  if(a.pasaporte)h+='<rect x="'+(cx-23)+'" y="'+(cy-28)+'" width="8" height="10" rx="1" fill="#1D4E89"/>';
+  h+='</g>';
+  return h;
+}
+
+// El mismo muñeco, chiquito y en su propio marco: sirve de foto de perfil.
+function munecoFoto(a,px){
+  px=px||64;
+  return '<svg viewBox="0 0 80 80" width="'+px+'" height="'+px+'" aria-hidden="true">'+
+    '<circle cx="40" cy="40" r="39" fill="var(--crema)" stroke="var(--linea)"/>'+
+    munecoSVG(40,72,a,0.98)+'</svg>';
+}
+
+// Los objetos del lugar. Son lo que hace que un tramo se sienta distinto del
+// otro: la misma loseta rodeada de máquinas o rodeada de maletas no es igual.
+function propSVG(tipo,cx,cy,a){
+  function caja(x,y,w,arr,iz,de){
+    return '<polygon points="'+(x-w)+','+y+' '+x+','+(y-w/2)+' '+(x+w)+','+y+' '+x+','+(y+w/2)+'" fill="'+arr+'"/>'+
+      '<polygon points="'+(x-w)+','+y+' '+(x-w)+','+(y+w*0.6)+' '+x+','+(y+w/2+w*0.6)+' '+x+','+(y+w/2)+'" fill="'+iz+'"/>'+
+      '<polygon points="'+(x+w)+','+y+' '+(x+w)+','+(y+w*0.6)+' '+x+','+(y+w/2+w*0.6)+' '+x+','+(y+w/2)+'" fill="'+de+'"/>';
+  }
+  if(tipo==='maquina')return caja(cx,cy,32,'#C0BCA9','#A19D8B','#918D7C')+caja(cx,cy-24,24,'#8E9A94','#75817B','#66726C');
+  if(tipo==='banco')return caja(cx,cy,28,'#B6C2BD','#98A49F','#89959 0'.replace(' ',''))+
+    '<rect x="'+(cx-14)+'" y="'+(cy-30)+'" width="28" height="10" rx="3" fill="#7E8A85"/>';
+  if(tipo==='escritorio')return caja(cx,cy,30,'#DFC79E','#C0A87F','#B09870')+
+    '<rect x="'+(cx-12)+'" y="'+(cy-34)+'" width="24" height="18" rx="3" fill="#9C7C4E"/>';
+  if(tipo==='telefono')return caja(cx,cy,26,'#E0CDC2','#C1AEA3','#B29F94')+
+    '<rect x="'+(cx-9)+'" y="'+(cy-30)+'" width="18" height="12" rx="4" fill="#993C1D"/>';
+  if(tipo==='maleta')return caja(cx,cy,22,'#B9C9C5','#9AAAA6','#8B9B97')+
+    '<rect x="'+(cx-10)+'" y="'+(cy-30)+'" width="20" height="16" rx="4" fill="#0F5D45"/>'+
+    '<rect x="'+(cx-4)+'" y="'+(cy-36)+'" width="8" height="7" rx="3" fill="#0A4636"/>';
+  return '';
+}
+
+// El arco que separa un tramo del siguiente. Cruzarlo es el momento.
+function arcoSVG(cx,cy,color){
+  return '<polygon points="'+(cx-52)+','+cy+' '+cx+','+(cy-26)+' '+(cx+52)+','+cy+' '+cx+','+(cy+26)+'" fill="'+color+'" opacity=".28"/>'+
+    '<rect x="'+(cx-30)+'" y="'+(cy-42)+'" width="9" height="34" rx="2" fill="'+color+'"/>'+
+    '<rect x="'+(cx+21)+'" y="'+(cy-42)+'" width="9" height="34" rx="2" fill="'+color+'" opacity=".85"/>'+
+    '<rect x="'+(cx-34)+'" y="'+(cy-50)+'" width="68" height="9" rx="3" fill="'+color+'"/>';
+}
+
+// Arma el tablero entero alrededor de donde va el alumno.
+function tableroSVG(actual,total){
+  var VENT=10;
+  var base=Math.max(1,actual-3);
+  var fin=Math.min(total,base+VENT-1);
+  // el alto lo mandan las paradas que se ven: 32 px cada una, más aire
+  // arriba para la loseta más lejana y abajo para la etiqueta del tramo
+  var ALTO=(fin-base)*32+188;
+  var h='<svg viewBox="0 0 340 '+ALTO+'" class="tab" role="img">'+
+    '<title>Tu camino</title><desc>Casillas que suben en zigzag; tu muñeco está parado en la parada '+actual+'.</desc>';
+
+  // el suelo de cada tramo, dibujado de lejos a cerca
+  var vistos={};
+  for(var n=fin;n>=base;n--){
+    var t=idxTramo(n);
+    if(vistos[t])continue;
+    vistos[t]=1;
+    var a=AMBIENTES[t];
+    var p=posicion(n,base,ALTO);
+    var cy=p.y;
+    h+='<polygon points="170,'+(cy+150)+' 350,'+(cy+60)+' 350,'+(cy-60)+' 170,'+(cy-150)+' -10,'+(cy-60)+' -10,'+(cy+60)+'" fill="'+a.piso+'"/>'+
+       '<polygon points="-10,'+(cy+60)+' 170,'+(cy+150)+' 170,'+(cy+166)+' -10,'+(cy+76)+'" fill="'+a.pisoIzq+'"/>'+
+       '<polygon points="350,'+(cy+60)+' 170,'+(cy+150)+' 170,'+(cy+166)+' 350,'+(cy+76)+'" fill="'+a.pisoDer+'"/>';
+  }
+
+  // los objetos del lugar, a los lados del camino
+  for(var n=fin;n>=base;n--){
+    var a=ambienteDe(n), p=posicion(n,base,ALTO);
+    if((n-base)%4===0 && p.x<180) h+=propSVG(a.props,308,p.y-30,a);
+    if((n-base)%4===2 && p.x>170) h+=propSVG(a.props,26,p.y-10,a);
+  }
+
+  // los arcos entre tramos
+  for(var n=base+1;n<=fin;n++){
+    if(idxTramo(n)!==idxTramo(n-1)){
+      var p=posicion(n,base,ALTO), a=ambienteDe(n);
+      h+=arcoSVG(p.x,p.y+36,a.arco);
+    }
+  }
+
+  // las losetas, de lejos a cerca para que se tapen bien
+  for(var n=fin;n>=base;n--){
+    var a=ambienteDe(n), p=posicion(n,base,ALTO);
+    if(n<actual){
+      var hecha=esRepaso(n)?['#C08A22','#9C7C4E','#8A6A3E']:['#1D9E75','#147A5A','#0F6E56'];
+      h+='<g class="lo" data-n="'+n+'">'+losetaSVG(p.x,p.y,hecha[0],hecha[1],hecha[2],palomita(p.x,p.y))+'</g>';
+    }else if(n===actual){
+      h+='<ellipse cx="'+p.x+'" cy="'+(p.y+18)+'" rx="30" ry="15" fill="#000" opacity=".10"/>';
+      h+='<g class="lo aqui" id="losetaAqui" data-n="'+n+'">'+
+         losetaSVG(p.x,p.y,esRepaso(n)?'#E8B24C':'#35C08F',esRepaso(n)?'#C08A22':'#1D9E75',esRepaso(n)?'#9C7C4E':'#147A5A',
+           '<polygon points="'+(p.x-TW)+','+(p.y-8)+' '+p.x+','+(p.y-TH-8)+' '+(p.x+TW)+','+(p.y-8)+' '+p.x+','+(p.y+TH-8)+'" fill="none" stroke="#0F6E56" stroke-width="2"/>',true)+
+         '</g>';
+    }else if(esRepaso(n)){
+      h+='<g class="lo fut rep" data-n="'+n+'">'+
+         losetaSVG(p.x,p.y,'#F0E2C4','#D6C6A4','#C6B694',flechaRepaso(p.x,p.y,'#9C7C4E'))+'</g>';
+    }else{
+      h+='<g class="lo fut" data-n="'+n+'">'+losetaSVG(p.x,p.y,a.loseta,a.lIzq,a.lDer,numeroEn(p.x,p.y,n,a.num))+'</g>';
+    }
+  }
+
+  // el muñeco, encima de todo
+  var pa=posicion(actual,base,ALTO);
+  h+='<g id="muneco">'+munecoSVG(pa.x,pa.y-8,(progreso().avatar)||{})+'</g>';
+
+  // el nombre del tramo, abajo
+  var tr=tramoDe(actual), am=ambienteDe(actual);
+  h+='<rect x="16" y="'+(ALTO-30)+'" width="'+(tr.nombre.length*7.4+26)+'" height="24" rx="12" fill="'+am.pill+'"/>'+
+     '<text x="'+(tr.nombre.length*3.7+29)+'" y="'+(ALTO-14)+'" text-anchor="middle" font-family="ui-sans-serif,system-ui" font-size="12" fill="'+am.pillTx+'">'+esc(tr.nombre)+'</text>';
+  h+='</svg>';
+  return {svg:h, base:base, alto:ALTO};
+}
+
+// El salto de una loseta a la siguiente. Es lo que hace que avanzar se sienta.
+function saltarA(deN,aN,base,alto,cuando){
+  var d=posicion(deN,base,alto), a=posicion(aN,base,alto);
+  var m=document.getElementById('muneco');
+  var lo=document.getElementById('losetaAqui');
+  if(!m){ if(cuando)cuando(); return; }
+  var t0=Date.now(), DUR=520;
+  (function paso(){
+    var k=Math.min(1,(Date.now()-t0)/DUR);
+    var x=d.x+(a.x-d.x)*k, y=d.y+(a.y-d.y)*k;
+    var alto_salto=Math.sin(k*Math.PI)*34;      // la parábola del brinco
+    m.setAttribute('transform','translate('+(x-d.x)+','+(y-d.y-alto_salto)+')');
+    if(k<1)requestAnimationFrame(paso);
+    else{
+      m.setAttribute('transform','translate('+(a.x-d.x)+','+(a.y-d.y)+')');
+      if(lo){ lo.classList.add('aterriza'); setTimeout(function(){lo.classList.remove('aterriza');},260); }
+      if(cuando)cuando();
+    }
+  })();
+}
+
+
+/* ═══════════ los repasos, armados con lo que a él se le atora ═══════════ */
+// Un repaso no es "volver a la parada 3". Es volver a lo que ESTE alumno
+// falló, que no es lo mismo que falló su compañero.
+
+function misErrores(){
+  var mem=memoria(), out=[];
+  Object.keys(mem).forEach(function(k){
+    var m=mem[k];
+    if(m.dominada)return;
+    if(!(m.fallos>0))return;
+    out.push({frase:m.frase, fallos:m.fallos, paso:m.paso||0});
+  });
+  // primero lo que más se le ha caído
+  out.sort(function(a,b){return b.fallos-a.fallos||a.paso-b.paso;});
+  return out;
+}
+
+// Los tipos de error que la IA le ha ido marcando en las sesiones
+function tiposDeError(){
+  var ses=(load().sesiones||[]).slice(-12), cuenta={};
+  ses.forEach(function(r){
+    (r.errores_ia||[]).forEach(function(e){
+      var t=(e.tipo||e.error||'').toString().trim();
+      if(t)cuenta[t]=(cuenta[t]||0)+1;
+    });
+  });
+  return Object.keys(cuenta).map(function(t){return {tipo:t,veces:cuenta[t]};})
+    .sort(function(a,b){return b.veces-a.veces;});
+}
+
+// Lo que ya corrigió no desaparece de golpe: pasa a vigilancia y vuelve
+// UNA vez más, dos repasos después. Si vuelve a salir bien, ahí sí se va.
+function retirarError(frase){
+  var c=progreso();
+  c.vigilancia=c.vigilancia||{};
+  if(c.vigilancia[frase]==null){
+    c.vigilancia[frase]={vuelve:(c.repasosHechos||0)+2, revisado:false};
+  }else{
+    c.vigilancia[frase].revisado=true;   // segunda vez limpia: se va
+  }
+  guardarProgreso(c);
+}
+function enVigilancia(){
+  var c=progreso(), v=c.vigilancia||{}, n=(c.repasosHechos||0), out=[];
+  Object.keys(v).forEach(function(f){
+    if(!v[f].revisado && v[f].vuelve<=n) out.push(f);
+  });
+  return out;
+}
+
+// El material de una parada de repaso
+function materialRepaso(){
+  var errs=misErrores().slice(0,4);
+  var vigilados=enVigilancia().slice(0,2);
+  var items=[], usadas={};
+
+  vigilados.forEach(function(f){
+    if(usadas[f])return; usadas[f]=1;
+    items.push({k:'model',en:f,es:'Esta se te atoraba. A ver cómo va ahora.',repaso:true,vigilada:true});
+  });
+  errs.forEach(function(e){
+    if(usadas[e.frase])return; usadas[e.frase]=1;
+    items.push({k:'model',en:e.frase,es:'Esta se te ha caído '+e.fallos+(e.fallos===1?' vez':' veces')+'.',repaso:true});
+  });
+
+  // si todavía no falla nada, se repasa lo más viejo que tenga
+  if(!items.length){
+    items=tocaHoy(4);
+  }
+  if(!items.length)return null;
+
+  var tipos=tiposDeError().slice(0,2);
+  return {
+    titulo:'Parada de repaso',
+    esRepaso:true,
+    tipos:tipos,
+    items:items.slice(0,5)
+  };
+}
+
+
+// Un aviso chiquito que se va solo. Para cosas que no merecen pantalla.
+function avisito(txt){
+  if(!document.body||!document.body.appendChild)return;
+  var v=document.getElementById('avisito');
+  if(v&&v.remove)v.remove();
+  var d=document.createElement('div');
+  d.id='avisito'; d.className='avisito'; d.setAttribute('role','status');
+  d.textContent=txt;
+  document.body.appendChild(d);
+  setTimeout(function(){ d.classList.add('fuera'); },2600);
+  setTimeout(function(){ if(d.parentNode)d.remove(); },3200);
+}
+
+// Arranca una parada de repaso: se arma en el momento con sus errores
+function arrancarRepaso(){
+  var R=materialRepaso();
+  if(!R){
+    avisito('Todavía no tengo errores tuyos que repasar. Sigue con la parada normal.');
+    var c0=progreso(); c0.parada=Math.min(c0.parada+1,PARADAS); guardarProgreso(c0); mapa();
+    return;
+  }
+  var S={
+    t:'Repaso', hoy:'repasamos lo que se te ha atorado',
+    enc:'Esto no es material nuevo: son tus propias frases.',
+    items:R.items, esRepaso:true, tipos:R.tipos
+  };
+  MAT=MAT.concat([S]);
+  sIdx=MAT.length-1; it=0; attempts=[]; t0=Date.now();
+  var c=progreso(); c.repasosHechos=(c.repasosHechos||0)+1; guardarProgreso(c);
+  say('Esta parada es de repaso. Son tus frases, las que se te han atorado.','es-MX');
+  correr();
+}
+
+
+
+/* ═══════════ íconos de línea ═══════════ */
+// Dibujados aquí mismo, en el estilo de las librerías de línea (24×24,
+// trazo de 2, puntas redondas). No se jala ninguna librería: la app es un
+// solo archivo y así no depende de internet ni arrastra licencias ajenas.
+// Los emojis se veían distintos en cada celular; esto se ve igual en todos.
+function ico(n,tam){
+  var d={
+    camino:'M4 20h4a4 4 0 0 0 0-8H8a4 4 0 0 1 0-8h4M16 4v.01M20 8a4 4 0 1 1-8 0 4 4 0 0 1 8 0M18 20h4',
+    chispa:'M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM18 16l.7 1.8L20.5 18.5l-1.8.7L18 21l-.7-1.8L15.5 18.5l1.8-.7z',
+    curva:'M3 3v16a2 2 0 0 0 2 2h16M7 15l3.5-4 3 2.5L20 7',
+    persona:'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8',
+    tijeras:'M6 6l12 12M8.5 6.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0M8.5 17.5a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0M18 6L6 18',
+    audifonos:'M3 14v-2a9 9 0 0 1 18 0v2M3 14a2 2 0 0 1 2-2h1v6H5a2 2 0 0 1-2-2zM21 14a2 2 0 0 0-2-2h-1v6h1a2 2 0 0 0 2-2z',
+    paleta:'M12 21a9 9 0 1 1 9-9c0 1.7-1.3 3-3 3h-1.5a2 2 0 0 0-1.4 3.4A2 2 0 0 1 12 21M7.5 10.5v.01M10.5 7v.01M14.5 7v.01M17 10v.01',
+    globo:'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18M3.6 9h16.8M3.6 15h16.8M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18',
+    nota:'M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5M9 13h6M9 17h4',
+    estrella:'M12 3l2.6 6.3L21 10l-5 4.3 1.5 6.7L12 17.6 6.5 21 8 14.3 3 10l6.4-.7z',
+    volver:'M3 12a9 9 0 1 0 3-6.7M3 4v5h5',
+    oido:'M6 8.5a6 6 0 1 1 12 0c0 2-1 3-2.5 4S13 14.5 13 16.5a2.5 2.5 0 0 1-5 0M9.5 8.5a2.5 2.5 0 0 1 5 0',
+    boca:'M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3M19 10v1a7 7 0 0 1-14 0v-1M12 19v3',
+    charla:'M21 14a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z',
+    bocina:'M11 5L6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13'
+  }[n]||'';
+  var t=tam||20;
+  return '<svg class="ico" width="'+t+'" height="'+t+'" viewBox="0 0 24 24" fill="none" '+
+    'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '+
+    'aria-hidden="true"><path d="'+d+'"/></svg>';
+}
+
+/* ═══════════ personalizar: todo lo que antes bloqueaba la entrada ═══════════ */
+// Brian lo movió aquí a propósito: primero que vea su tablero, y cuando
+// quiera empezar, entonces sí se le pregunta quién es.
+var PERSONALIZANDO=false;
+
+function personalizar(){
+  PERSONALIZANDO=true;
+  cerrarCajon();
+  seguirPersonalizacion();
+}
+
+// El orden: cómo se llama → su personaje → prueba de sonido → acento →
+// las preguntas → la prueba de nivel. Cada quien retoma donde se quedó.
+function seguirPersonalizacion(){
+  var a=(progreso().avatar)||{};
+  if(!D.experiencia&&D.experiencia===undefined){preguntaExperiencia();return;}
+  if(!a.sexo){ pantallaPersonaje(function(){ seguirPersonalizacion(); }); return; }
+  if(!D.probado){pruebaSonido();return;}
+  if(D.paquete===undefined){vozPicker();return;}
+  if(!P){entrevista();return;}
+  PERSONALIZANDO=false;
+  MAT=materialDe(P);
+  mapa();
+}
+
+// ¿ya está listo para practicar?
+function yaPersonalizo(){
+  var a=(progreso().avatar)||{};
+  return !!(P&&a.sexo&&D.probado);
+}
+
 /* ═══════════ pantalla del mapa ═══════════ */
 function mapa(){
   var c=progreso();
@@ -1933,6 +2691,7 @@ function mapa(){
   var tb=document.querySelector('.topbar');
   if(tb)tb.style.display='';
 
+  var t=tableroSVG(c.parada,PARADAS);
   var h='<div class="mapcab">'+
     '<div class="maptramo" style="background:'+tr.color+'">'+esc(tr.nombre)+'</div>'+
     '<div class="mapsub">'+esc(tr.sub)+'</div>'+
@@ -1942,50 +2701,63 @@ function mapa(){
       '<div class="mapdato"><b>'+diasSeguidos(c.dias)+'</b><span>días seguidos</span></div>'+
     '</div></div>';
 
-  // el camino: se muestran doce paradas alrededor de donde va
-  var ini=Math.max(1,c.parada-4), fin=Math.min(PARADAS,ini+11);
-  h+='<div class="camino">';
-  for(var n=fin;n>=ini;n--){
-    var t=tramoDe(n);
-    var estado = n<c.parada?'hecha' : (n===c.parada?'ahora':'falta');
-    var lado = (n%2===0)?'izq':'der';
-    h+='<div class="pnodo '+lado+' '+estado+'" data-n="'+n+'">'+
-       '<span class="pcirc" style="'+(estado!=='falta'?'background:'+t.color+';border-color:'+t.color:'')+'">'+
-       (estado==='hecha'?'✓':n)+'</span>'+
-       (n===c.parada?'<span class="pahora">Aquí vas</span>':'')+
-       '</div>';
-  }
-  h+='</div>';
+  h+='<div class="tabwrap">'+t.svg+
+     '<div class="aqui-pill">Aquí vas · '+c.parada+'</div></div>';
 
   h+='<div class="mapbotones">'+
-     '<button class="btn" id="seguir">Practicar la parada '+c.parada+'</button>'+
-     '<button class="btn ghost" id="atrasmapa" style="margin-top:8px">Repasar una parada anterior</button>'+
-     '<button class="btn ghost" id="miperfil" style="margin-top:6px">Mi avance y mi avatar</button>'+
+     '<button class="btn" id="seguir">'+
+       (!yaPersonalizo()?'Empezar: arma tu personaje'
+         :(esRepaso(c.parada)?'Repasar lo que se te atora':'Practicar la parada '+c.parada))+'</button>'+
+     (yaPersonalizo()
+       ?'<button class="btn ghost" id="miperfil" style="margin-top:8px">Mi avance y mi avatar</button>'
+       :'<p class="tiny" style="margin-top:10px">Son unos minutos. Con tus respuestas armo tus frases: '+
+        'no son de un libro, salen de tu trabajo.</p>')+
      '</div>';
 
   APP.innerHTML=h;
+
   document.getElementById('seguir').onclick=function(){
-    sIdx=(c.parada-1)%MAT.length;it=0;attempts=[];t0=Date.now();correr();
+    // sin sus respuestas, el material sería genérico: mejor mandarlo a armarlo
+    if(!yaPersonalizo()){ personalizar(); return; }
+    if(esRepaso(c.parada)){ arrancarRepaso(); return; }
+    sIdx=(contenidoDe(c.parada)-1)%MAT.length;it=0;attempts=[];t0=Date.now();correr();
   };
-  document.getElementById('atrasmapa').onclick=function(){
-    APP.querySelectorAll('.pnodo.hecha').forEach(function(x){x.classList.add('tocable');});
-    this.textContent='Toca la parada que quieras repasar';
-  };
-  APP.querySelectorAll('.pnodo').forEach(function(x){
-    x.onclick=function(){
-      var n=+x.dataset.n;
-      if(n>c.parada)return;   // adelante no se puede
-      sIdx=(n-1)%MAT.length;it=0;attempts=[];t0=Date.now();correr();
+  var mp=document.getElementById('miperfil');
+  if(mp)mp.onclick=perfilAlumno;
+
+  // No se regresa. Lo que se le atoró vuelve solo, en las casillas de repaso.
+  APP.querySelectorAll('.lo').forEach(function(g){
+    var n=+g.getAttribute('data-n');
+    g.style.cursor='default';
+    g.onclick=function(){
+      if(n<c.parada){
+        avisito('Ya no hace falta regresar. Lo que se te atoró te va a volver a salir en una parada de repaso.');
+      }
     };
   });
-  document.getElementById('miperfil').onclick=perfilAlumno;
-  say('Vas en la parada '+c.parada+'. '+tr.sub+'.','es-MX');
+
+  // si acaba de avanzar, el muñeco brinca a su nueva loseta
+  if(!yaPersonalizo()){
+    say('Este es tu camino. Toca el botón para armar tu personaje y tus frases.','es-MX');
+  }else if(SALTAR_DESDE&&SALTAR_DESDE<c.parada){
+    var de=SALTAR_DESDE; SALTAR_DESDE=0;
+    setTimeout(function(){
+      saltarA(de,c.parada,t.base,t.alto,function(){
+        if(idxTramo(de)!==idxTramo(c.parada)){
+          say('Llegaste a un tramo nuevo: '+tr.nombre+'.','es-MX');
+        }
+      });
+    },420);
+  }else{
+    say('Vas en la parada '+c.parada+'. '+tr.sub+'.','es-MX');
+  }
 }
+var SALTAR_DESDE=0;
 
 /* ═══════════ avance y avatar ═══════════ */
 // Se desbloquea por nivel: cosas de su propio trabajo, no disfraces.
 var PRENDAS=[
-  {id:'casco',   nombre:'Casco de seguridad', nivel:0, precio:0,   ico:'⛑️'},
+  {id:'casco',   nombre:'Casco de seguridad', nivel:0, precio:60,  ico:'⛑️'},
   {id:'chaleco', nombre:'Chaleco reflejante', nivel:0, precio:80,  ico:'🦺'},
   {id:'lentes',  nombre:'Lentes de protección',nivel:0,precio:120, ico:'🥽'},
   {id:'bata',    nombre:'Bata de laboratorio', nivel:1, precio:150, ico:'🥼'},
@@ -1997,11 +2769,94 @@ var PRENDAS=[
 ];
 var COLORES=[['#1D9E75','verde'],['#D85A30','coral'],['#C08A22','ámbar'],['#0F5D45','pino'],['#57534E','gris']];
 
+
+/* ═══════════ armar su personaje ═══════════ */
+// Empieza con lo mismo que todos: playera blanca, mezclilla y botas.
+// Lo único que escoge aquí es quién es. Lo demás se gana practicando.
+var PELOS=[['#1C1310','negro'],['#3B2A1C','castaño oscuro'],['#6B4A2B','castaño'],
+           ['#A97142','claro'],['#C9A227','rubio'],['#8A8580','canoso']];
+
+function pantallaPersonaje(alTerminar){
+  var c=progreso();
+  var a=c.avatar||{};
+  if(!a.sexo)a.sexo='h';
+  if(!a.corte)a.corte='corto';
+  if(!a.pelo_color)a.pelo_color='#3B2A1C';
+
+  function pinta(){
+    APP.innerHTML='<div class="qcard">'+
+      '<div class="qlbl">Tu personaje</div>'+
+      '<div class="qtxt">Así te vas a ver en el camino.</div>'+
+      '<div class="qsub">Empiezas con playera, mezclilla y botas. El casco, el chaleco y lo demás se ganan practicando.</div>'+
+      '<div class="pers"><svg viewBox="0 0 100 100">'+munecoSVG(50,92,a,1.15)+'</svg></div>'+
+      '<div class="qlbl">Quién eres</div>'+
+      '<div class="opcs" id="sx">'+
+        '<button data-v="h" class="'+(a.sexo==='h'?'sel':'')+'">Hombre</button>'+
+        '<button data-v="m" class="'+(a.sexo==='m'?'sel':'')+'">Mujer</button>'+
+      '</div>'+
+      '<div class="qlbl">Tu cabello</div>'+
+      '<div class="opcs" id="ct">'+
+        '<button data-v="corto" class="'+(a.corte==='corto'?'sel':'')+'">Corto</button>'+
+        '<button data-v="largo" class="'+(a.corte==='largo'?'sel':'')+'">Largo</button>'+
+      '</div>'+
+      '<div class="pelos" id="pl">'+
+        PELOS.map(function(p){
+          return '<button data-v="'+p[0]+'" title="'+p[1]+'" aria-label="Cabello '+p[1]+'" '+
+            'style="background:'+p[0]+'" class="'+(a.pelo_color===p[0]?'sel':'')+'"></button>';
+        }).join('')+
+      '</div>'+
+      '<button class="btn" id="listo">Este soy yo</button>'+
+      '</div>';
+
+    function grupo(id,campo){
+      var o=document.getElementById(id); if(!o)return;
+      o.querySelectorAll('button').forEach(function(b){
+        b.onclick=function(){ a[campo]=b.getAttribute('data-v'); pinta(); };
+      });
+    }
+    grupo('sx','sexo'); grupo('ct','corte'); grupo('pl','pelo_color');
+    document.getElementById('listo').onclick=function(){
+      var cc=progreso();
+      cc.avatar=cc.avatar||{};
+      cc.avatar.sexo=a.sexo; cc.avatar.corte=a.corte; cc.avatar.pelo_color=a.pelo_color;
+      guardarProgreso(cc);
+      if(alTerminar)alTerminar(); else mapa();
+    };
+  }
+  say('Arma tu personaje. Escoge quién eres y cómo traes el cabello.','es-MX');
+  pinta();
+}
+
+// Enseña cómo se le vería ESA prenda a él, con su cara y su pelo.
+// Vale más que un emoji: es una probada de lo que va a comprar.
+function prendaEnMuneco(id,mios){
+  var base={sexo:mios.sexo,corte:mios.corte,pelo_color:mios.pelo_color};
+  base[id]=1;
+  return '<svg viewBox="18 18 64 76" class="pmun" aria-hidden="true">'+munecoSVG(50,90,base,1)+'</svg>';
+}
+
 function perfilAlumno(){
+  // Se llega aquí desde el cajón, y el cajón está disponible desde el minuto
+  // uno: puede no haber perfil todavía. Antes esto reventaba en silencio.
+  if(!P){
+    APP.innerHTML=atras()+'<div class="qcard"><div class="qlbl">Tu avance</div>'+
+      '<div class="qtxt">Todavía no hay nada que mostrarte.</div>'+
+      '<div class="qsub">En cuanto armes tu personaje y contestes unas preguntas, '+
+      'aquí vas a ver tu curva, tus frases dominadas y tu muñeco.</div>'+
+      '<button class="btn" id="vamos">Armar mi personaje</button></div>';
+    ligarAtras(function(){mapa();});
+    var v=document.getElementById('vamos');
+    if(v)v.onclick=personalizar;
+    return;
+  }
   var c=progreso();
   var nv=(P&&P.nivel_n)||0;
   var mios=c.avatar||{};
   var h=atras()+'<div class="qcard"><div class="qlbl">Tu avance</div>'+
+    '<div class="miMuneco">'+
+      '<svg viewBox="0 0 100 100" class="munecoGde" aria-label="Tu muñeco">'+
+        munecoSVG(50,90,mios,1.05)+'</svg>'+
+    '</div>'+
     '<div class="qtxt">'+esc(P.nombre)+'</div>'+
     '<div class="qsub">Nivel '+esc((P&&P.nivel)||'Pre-A1')+' · parada '+c.parada+' de '+PARADAS+'</div>'+
     '<div class="mapfila" style="margin-bottom:16px">'+
@@ -2016,7 +2871,7 @@ function perfilAlumno(){
         var bloq=nv<p.nivel;
         var tengo=!!mios[p.id];
         return '<button class="prenda'+(tengo?' mia':'')+(bloq?' bloq':'')+'" data-id="'+p.id+'">'+
-          '<span class="pico">'+p.ico+'</span>'+
+          '<span class="pico">'+prendaEnMuneco(p.id,mios)+'</span>'+
           '<span class="pnom">'+esc(p.nombre)+'</span>'+
           '<span class="ppre">'+(bloq?'Se abre en '+['Pre-A1','A1','A2','B1'][p.nivel]
             :(tengo?'ya es tuya':(p.precio===0?'gratis':p.precio+' pts')))+'</span></button>';
@@ -2107,6 +2962,8 @@ function registrarEnMemoria(frase,pct){
   m.ultima=hoyISO();
   m.proxima=enDias(DIAS[m.paso]);
   m.dominada=(m.paso>=3&&m.fallos===0)||m.paso>=4;
+  // si venía fallando y ahora salió, entra a vigilancia: vuelve una vez más
+  if(pct>=80&&m.fallos>0&&m.paso>=2)retirarError(m.frase);
   mem[k]=m;guardarMemoria(mem);
 }
 // lo que toca repasar hoy: vencido y no dominado, lo más atrasado primero
@@ -2164,9 +3021,9 @@ function lang(){return modoIdioma()==='es'?'es-MX':'en-US';}
 /* ═══════════ el plan de hoy ═══════════ */
 // Antes de empezar, tres pasos. Cortos, para que no se sienta abrumado.
 var PLAN=[
-  {en:'First you listen.',   es:'Primero escuchas.',        ico:'🎧'},
-  {en:'Then you repeat.',    es:'Luego repites en voz alta.',ico:'🗣️'},
-  {en:'Then you answer.',    es:'Después contestas tú.',     ico:'💬'}
+  {en:'First you listen.',   es:'Primero escuchas.',        ico:'oido'},
+  {en:'Then you repeat.',    es:'Luego repites en voz alta.',ico:'boca'},
+  {en:'Then you answer.',    es:'Después contestas tú.',     ico:'charla'}
 ];
 function planDeHoy(S){
   var m=modoIdioma();
@@ -2174,9 +3031,9 @@ function planDeHoy(S){
     PLAN.map(function(p,i){
       var t = m==='es' ? p.es : (m==='both' ? p.en+' · '+p.es : p.en);
       return '<div class="plan-p"><span class="plan-n">'+(i+1)+'</span>'+
-             '<span class="plan-i">'+p.ico+'</span><span class="plan-t">'+esc(t)+'</span></div>';
+             '<span class="plan-i">'+ico(p.ico,18)+'</span><span class="plan-t">'+esc(t)+'</span></div>';
     }).join('')+
-    '<button class="plan-b" id="planoir">🔊 Escuchar el plan</button></div>';
+    '<button class="plan-b" id="planoir">'+ico('bocina',17)+' Escuchar el plan</button></div>';
 }
 function ligarPlan(S){
   var b=document.getElementById('planoir');
@@ -2708,7 +3565,7 @@ function ayuda(txt,sigue){
     '<div class="guia-l">Qué hay que hacer aquí</div>'+
     '<div class="guia-t" id="guiatxt">'+txt+'</div>'+
     (sigue?'<div class="guia-s">Después de esto: '+sigue+'</div>':'')+
-    '<button class="guia-b" id="guiaoir">🔊 Escuchar otra vez</button>'+
+    '<button class="guia-b" id="guiaoir">'+ico('bocina',16)+' Escuchar otra vez</button>'+
     '</div>';
 }
 function ligarAyuda(txt){
@@ -2751,6 +3608,11 @@ function preguntaExperiencia(){
 
 /* ═══════════ marca · lo primero que se ve ═══════════ */
 function marca(){
+  var mb=document.getElementById('menub'), vl=document.getElementById('velo');
+  if(mb&&!mb.onclick){
+    mb.onclick=function(){ CAJON_ABIERTO?cerrarCajon():abrirCajon(); };
+    if(vl)vl.onclick=cerrarCajon;
+  }
   var tb=document.querySelector('.topbar');
   if(tb)tb.style.display='none';
   APP.innerHTML='<div class="splash marca" id="mk">'+
@@ -2767,6 +3629,7 @@ function marca(){
     '<button class="btn sp-go" id="mkgo" style="margin-top:34px">Entrar</button>'+
     '</div>';
   cargarVoces(aplicarPreferencias);
+  try{aplicarTema((load().tema)||'crema');}catch(e){}
   document.getElementById('mkgo').onclick=function(){
     vioMarca=true;
     var m=document.getElementById('mk');
@@ -3434,7 +4297,7 @@ function paso(){
            return '<button class="varb" data-v="'+vi+'">'+esc(v)+' <i>▶</i></button>';
          }).join('')+'</div>':'')+
        '<div class="oirfila">'+
-         '<button class="oirb" id="oir">🔊 Oírla otra vez</button>'+
+         '<button class="oirb" id="oir">'+ico('bocina',16)+' Oírla otra vez</button>'+
          '<button class="oirb alt" id="oires">🇲🇽 Qué significa</button>'+
        '</div>'+
        '<div id="res"></div>'+
@@ -3445,7 +4308,7 @@ function paso(){
     h+='<div class="qlbl">Números · el que más se confunde</div>'+
        '<div class="qtxt">¿Cuál oíste?</div>'+
        bilingue('Listen and choose the number.','Escucha y escoge el número.')+
-       '<button class="oirb full" id="oir" style="margin-bottom:12px">🔊 Escuchar</button>'+
+       '<button class="oirb full" id="oir" style="margin-bottom:12px">'+ico('bocina',16)+' Escuchar</button>'+
        '<div class="opts" id="numops">'+
          x.ops.map(function(o,i){return '<button class="opt" data-i="'+i+'">'+o.es+' · '+o.en+'</button>';}).join('')+
        '</div>'+
@@ -3457,7 +4320,7 @@ function paso(){
        '<div class="qtxt">'+esc(x.en)+'</div>'+
        bilingue(INS.drill.en,x.es)+
        '<div class="oirfila">'+
-         '<button class="oirb" id="oir">🔊 Oírla</button>'+
+         '<button class="oirb" id="oir">'+ico('bocina',16)+' Oírla</button>'+
          '<button class="oirb alt" id="oires">🇲🇽 Qué significa</button>'+
        '</div>'+
        botonVideo(x.en)+
@@ -3471,10 +4334,10 @@ function paso(){
     h+='<div class="qlbl">Situación · primero escucha</div>'+
        '<div class="ctxbox">'+esc(x.ctx)+'</div>'+
        '<div class="tapado" id="tapado">'+
-         '<span class="tapado-ico">🎧</span>'+
+         '<span class="tapado-ico">'+ico('oido',22)+'</span>'+
          '<span class="tapado-txt">Alguien te va a hablar en inglés.<br>Escúchalo antes de ver lo que dice.</span>'+
        '</div>'+
-       '<button class="oirb full" id="oir">🔊 Escuchar</button>'+
+       '<button class="oirb full" id="oir">'+ico('bocina',16)+' Escuchar</button>'+
        '<p class="tiny" id="conteo" style="text-align:left;margin:8px 0 0">'+
          'La primera vez, solo capta de qué se trata. La segunda, fíjate en los detalles.</p>'+
        '<div id="chequeo"></div>'+
@@ -3488,7 +4351,7 @@ function paso(){
        '<div class="qtxt">'+esc(x.q)+'</div>'+
        bilingue(INS.ask.en,x.es)+
        '<div class="oirfila">'+
-         '<button class="oirb" id="oir">🔊 Oír la pregunta</button>'+
+         '<button class="oirb" id="oir">'+ico('bocina',16)+' Oír la pregunta</button>'+
          '<button class="oirb alt" id="oires">🇲🇽 Qué significa</button>'+
        '</div>'+
        '<div id="res"></div>'+

@@ -495,6 +495,64 @@
   .guiado .db-msg{font-size:18px}
   .guiado .db-marca{font-size:15px}
 </style>
+<style>
+  /* ── reloj ── */
+  .reloj{position:sticky;top:0;z-index:5;float:right;font-family:var(--mono);font-size:12px;
+    background:var(--papel);border:1px solid var(--linea);border-radius:20px;padding:5px 12px;
+    color:var(--tinta-2);margin-bottom:8px}
+  .reloj.poco{border-color:var(--ambar);color:#8A6210}
+  .reloj.fin{border-color:var(--coral);color:var(--coral);font-size:11px}
+  .btn-cerrar{background:var(--coral)!important;color:#fff!important;border-color:var(--coral)!important}
+
+  /* ── mapa ── */
+  .mapcab{background:var(--papel);border:1px solid var(--linea);border-radius:16px;padding:18px;margin-bottom:16px}
+  .maptramo{display:inline-block;color:#fff;border-radius:20px;padding:6px 14px;font-size:13.5px;
+    font-weight:600;margin-bottom:8px}
+  .mapsub{font-family:var(--display);font-size:19px;color:var(--tinta);line-height:1.3;margin-bottom:16px}
+  .mapfila{display:flex;gap:8px}
+  .mapdato{flex:1;background:var(--crema);border-radius:10px;padding:11px 8px;text-align:center}
+  .mapdato b{display:block;font-family:var(--display);font-size:22px;color:var(--verde-hondo);line-height:1}
+  .mapdato span{display:block;font-size:10.5px;color:var(--tinta-2);margin-top:4px;line-height:1.3}
+
+  .camino{position:relative;padding:10px 0 6px}
+  .camino:before{content:'';position:absolute;left:50%;top:0;bottom:0;width:2px;
+    background:repeating-linear-gradient(var(--linea) 0 6px,transparent 6px 12px);transform:translateX(-1px)}
+  .pnodo{position:relative;display:flex;align-items:center;gap:10px;padding:7px 0;min-height:44px}
+  .pnodo.izq{justify-content:flex-start;padding-right:52%}
+  .pnodo.der{justify-content:flex-end;padding-left:52%}
+  .pcirc{width:40px;height:40px;border-radius:50%;background:var(--papel);border:2px solid var(--linea);
+    display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;
+    color:var(--tenue);flex:0 0 40px}
+  .pnodo.hecha .pcirc{color:#fff}
+  .pnodo.ahora .pcirc{color:#fff;box-shadow:0 0 0 5px rgba(29,158,117,.18);transform:scale(1.15)}
+  .pnodo.falta{opacity:.45}
+  .pnodo.hecha,.pnodo.ahora{cursor:pointer}
+  .pahora{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--verde-hondo)}
+  .mapbotones{margin-top:16px}
+
+  /* ── avatar ── */
+  .prendas{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .prenda{background:var(--crema);border:1px solid var(--linea);border-radius:12px;padding:13px 10px;
+    text-align:center;cursor:pointer;font-family:var(--body)}
+  .prenda:hover{border-color:var(--verde)}
+  .prenda.mia{background:var(--verde-suave);border-color:var(--verde)}
+  .prenda.bloq{opacity:.4;cursor:default}
+  .pico{display:block;font-size:26px;margin-bottom:5px}
+  .pnom{display:block;font-size:12.5px;color:var(--tinta);line-height:1.3;margin-bottom:3px}
+  .ppre{display:block;font-family:var(--mono);font-size:10px;color:var(--tinta-2)}
+
+  /* ── curva ── */
+  .curva{background:var(--crema);border:1px solid var(--linea);border-radius:12px;padding:14px}
+  .cbarras{display:flex;gap:6px;align-items:flex-end;height:90px;margin-top:10px}
+  .cb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+  .cb i{width:100%;background:var(--verde);border-radius:4px 4px 0 0;min-height:4px;display:block}
+  .cb span{font-family:var(--mono);font-size:10px;color:var(--tinta-2);margin-top:4px}
+
+  .ganados{background:var(--verde-suave);border:1px solid var(--verde);border-radius:12px;
+    padding:12px 14px;margin-top:12px;font-size:13px;color:var(--tinta-2);line-height:1.5}
+  .ganados span{display:block;font-family:var(--display);font-size:21px;color:var(--verde-hondo);margin-bottom:4px}
+</style>
 
 
 
@@ -516,7 +574,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v65 · 8 sep";
+var VERSION="v66 · 8 sep";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -1231,7 +1289,7 @@ function router(){
   aplicarVoz(D.voz);elegirVozES();if(D.rate)RATE=D.rate;
   if(!P){entrevista();return;}
   MAT=materialDe(P);
-  if(sIdx===null){menu();return;}
+  if(sIdx===null){mapa();return;}
   correr();
 }
 
@@ -1766,6 +1824,234 @@ function ejercicioNumeros(){
   return {k:'num',en:bien.en,es:'¿Cuál oíste?',ops:[a,b],bien:bien};
 }
 
+
+
+
+/* ═══════════ los veinte minutos ═══════════ */
+// El límite no es para cortar: es para que sepa cuánto le queda y aproveche.
+// Al llegar a cero no se bloquea nada — se le ofrece cerrar. Practicar de más
+// cansado no sirve, y obligarlo a parar a media frase tampoco.
+var MINUTOS=20, RELOJ=null, AVISADO=false;
+function arrancarReloj(){
+  pararReloj();AVISADO=false;
+  RELOJ=setInterval(pintarReloj,1000);
+  pintarReloj();
+}
+function pararReloj(){ if(RELOJ){clearInterval(RELOJ);RELOJ=null;} }
+function pintarReloj(){
+  var caja=document.getElementById('reloj');
+  if(!caja)return;
+  var pasados=Math.floor((Date.now()-t0)/1000);
+  var quedan=Math.max(0,MINUTOS*60-pasados);
+  var m=Math.floor(quedan/60), sg=quedan%60;
+  caja.textContent=m+':'+(sg<10?'0':'')+sg;
+  caja.className='reloj'+(quedan<=180?' poco':'')+(quedan===0?' fin':'');
+  if(quedan===0&&!AVISADO){
+    AVISADO=true;
+    caja.textContent='se acabó el tiempo';
+    var b=document.getElementById('skip');
+    if(b){
+      b.classList.add('btn-cerrar');
+      b.textContent='Cerrar aquí · ya son 20 minutos';
+    }
+    say('Ya pasaron los veinte minutos. Puedes cerrar aquí o terminar lo que estás haciendo.','es-MX');
+  }
+}
+function marcaReloj(){ return '<div class="reloj" id="reloj">'+MINUTOS+':00</div>'; }
+
+/* ═══════════ el camino ═══════════ */
+// Sesenta paradas, iguales para todos. Lo que cambia es dónde entra cada
+// quien según su nivel: ver el camino recorrido detrás motiva más que
+// empezar de cero sabiendo que ya sabes.
+var PARADAS=60;
+var TRAMOS=[
+  {desde:1,  hasta:12, nombre:'En tu área',        sub:'Presentarte y decir qué haces',        color:'#1D9E75'},
+  {desde:13, hasta:30, nombre:'Con tu equipo',     sub:'Turnos, rutina y pedir cosas',         color:'#137A59'},
+  {desde:31, hasta:45, nombre:'Llega un cliente',  sub:'Atender una visita a la planta',       color:'#C08A22'},
+  {desde:46, hasta:54, nombre:'Por teléfono',      sub:'Llamadas y correos del trabajo',       color:'#D85A30'},
+  {desde:55, hasta:60, nombre:'Fuera de México',   sub:'Viajar y presentarte con un cliente',  color:'#0F5D45'}
+];
+function tramoDe(n){
+  for(var i=0;i<TRAMOS.length;i++)if(n>=TRAMOS[i].desde&&n<=TRAMOS[i].hasta)return TRAMOS[i];
+  return TRAMOS[0];
+}
+// dónde arranca cada quien
+function paradaInicial(nivel_n){
+  return [1,12,30,45,45][nivel_n||0];
+}
+function progreso(){
+  var d=load();
+  if(!d.camino){
+    d.camino={parada:paradaInicial(P&&P.nivel_n),maxima:paradaInicial(P&&P.nivel_n),
+              puntos:0,gastados:0,dias:[],avatar:{}};
+    save(d);D=d;
+  }
+  return d.camino;
+}
+function guardarProgreso(c){var d=load();d.camino=c;save(d);D=d;}
+
+// ── puntos ──
+// Se ganan por producir y por volver. Volver pesa más: terminar una lección
+// lo hace cualquiera con ganas un martes; volver el jueves es lo difícil.
+function sumarPuntos(rec){
+  var c=progreso();
+  var att=rec.intentos||[];
+  var producidas=att.filter(function(a){return a.oido&&a.tipo!=='pista'&&a.tipo!=='listening'&&a.tipo!=='numeros';}).length;
+  var escuchas=att.filter(function(a){return a.tipo==='listening'&&a.pct===100;}).length;
+  var sombra=att.filter(function(a){return a.tipo==='shadow';}).length;
+  var ganados=producidas*3+escuchas*2+sombra*2+10;   // 10 por terminar
+
+  // constancia: si volvió otro día, vale más
+  var hoy=new Date().toISOString().slice(0,10);
+  if(c.dias.indexOf(hoy)<0){
+    c.dias.push(hoy);
+    var seguidos=diasSeguidos(c.dias);
+    ganados+=15+Math.min(seguidos,5)*5;
+  }
+  c.puntos+=ganados;
+  c.parada=Math.min(c.parada+1,PARADAS);
+  c.maxima=Math.max(c.maxima,c.parada);
+  guardarProgreso(c);
+  return {ganados:ganados,producidas:producidas,escuchas:escuchas,sombra:sombra};
+}
+function diasSeguidos(dias){
+  if(!dias.length)return 0;
+  var o=dias.slice().sort().reverse(),n=1;
+  for(var i=1;i<o.length;i++){
+    var a=new Date(o[i-1]),b=new Date(o[i]);
+    if(Math.round((a-b)/86400000)===1)n++; else break;
+  }
+  return n;
+}
+function puntosLibres(){var c=progreso();return c.puntos-(c.gastados||0);}
+
+
+/* ═══════════ pantalla del mapa ═══════════ */
+function mapa(){
+  var c=progreso();
+  var tr=tramoDe(c.parada);
+  var tb=document.querySelector('.topbar');
+  if(tb)tb.style.display='';
+
+  var h='<div class="mapcab">'+
+    '<div class="maptramo" style="background:'+tr.color+'">'+esc(tr.nombre)+'</div>'+
+    '<div class="mapsub">'+esc(tr.sub)+'</div>'+
+    '<div class="mapfila">'+
+      '<div class="mapdato"><b>'+c.parada+'</b><span>de '+PARADAS+'</span></div>'+
+      '<div class="mapdato"><b>'+puntosLibres()+'</b><span>puntos</span></div>'+
+      '<div class="mapdato"><b>'+diasSeguidos(c.dias)+'</b><span>días seguidos</span></div>'+
+    '</div></div>';
+
+  // el camino: se muestran doce paradas alrededor de donde va
+  var ini=Math.max(1,c.parada-4), fin=Math.min(PARADAS,ini+11);
+  h+='<div class="camino">';
+  for(var n=fin;n>=ini;n--){
+    var t=tramoDe(n);
+    var estado = n<c.parada?'hecha' : (n===c.parada?'ahora':'falta');
+    var lado = (n%2===0)?'izq':'der';
+    h+='<div class="pnodo '+lado+' '+estado+'" data-n="'+n+'">'+
+       '<span class="pcirc" style="'+(estado!=='falta'?'background:'+t.color+';border-color:'+t.color:'')+'">'+
+       (estado==='hecha'?'✓':n)+'</span>'+
+       (n===c.parada?'<span class="pahora">Aquí vas</span>':'')+
+       '</div>';
+  }
+  h+='</div>';
+
+  h+='<div class="mapbotones">'+
+     '<button class="btn" id="seguir">Practicar la parada '+c.parada+'</button>'+
+     '<button class="btn ghost" id="atrasmapa" style="margin-top:8px">Repasar una parada anterior</button>'+
+     '<button class="btn ghost" id="miperfil" style="margin-top:6px">Mi avance y mi avatar</button>'+
+     '</div>';
+
+  APP.innerHTML=h;
+  document.getElementById('seguir').onclick=function(){
+    sIdx=(c.parada-1)%MAT.length;it=0;attempts=[];t0=Date.now();correr();
+  };
+  document.getElementById('atrasmapa').onclick=function(){
+    APP.querySelectorAll('.pnodo.hecha').forEach(function(x){x.classList.add('tocable');});
+    this.textContent='Toca la parada que quieras repasar';
+  };
+  APP.querySelectorAll('.pnodo').forEach(function(x){
+    x.onclick=function(){
+      var n=+x.dataset.n;
+      if(n>c.parada)return;   // adelante no se puede
+      sIdx=(n-1)%MAT.length;it=0;attempts=[];t0=Date.now();correr();
+    };
+  });
+  document.getElementById('miperfil').onclick=perfilAlumno;
+  say('Vas en la parada '+c.parada+'. '+tr.sub+'.','es-MX');
+}
+
+/* ═══════════ avance y avatar ═══════════ */
+// Se desbloquea por nivel: cosas de su propio trabajo, no disfraces.
+var PRENDAS=[
+  {id:'casco',   nombre:'Casco de seguridad', nivel:0, precio:0,   ico:'⛑️'},
+  {id:'chaleco', nombre:'Chaleco reflejante', nivel:0, precio:80,  ico:'🦺'},
+  {id:'lentes',  nombre:'Lentes de protección',nivel:0,precio:120, ico:'🥽'},
+  {id:'bata',    nombre:'Bata de laboratorio', nivel:1, precio:150, ico:'🥼'},
+  {id:'cofia',   nombre:'Cofia',              nivel:1, precio:100, ico:'👒'},
+  {id:'camisa',  nombre:'Camisa de oficina',  nivel:1, precio:200, ico:'👔'},
+  {id:'gafete',  nombre:'Gafete de visitante',nivel:2, precio:250, ico:'📛'},
+  {id:'maleta',  nombre:'Maleta de viaje',    nivel:2, precio:400, ico:'🧳'},
+  {id:'pasaporte',nombre:'Pasaporte',         nivel:3, precio:600, ico:'🛂'}
+];
+var COLORES=[['#1D9E75','verde'],['#D85A30','coral'],['#C08A22','ámbar'],['#0F5D45','pino'],['#57534E','gris']];
+
+function perfilAlumno(){
+  var c=progreso();
+  var nv=(P&&P.nivel_n)||0;
+  var mios=c.avatar||{};
+  var h=atras()+'<div class="qcard"><div class="qlbl">Tu avance</div>'+
+    '<div class="qtxt">'+esc(P.nombre)+'</div>'+
+    '<div class="qsub">Nivel '+esc((P&&P.nivel)||'Pre-A1')+' · parada '+c.parada+' de '+PARADAS+'</div>'+
+    '<div class="mapfila" style="margin-bottom:16px">'+
+      '<div class="mapdato"><b>'+(load().sesiones||[]).length+'</b><span>sesiones</span></div>'+
+      '<div class="mapdato"><b>'+cuantasDominadas().dominadas+'</b><span>frases dominadas</span></div>'+
+      '<div class="mapdato"><b>'+c.puntos+'</b><span>puntos ganados</span></div>'+
+    '</div>'+
+    curvaDeAvance()+
+    '<div class="qlbl" style="margin-top:18px">Tu avatar · te quedan '+puntosLibres()+' puntos</div>'+
+    '<div class="prendas">'+
+      PRENDAS.map(function(p){
+        var bloq=nv<p.nivel;
+        var tengo=!!mios[p.id];
+        return '<button class="prenda'+(tengo?' mia':'')+(bloq?' bloq':'')+'" data-id="'+p.id+'">'+
+          '<span class="pico">'+p.ico+'</span>'+
+          '<span class="pnom">'+esc(p.nombre)+'</span>'+
+          '<span class="ppre">'+(bloq?'Se abre en '+['Pre-A1','A1','A2','B1'][p.nivel]
+            :(tengo?'ya es tuya':(p.precio===0?'gratis':p.precio+' pts')))+'</span></button>';
+      }).join('')+
+    '</div></div>';
+  APP.innerHTML=h;
+  ligarAtras(function(){mapa();});
+  APP.querySelectorAll('.prenda').forEach(function(b){
+    b.onclick=function(){
+      var p=PRENDAS.filter(function(x){return x.id===b.dataset.id;})[0];
+      if(!p||nv<p.nivel)return;
+      var cc=progreso();
+      cc.avatar=cc.avatar||{};
+      if(cc.avatar[p.id])return;
+      if(puntosLibres()<p.precio)return;
+      cc.avatar[p.id]=1;cc.gastados=(cc.gastados||0)+p.precio;
+      guardarProgreso(cc);perfilAlumno();
+    };
+  });
+}
+
+// la curva: cuántas frases produjo en cada sesión
+function curvaDeAvance(){
+  var ses=(load().sesiones||[]).slice(-8);
+  if(ses.length<2)return '<p class="tiny" style="text-align:left">Con dos sesiones ya puedes ver tu curva.</p>';
+  var vals=ses.map(function(r){
+    return (r.intentos||[]).filter(function(a){return a.oido&&a.tipo!=='pista';}).length;
+  });
+  var max=Math.max.apply(null,vals)||1;
+  return '<div class="curva"><span class="hl">Frases que dijiste en cada sesión</span>'+
+    '<div class="cbarras">'+vals.map(function(v,i){
+      return '<div class="cb"><i style="height:'+Math.round(v/max*100)+'%"></i><span>'+v+'</span></div>';
+    }).join('')+'</div>'+
+    '<p class="tiny" style="text-align:left;margin:8px 0 0">De '+vals[0]+' a '+vals[vals.length-1]+' frases.</p></div>';
+}
 
 /* ═══════════ lo que Brian corrigió ═══════════ */
 // El bucle: Brian firma en la hoja y escribe la corrección; la app la recoge
@@ -2352,13 +2638,13 @@ function pruebaNivel(){
 // La llave NUNCA va aquí: este archivo es público. Se pone en el Apps Script
 // y aquí solo va la dirección de ese servidor. Si está vacía, la app funciona
 // igual que antes, sin IA.
-var IA_ENDPOINT='https://script.google.com/macros/s/AKfycbxlAGlMVpdjqLZ_yh-Oh3934akKkfHojlGonjHKnUE3ZncdQRsT2bMzv0Elc0Ng4DK1Hw/exec';
+var IA_ENDPOINT='';
 // Si pones aquí la dirección del servidor de voz, la app pide el audio al vuelo
 // y ya no hace falta subir un solo archivo. El servidor lo genera y lo guarda.
 var VOZ_ENDPOINT='https://script.google.com/macros/s/AKfycbxJgynQD_GCLvdzlDNUrc8AnnWbTeS-1G6_lqIkNjelpB7Mqbjeg-qH3_tpidzNMGiK/exec';
 // Servidor de datos: si lo pones, cada sesión se guarda sola en tu hoja.
 // Si está vacío, el alumno tiene que mandarla por correo.
-var DATOS_ENDPOINT='https://script.google.com/macros/s/AKfycbyW4nHbMi8a4pcOS_0PUOYR053PEYwQ0tFjm9hZM4Tx7kq2hK6VdrZy9PGqyrlsSrimng/exec';
+var DATOS_ENDPOINT='';
 
 function hayIA(){return !!IA_ENDPOINT;}
 function pedirIA(accion,datos,ok,falla){
@@ -3092,7 +3378,7 @@ function portadaSesion(){
   APP.querySelectorAll('.spk').forEach(function(b){
     b.onclick=function(){say(modelos[+b.dataset.i].en,'en-US');};
   });
-  document.getElementById('go').onclick=function(){t0=Date.now();vistos={};paso();};
+  document.getElementById('go').onclick=function(){t0=Date.now();vistos={};arrancarReloj();paso();};
   document.getElementById('atras').onclick=function(){speechSynthesis&&speechSynthesis.cancel();sIdx=null;router();};
 }
 
@@ -3106,6 +3392,7 @@ var VECES_OIDO=0;
 function paso(){
   callarTodo();
   VECES_OIDO=0;
+  setTimeout(pintarReloj,50);
   var S=MAT[sIdx];
   if(it>=S.items.length){cierre();return;}
   var x=S.items[it];
@@ -3125,7 +3412,7 @@ function paso(){
     sit:'Primero escucha sin ver el texto. La primera vez capta de qué se trata; la segunda, los detalles. Luego contestas.'
   };
   var quedan=S.items.length-it-1;
-  var h=atras()+ayuda(ayudas[x.k],(quedan>0?'quedan '+quedan+' ejercicios':'el cierre de la sesión'))+'<div class="prog">'+S.items.map(function(_,i){return '<i class="'+(i<=it?'on':'')+'"></i>';}).join('')+'</div><div class="qcard">';
+  var h=atras()+marcaReloj()+ayuda(ayudas[x.k],(quedan>0?'quedan '+quedan+' ejercicios':'el cierre de la sesión'))+'<div class="prog">'+S.items.map(function(_,i){return '<i class="'+(i<=it?'on':'')+'"></i>';}).join('')+'</div><div class="qcard">';
 
   if(x.k==='model'){
     var vars=variantesDe(x.en,P);
@@ -3448,6 +3735,7 @@ function registrar(x,t){
 
 /* ═══════════ cierre y envío ═══════════ */
 function cierre(){
+  pararReloj();
   var S=MAT[sIdx];
   var dichas=attempts.filter(function(a){return a.oido&&a.tipo!=='pista';});
   var libres=attempts.filter(function(a){return (a.tipo==='free'||a.tipo==='sit')&&a.oido;});
@@ -3496,7 +3784,7 @@ function cierre(){
 
   var h='<div class="qcard"><div class="qlbl">Cierre</div><div class="qtxt">Buen trabajo, '+esc(P.nombre)+'.</div>'+
     '<div class="qsub">'+msg+(prom!==null?' Tus repeticiones salieron al '+prom+'% de parecido con el modelo.':'')+'</div>'+
-    '<button class="btn" id="menu">Volver a las sesiones</button></div>'+
+    '<button class="btn" id="menu">Volver al camino</button></div>'+
     '<div class="sumcard"><h3>Lo que se le manda a tu maestro</h3><p class="sub">Cada intento, tal como salió. Brian lo revisa y te devuelve máximo tres correcciones.</p>'+
     attempts.map(function(a){
       if(a.tipo==='pista')return '<div class="att"><span class="hd">pidió pista · '+esc(a.meta)+'</span></div>';
@@ -3535,6 +3823,12 @@ function cierre(){
     rec.dudas=DUDAS.slice();
     return pack(rec);
   }
+  // los puntos se dan al cerrar
+  var gan=sumarPuntos(rec);
+  var cab=APP.querySelector('.qcard');
+  if(cab)cab.insertAdjacentHTML('beforeend',
+    '<div class="ganados"><span>+'+gan.ganados+' puntos</span>'+
+    gan.producidas+' frases tuyas · '+gan.escuchas+' escuchas · '+gan.sombra+' veces al mismo tiempo</div>');
   var codigo=pack(rec);
   document.getElementById('cd').value=codigo;
   document.getElementById('menu').onclick=function(){sIdx=null;router();};

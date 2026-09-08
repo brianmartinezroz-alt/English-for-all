@@ -473,6 +473,22 @@
   .sh-p.on{background:var(--verde)}
   .guiado .sh-t{font-size:15px}
 </style>
+<style>
+  .ygb{width:100%;background:var(--verde-suave);border:1px solid var(--verde);border-radius:22px;
+    padding:13px;margin:0 0 12px;font-family:var(--body);font-size:14px;font-weight:600;
+    color:var(--verde-hondo);cursor:pointer}
+  .ygb:hover{background:var(--verde);color:#fff}
+  .ygaviso2{font-size:12px;color:var(--tinta-2);line-height:1.5;margin:10px 0 0}
+  .guiado .ygb{font-size:15.5px;padding:15px}
+</style>
+<style>
+  .acfila{display:flex;flex-wrap:wrap;gap:6px}
+  .acb{flex:1;min-width:110px;background:var(--papel);border:1px solid var(--linea);border-radius:20px;
+    padding:11px 10px;font-family:var(--body);font-size:13px;color:var(--tinta-2);cursor:pointer}
+  .acb:hover{border-color:var(--verde);color:var(--verde-hondo)}
+  .acb.on{background:var(--verde);border-color:var(--verde);color:#fff;font-weight:600}
+  .guiado .acb{font-size:15px;padding:14px 10px}
+</style>
 
 
 </head>
@@ -493,7 +509,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v58 · 5 sep";
+var VERSION="v62 · 7 sep";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -1380,105 +1396,132 @@ function repasoDeErrores(){
 
 
 
-/* ═══════════ ver a gente real diciéndolo ═══════════ */
-// YouGlish busca la frase en videos de YouTube y muestra a hablantes reales
-// diciéndola. Se carga solo cuando el alumno lo pide, para no pesar de más.
-var YG_LISTO=false,YG_WIDGET=null,YG_PENDIENTE=null;
 
-function cargarYouglish(cb){
-  if(YG_LISTO){cb&&cb();return;}
-  if(window.YG&&window.YG.Widget){YG_LISTO=true;cb&&cb();return;}
-  window.onYouglishAPIReady=function(){YG_LISTO=true;cb&&cb();};
-  if(document.getElementById('yg-script'))return;
-  var t=document.createElement('script');
-  t.id='yg-script';
-  t.src='https://youglish.com/public/emb/widget.js';
-  t.onerror=function(){YG_LISTO=false;cb&&cb('error');};
-  document.getElementsByTagName('script')[0].parentNode.insertBefore(t,document.getElementsByTagName('script')[0]);
+
+
+/* ═══════════ grabar y comparar ═══════════ */
+// El error más común del shadowing es practicar sin oírse. Después de hablar,
+// puede oír el modelo y su propia voz, una tras otra.
+var MI_GRABACION=null,GRAB_ACTIVA=null,GRAB_TROZOS=[];
+function grabandoDisponible(){
+  return !!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&window.MediaRecorder);
+}
+function empezarGrabacion(){
+  if(!grabandoDisponible())return;
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(st){
+    GRAB_TROZOS=[];
+    var tipo='';
+    ['audio/webm;codecs=opus','audio/webm','audio/mp4'].forEach(function(t){
+      if(!tipo&&window.MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t))tipo=t;
+    });
+    GRAB_ACTIVA=tipo?new MediaRecorder(st,{mimeType:tipo}):new MediaRecorder(st);
+    GRAB_ACTIVA.ondataavailable=function(e){if(e.data&&e.data.size)GRAB_TROZOS.push(e.data);};
+    GRAB_ACTIVA.onstop=function(){
+      try{st.getTracks().forEach(function(t){t.stop();});}catch(e){}
+      if(!GRAB_TROZOS.length)return;
+      MI_GRABACION=URL.createObjectURL(new Blob(GRAB_TROZOS,{type:GRAB_ACTIVA.mimeType||'audio/webm'}));
+    };
+    GRAB_ACTIVA.start();
+  }).catch(function(){});
+}
+function pararGrabacion(){
+  try{if(GRAB_ACTIVA&&GRAB_ACTIVA.state!=='inactive')GRAB_ACTIVA.stop();}catch(e){}
+  GRAB_ACTIVA=null;
+}
+function bloqueComparar(meta){
+  if(!MI_GRABACION)return '';
+  return '<div class="compbox">'+
+    '<div class="hl">Óyelo seguido: primero como se dice, luego como lo dijiste</div>'+
+    '<div class="compfila">'+
+      '<button class="compb" id="cmpmodelo">🔊 Así se dice</button>'+
+      '<button class="compb mia" id="cmpmia">🎙️ Así lo dijiste</button>'+
+    '</div>'+
+    '<button class="compb full" id="cmpambos">▶ Uno tras otro</button>'+
+    '</div>';
+}
+function ligarComparar(meta){
+  var m=document.getElementById('cmpmodelo');
+  if(m)m.onclick=function(e){e.stopPropagation();say(meta,'en-US');};
+  var y=document.getElementById('cmpmia');
+  if(y)y.onclick=function(e){e.stopPropagation();callarTodo();try{new Audio(MI_GRABACION).play();}catch(x){}};
+  var a=document.getElementById('cmpambos');
+  if(a)a.onclick=function(e){
+    e.stopPropagation();
+    say(meta,'en-US',function(){
+      setTimeout(function(){try{new Audio(MI_GRABACION).play();}catch(x){}},500);
+    });
+  };
 }
 
-function botonVideo(frase){
-  return '<button class="ygb" data-fr="'+esc(frase)+'">🎬 Ver a alguien decirlo</button>';
-}
-
-function abrirVideo(frase){
-  var caja=document.getElementById('res')||document.getElementById('body')||APP;
-  var viejo=document.getElementById('ygbox');
-  if(viejo)viejo.remove();
-  var d=document.createElement('div');
-  d.id='ygbox';d.className='ygbox';
-  d.innerHTML='<div class="hl">Gente real diciendo «'+esc(frase)+'»</div>'+
-    '<div id="yg-widget"><p class="tiny" style="text-align:left">Buscando videos…</p></div>'+
-    '<p class="ygnota">Videos de YouTube vía YouGlish · '+
-      '<a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener">Términos de YouTube</a> · '+
-      '<a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Privacidad de Google</a></p>'+
-    '<button class="btn ghost" id="ygcerrar">Cerrar</button>';
-  caja.insertBefore(d,caja.firstChild);
-  document.getElementById('ygcerrar').onclick=function(e){e.stopPropagation();d.remove();};
-
-  // se busca la frase sin puntuación ni el nombre propio, para tener resultados
-  var q=String(frase).replace(/[.?!,]/g,'').trim();
-
-  // El video no se puede filtrar por nivel: son hablantes reales. Lo que sí
-  // se ajusta es cómo se presenta — velocidad, subtítulos y acento.
-  var n=(P&&P.nivel_n)||0;
-  var vel = n<=0 ? 0.6 : n===1 ? 0.75 : n===2 ? 0.9 : 1;
-  var acento={'audio-uk':'uk','audio-au':'aus','audio-in':'ind','audio-us':'us'}[PAQUETE_ACTIVO]||'';
-  var aviso = n<=1
-    ? 'Va despacio y con subtítulos. No tienes que entender todo: escucha cómo suena la frase.'
-    : 'Velocidad casi normal. Fíjate en el ritmo, no en cada palabra.';
-
-  var av=document.createElement('p');
-  av.className='ygaviso';av.textContent=aviso;
-  d.insertBefore(av,document.getElementById('yg-widget'));
-
-  cargarYouglish(function(err){
-    var cont=document.getElementById('yg-widget');
-    if(!cont)return;
-    if(err||!window.YG||!window.YG.Widget){
-      cont.innerHTML='<p class="tiny" style="text-align:left">No se pudieron cargar los videos. '+
-        'Revisa tu conexión e intenta otra vez.</p>';
+/* ═══════════ lección a la carta ═══════════ */
+var LECCION=null;
+function pantallaLeccion(){
+  var tb=document.querySelector('.topbar');
+  if(tb)tb.style.display='';
+  var texto='Escribe qué situación se te viene. El tutor te arma las frases para eso.';
+  APP.innerHTML=atras()+ayuda(texto,'practicar esas frases')+
+    '<div class="qcard"><div class="qlbl">Lección a la carta</div>'+
+    '<div class="qtxt">¿Qué necesitas decir esta semana?</div>'+
+    '<div class="qsub">Cuéntamelo en español, como se te ocurra. Yo te armo las frases.</div>'+
+    '<div class="ejemplos">'+
+      '<button class="ejb">Mañana viene un cliente de Estados Unidos</button>'+
+      '<button class="ejb">Tengo que pedir refacciones por correo</button>'+
+      '<button class="ejb">Me toca explicar cómo funciona mi máquina</button>'+
+      '<button class="ejb">Quiero saludar y presentarme en la junta</button>'+
+    '</div>'+
+    '<textarea class="typebox" id="lecTx" placeholder="O escríbelo con tus palabras…"></textarea>'+
+    (HAY_MIC?'<button class="btn ghost" id="lecMic"><span class="pulse"></span> Decirlo en voz alta</button>':'')+
+    '<button class="btn" id="lecOk" style="margin-top:8px">Armar mi lección</button>'+
+    '<div id="lecRes"></div></div>';
+  ligarAyuda(texto);
+  ligarAtras(function(){menu();});
+  APP.querySelectorAll('.ejb').forEach(function(b){
+    b.onclick=function(){document.getElementById('lecTx').value=b.textContent;};
+  });
+  var mm=document.getElementById('lecMic');
+  if(mm)mm.onclick=function(){
+    var b=this;b.classList.add('rec');b.innerHTML='<span class="pulse"></span> Escuchando…';
+    listen('es-MX',function(t){document.getElementById('lecTx').value=t;b.classList.remove('rec');b.innerHTML='<span class="pulse"></span> Decirlo otra vez';},
+      function(){b.classList.remove('rec');b.disabled=true;b.textContent='El micrófono no abrió · escríbelo';});
+  };
+  document.getElementById('lecOk').onclick=function(){
+    var q=document.getElementById('lecTx').value.trim();
+    if(!q)return;
+    var r=document.getElementById('lecRes');
+    if(!hayIA()){
+      r.innerHTML='<div class="heard"><span class="no2">Esta parte todavía no está encendida. Le mando tu petición a Brian.</span></div>';
+      DUDAS.push('LECCIÓN PEDIDA: '+q);
       return;
     }
-    try{
-      cont.innerHTML='';
-      YG_WIDGET=new YG.Widget('yg-widget',{
-        width:0,
-        components:9,          // busca, controles y subtítulos a la vista
-        autoStart:1,
-        captionMode:2,         // subtítulos siempre encendidos
-        bkgColor:'#F5F1E8',
-        accent:acento,         // el mismo acento que eligió el alumno
-        events:{
-          onFetchDone:function(ev){
-            // la velocidad se baja apenas carga, según el nivel
-            try{ if(YG_WIDGET.setSpeed) YG_WIDGET.setSpeed(vel); }catch(e){}
-            if(ev&&ev.totalResult===0){
-              cont.insertAdjacentHTML('afterbegin',
-                '<p class="tiny" style="text-align:left">Nadie dice esa frase completa en video. '+
-                'Prueba con una parte más corta.</p>');
-            }
-          },
-          onVideoChange:function(){
-            try{ if(YG_WIDGET.setSpeed) YG_WIDGET.setSpeed(vel); }catch(e){}
-          }
+    r.innerHTML='<div class="heard"><span class="hl">armando tu lección…</span></div>';
+    pedirIA('leccion',{situacion:q,nivel:(P&&P.nivel)||'',trabajo:(P&&P.trabajo_es)||'',nombre:(P&&P.nombre)||''},
+      function(res){
+        if(!res||!res.frases||!res.frases.length){
+          r.innerHTML='<div class="heard"><span class="no2">No pude armarla. Inténtalo con otras palabras.</span></div>';
+          return;
         }
+        LECCION={t:res.titulo||'Tu lección',hoy:'practicamos lo que pediste',
+          obj:res.objetivo||'Decir lo que necesitas para esa situación.',
+          tip:'Esta lección la pediste tú. Si te sirve, dile a Brian para hacerla fija.',
+          enc:res.encuadre||'Vamos con las frases que necesitas para eso.',
+          items:res.frases.slice(0,5).map(function(f){return {k:'model',en:f.en,es:f.es};})
+            .concat((res.preguntas||[]).slice(0,3).map(function(p){
+              return {k:'ask',q:p.en,es:p.es||'Contéstale.',pista:p.pista||''};
+            }))
+            .concat([{k:'free',q:'Now tell me about it.',es:'Ahora cuéntamelo tú, con lo que puedas.'}])
+        };
+        MAT.push(LECCION);
+        sIdx=MAT.length-1;it=0;attempts=[];t0=Date.now();
+        correr();
+      },
+      function(){
+        r.innerHTML='<div class="heard"><span class="no2">No se pudo conectar. Tu petición queda anotada para Brian.</span></div>';
+        DUDAS.push('LECCIÓN PEDIDA: '+q);
       });
-      YG_WIDGET.fetch(q,'english');
-    }catch(e){
-      cont.innerHTML='<p class="tiny" style="text-align:left">No se pudieron cargar los videos.</p>';
-    }
-  });
-}
-function ligarVideo(){
-  APP.querySelectorAll('.ygb').forEach(function(b){
-    b.onclick=function(e){e.stopPropagation();abrirVideo(b.dataset.fr);};
-  });
+  };
 }
 
 /* ═══════════ botón de duda ═══════════ */
-// En cualquier momento se puede preguntar. Si hay IA, contesta ella;
-// si no, la pregunta se guarda y le llega a Brian con la sesión.
 var DUDAS=[];
 function botonDuda(){
   return '<button class="dudab" id="dudab">❓ Tengo una duda</button>';
@@ -1486,10 +1529,7 @@ function botonDuda(){
 function ligarDuda(){
   var b=document.getElementById('dudab');
   if(!b)return;
-  b.onclick=function(e){
-    e.stopPropagation();
-    abrirDuda();
-  };
+  b.onclick=function(e){e.stopPropagation();abrirDuda();};
 }
 function abrirDuda(){
   var caja=document.getElementById('res')||document.getElementById('body')||APP;
@@ -1532,152 +1572,13 @@ function abrirDuda(){
           esc(res.respuesta)+'</div></div>';
         say(res.respuesta,'es-MX');
       },
-      function(){
-        r.innerHTML='<div class="heard"><span class="ok2">Anotada. Brian te la contesta al revisar tu sesión.</span></div>';
-      });
-  };
-}
-
-
-
-
-/* ═══════════ lección a la carta ═══════════ */
-// El alumno pide lo que necesita esta semana: "mañana viene un cliente",
-// "tengo que pedir refacciones". El tutor arma la lección para eso.
-var LECCION=null;
-function pantallaLeccion(){
-  var tb=document.querySelector('.topbar');
-  if(tb)tb.style.display='';
-  var texto='Escribe qué situación se te viene. El tutor te arma las frases para eso.';
-  APP.innerHTML=atras()+ayuda(texto,'practicar esas frases')+
-    '<div class="qcard"><div class="qlbl">Lección a la carta</div>'+
-    '<div class="qtxt">¿Qué necesitas decir esta semana?</div>'+
-    '<div class="qsub">Cuéntamelo en español, como se te ocurra. Yo te armo las frases.</div>'+
-    '<div class="ejemplos">'+
-      '<button class="ejb">Mañana viene un cliente de Estados Unidos</button>'+
-      '<button class="ejb">Tengo que pedir refacciones por correo</button>'+
-      '<button class="ejb">Me toca explicar cómo funciona mi máquina</button>'+
-      '<button class="ejb">Quiero saludar y presentarme en la junta</button>'+
-    '</div>'+
-    '<textarea class="typebox" id="lecTx" placeholder="O escríbelo con tus palabras…"></textarea>'+
-    (HAY_MIC?'<button class="btn ghost" id="lecMic"><span class="pulse"></span> Decirlo en voz alta</button>':'')+
-    '<button class="btn" id="lecOk" style="margin-top:8px">Armar mi lección</button>'+
-    '<div id="lecRes"></div></div>';
-  ligarAyuda(texto);
-  ligarAtras(function(){menu();});
-
-  APP.querySelectorAll('.ejb').forEach(function(b){
-    b.onclick=function(){document.getElementById('lecTx').value=b.textContent;};
-  });
-  var mm=document.getElementById('lecMic');
-  if(mm)mm.onclick=function(){
-    var b=this;b.classList.add('rec');b.innerHTML='<span class="pulse"></span> Escuchando…';
-    listen('es-MX',function(t){document.getElementById('lecTx').value=t;b.classList.remove('rec');b.innerHTML='<span class="pulse"></span> Decirlo otra vez';},
-      function(){b.classList.remove('rec');b.disabled=true;b.textContent='El micrófono no abrió · escríbelo';});
-  };
-  document.getElementById('lecOk').onclick=function(){
-    var q=document.getElementById('lecTx').value.trim();
-    if(!q)return;
-    var r=document.getElementById('lecRes');
-    if(!hayIA()){
-      r.innerHTML='<div class="heard"><span class="no2">Esta parte todavía no está encendida. '+
-        'Le mando tu petición a Brian y él te arma la lección.</span></div>';
-      DUDAS.push('LECCIÓN PEDIDA: '+q);
-      return;
-    }
-    r.innerHTML='<div class="heard"><span class="hl">armando tu lección…</span></div>';
-    pedirIA('leccion',{situacion:q,nivel:(P&&P.nivel)||'',trabajo:(P&&P.trabajo_es)||'',nombre:(P&&P.nombre)||''},
-      function(res){
-        if(!res||!res.frases||!res.frases.length){
-          r.innerHTML='<div class="heard"><span class="no2">No pude armarla. Inténtalo con otras palabras.</span></div>';
-          return;
-        }
-        LECCION={t:res.titulo||'Tu lección',hoy:'practicamos lo que pediste',
-          obj:res.objetivo||'Decir lo que necesitas para esa situación.',
-          tip:'Esta lección la pediste tú. Si te sirve, dile a Brian para hacerla fija.',
-          enc:res.encuadre||'Vamos con las frases que necesitas para eso.',
-          items:res.frases.slice(0,5).map(function(f){return {k:'model',en:f.en,es:f.es};})
-            .concat((res.preguntas||[]).slice(0,3).map(function(p){
-              return {k:'ask',q:p.en,es:p.es||'Contéstale.',pista:p.pista||''};
-            }))
-            .concat([{k:'free',q:'Now tell me about it.',es:'Ahora cuéntamelo tú, con lo que puedas.'}])
-        };
-        MAT.push(LECCION);
-        sIdx=MAT.length-1;it=0;attempts=[];t0=Date.now();
-        correr();
-      },
-      function(){
-        r.innerHTML='<div class="heard"><span class="no2">No se pudo conectar. Tu petición queda anotada para Brian.</span></div>';
-        DUDAS.push('LECCIÓN PEDIDA: '+q);
-      });
-  };
-}
-
-/* ═══════════ grabar y comparar ═══════════ */
-// El error más común del shadowing es practicar sin oírse. Aquí, después de
-// hablar, se puede oír el modelo y su propia voz, una tras otra.
-var MI_GRABACION=null,GRAB_ACTIVA=null,GRAB_TROZOS=[];
-
-function grabandoDisponible(){
-  return !!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&window.MediaRecorder);
-}
-function empezarGrabacion(){
-  if(!grabandoDisponible())return;
-  navigator.mediaDevices.getUserMedia({audio:true}).then(function(st){
-    GRAB_TROZOS=[];
-    var tipo='';
-    ['audio/webm;codecs=opus','audio/webm','audio/mp4'].forEach(function(t){
-      if(!tipo&&window.MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t))tipo=t;
-    });
-    GRAB_ACTIVA=tipo?new MediaRecorder(st,{mimeType:tipo}):new MediaRecorder(st);
-    GRAB_ACTIVA.ondataavailable=function(e){if(e.data&&e.data.size)GRAB_TROZOS.push(e.data);};
-    GRAB_ACTIVA.onstop=function(){
-      try{st.getTracks().forEach(function(t){t.stop();});}catch(e){}
-      if(!GRAB_TROZOS.length)return;
-      var blob=new Blob(GRAB_TROZOS,{type:GRAB_ACTIVA.mimeType||'audio/webm'});
-      MI_GRABACION=URL.createObjectURL(blob);
-    };
-    GRAB_ACTIVA.start();
-  }).catch(function(){});
-}
-function pararGrabacion(){
-  try{if(GRAB_ACTIVA&&GRAB_ACTIVA.state!=='inactive')GRAB_ACTIVA.stop();}catch(e){}
-  GRAB_ACTIVA=null;
-}
-// los dos botones que hacen la comparación
-function bloqueComparar(meta){
-  if(!MI_GRABACION)return '';
-  return '<div class="compbox">'+
-    '<div class="hl">Óyelo seguido: primero como se dice, luego como lo dijiste</div>'+
-    '<div class="compfila">'+
-      '<button class="compb" id="cmpmodelo">🔊 Así se dice</button>'+
-      '<button class="compb mia" id="cmpmia">🎙️ Así lo dijiste</button>'+
-    '</div>'+
-    '<button class="compb full" id="cmpambos">▶ Uno tras otro</button>'+
-    '</div>';
-}
-function ligarComparar(meta){
-  var m=document.getElementById('cmpmodelo');
-  if(m)m.onclick=function(e){e.stopPropagation();say(meta,'en-US');};
-  var y=document.getElementById('cmpmia');
-  if(y)y.onclick=function(e){e.stopPropagation();callarTodo();try{new Audio(MI_GRABACION).play();}catch(x){}};
-  var a=document.getElementById('cmpambos');
-  if(a)a.onclick=function(e){
-    e.stopPropagation();
-    say(meta,'en-US',function(){
-      setTimeout(function(){try{new Audio(MI_GRABACION).play();}catch(x){}},500);
-    });
+      function(){r.innerHTML='<div class="heard"><span class="ok2">Anotada. Brian te la contesta al revisar tu sesión.</span></div>';});
   };
 }
 
 /* ═══════════ cambiar una pieza ═══════════ */
-// Practicar una frase suelta no enseña el patrón. Aquí se cambia una sola
-// pieza a la vez —el pronombre, la negación, la pregunta— y el resto queda
-// igual, para que la persona vea cómo se mueve la estructura.
 function serieDe(en,p){
-  var out=[];
-  var m;
-  // I am a dentist → he is / she is / we are / they are
+  var out=[],m;
   if((m=en.match(/^I am (a|an)\s+(.+?)\.?$/i))){
     var art=m[1], of=m[2];
     var plural=of.replace(/^(a|an)\s+/i,'')+'s';
@@ -1688,46 +1589,35 @@ function serieDe(en,p){
       {pide:'Ahora dilo en negativo.',            di:'I am not '+art+' '+of+'.'},
       {pide:'Ahora pregúntale a alguien.',        di:'Are you '+art+' '+of+'?'}
     ];
-  }
-  // I work at a factory → he works / we work / negativo / pregunta
-  else if((m=en.match(/^I work\s+(.+?)\.?$/i))){
+  }else if((m=en.match(/^I work\s+(.+?)\.?$/i))){
     var d=m[1];
     out=[
-      {pide:'Ahora de un compañero. Él.',    di:'He works '+d+'.'},
-      {pide:'Ahora de ustedes. Nosotros.',   di:'We work '+d+'.'},
-      {pide:'Ahora en negativo.',            di:'I do not work '+d+'.'},
-      {pide:'Ahora pregunta.',               di:'Do you work '+d+'?'}
+      {pide:'Ahora de un compañero. Él.',  di:'He works '+d+'.'},
+      {pide:'Ahora de ustedes. Nosotros.', di:'We work '+d+'.'},
+      {pide:'Ahora en negativo.',          di:'I do not work '+d+'.'},
+      {pide:'Ahora pregunta.',             di:'Do you work '+d+'?'}
     ];
-  }
-  // I start at seven
-  else if((m=en.match(/^I start\s+(.+?)\.?$/i))){
+  }else if((m=en.match(/^I start\s+(.+?)\.?$/i))){
     var h=m[1];
     out=[
-      {pide:'Ahora de tu compañera. Ella.',  di:'She starts '+h+'.'},
-      {pide:'Ahora pregunta la hora.',       di:'What time do you start?'},
-      {pide:'Ahora en negativo.',            di:'I do not start '+h+'.'}
+      {pide:'Ahora de tu compañera. Ella.', di:'She starts '+h+'.'},
+      {pide:'Ahora pregunta la hora.',      di:'What time do you start?'},
+      {pide:'Ahora en negativo.',           di:'I do not start '+h+'.'}
     ];
-  }
-  // I like my family
-  else if((m=en.match(/^I like\s+(.+?)\.?$/i))){
+  }else if((m=en.match(/^I like\s+(.+?)\.?$/i))){
     var g=m[1];
     out=[
       {pide:'Ahora de un compañero. A él le gusta.', di:'He likes '+g+'.'},
       {pide:'Ahora en negativo.',                    di:'I do not like '+g+'.'},
       {pide:'Ahora pregunta.',                       di:'Do you like '+g+'?'}
     ];
-  }
-  // My name is Carlos
-  else if((m=en.match(/^My name is\s+(.+?)\.?$/i))){
-    var n=m[1];
+  }else if((m=en.match(/^My name is\s+(.+?)\.?$/i))){
     out=[
-      {pide:'Ahora presenta a alguien más.',  di:'His name is Pedro.'},
-      {pide:'Ahora a una compañera.',         di:'Her name is Ana.'},
-      {pide:'Ahora pregunta el nombre.',      di:'What is your name?'}
+      {pide:'Ahora presenta a alguien más.', di:'His name is Pedro.'},
+      {pide:'Ahora a una compañera.',        di:'Her name is Ana.'},
+      {pide:'Ahora pregunta el nombre.',     di:'What is your name?'}
     ];
-  }
-  // acciones: I check things
-  else if((m=en.match(/^I\s+([a-z]+)\s*(.*?)\.?$/i))){
+  }else if((m=en.match(/^I\s+([a-z]+)\s*(.*?)\.?$/i))){
     var v=m[1], resto=m[2]?(' '+m[2]):'';
     var v3=/[sxz]$|ch$|sh$/.test(v)?v+'es':(/[^aeiou]y$/.test(v)?v.slice(0,-1)+'ies':v+'s');
     out=[
@@ -1739,9 +1629,69 @@ function serieDe(en,p){
   return out;
 }
 
+/* ═══════════ la misma frase en varios acentos ═══════════ */
+// Oír la frase en bocas distintas es lo que entrena el oído. En vez de
+// depender de videos ajenos con publicidad, se usan los paquetes de voz
+// que ya tenemos: la misma frase en americano, británico, australiano.
+function acentosDisponibles(){
+  return PAQUETES.filter(function(p){return p.id!=='audio';});
+}
+function botonVideo(frase){
+  return '<button class="ygb" data-fr="'+esc(frase)+'">🌎 Oírla en otros acentos</button>';
+}
+function abrirVideo(frase){
+  var caja=document.getElementById('res')||document.getElementById('body')||APP;
+  var viejo=document.getElementById('ygbox');
+  if(viejo)viejo.remove();
+  var lista=acentosDisponibles();
+  var d=document.createElement('div');
+  d.id='ygbox';d.className='ygbox';
+  d.innerHTML='<div class="hl">La misma frase, en otras bocas</div>'+
+    '<p class="ygaviso2">Es lo mismo dicho en distintos países. No tienes que entenderlo todo: '+
+    'fíjate en cómo cambia el sonido.</p>'+
+    '<div class="acfila">'+
+      lista.map(function(p){
+        return '<button class="acb" data-id="'+p.id+'">'+esc(p.nombre)+'</button>';
+      }).join('')+
+    '</div>'+
+    '<button class="compb full" id="actodos" style="margin-top:8px">▶ Oírla en todos, uno tras otro</button>'+
+    '<button class="btn ghost" id="ygcerrar" style="margin-top:8px">Cerrar</button>';
+  caja.insertBefore(d,caja.firstChild);
+  document.getElementById('ygcerrar').onclick=function(e){e.stopPropagation();d.remove();};
 
-
-
+  function conAcento(id,cb){
+    var antes=PAQUETE_ACTIVO;
+    PAQUETE_ACTIVO=id;armarRutas();
+    say(frase,'en-US',function(){
+      PAQUETE_ACTIVO=antes;armarRutas();
+      cb&&cb();
+    });
+  }
+  d.querySelectorAll('.acb').forEach(function(b){
+    b.onclick=function(e){
+      e.stopPropagation();
+      d.querySelectorAll('.acb').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on');
+      conAcento(b.getAttribute('data-id'));
+    };
+  });
+  document.getElementById('actodos').onclick=function(e){
+    e.stopPropagation();
+    var i=0,btns=d.querySelectorAll('.acb');
+    (function siguiente(){
+      if(i>=lista.length)return;
+      btns.forEach(function(x){x.classList.remove('on');});
+      if(btns[i])btns[i].classList.add('on');
+      var id=lista[i].id;i++;
+      conAcento(id,function(){setTimeout(siguiente,600);});
+    })();
+  };
+}
+function ligarVideo(){
+  APP.querySelectorAll('.ygb').forEach(function(b){
+    b.onclick=function(e){e.stopPropagation();abrirVideo(b.dataset.fr);};
+  });
+}
 
 /* ═══════════ modo shadowing ═══════════ */
 // Repetir con pausa es una técnica; hablar encima es otra distinta, y es la
@@ -2362,6 +2312,9 @@ var IA_ENDPOINT='https://script.google.com/macros/s/AKfycbxlAGlMVpdjqLZ_yh-Oh393
 // Si pones aquí la dirección del servidor de voz, la app pide el audio al vuelo
 // y ya no hace falta subir un solo archivo. El servidor lo genera y lo guarda.
 var VOZ_ENDPOINT='https://script.google.com/macros/s/AKfycbxJgynQD_GCLvdzlDNUrc8AnnWbTeS-1G6_lqIkNjelpB7Mqbjeg-qH3_tpidzNMGiK/exec';
+// Servidor de datos: si lo pones, cada sesión se guarda sola en tu hoja.
+// Si está vacío, el alumno tiene que mandarla por correo.
+var DATOS_ENDPOINT='https://script.google.com/macros/s/AKfycbyW4nHbMi8a4pcOS_0PUOYR053PEYwQ0tFjm9hZM4Tx7kq2hK6VdrZy9PGqyrlsSrimng/exec';
 
 function hayIA(){return !!IA_ENDPOINT;}
 function pedirIA(accion,datos,ok,falla){
@@ -3496,9 +3449,9 @@ function cierre(){
     '<textarea class="typebox" id="obs" placeholder="Lo que se te hizo difícil, lo que no entendiste, lo que le cambiarías…"></textarea>'+
     (HAY_MIC?'<button class="btn ghost" id="obsmic"><span class="pulse"></span> Decirlo en voz alta</button>':'')+
     '<p class="tiny" style="text-align:left;margin:6px 0 0">Es opcional, pero es lo que más le sirve a Brian.</p></div>'+
-    '<p class="why" id="stat"></p><div class="actrow" id="manual"'+(ONLINE?' hidden':'')+'>'+
+    '<p class="why" id="stat"></p><div class="actrow" id="manual"'+((ONLINE||DATOS_ENDPOINT)?' hidden':'')+'>'+
     '<button class="p" id="mail">Enviar por correo</button><button id="cop">Copiar código</button></div>'+
-    '<textarea class="code" id="cd" readonly'+(ONLINE?' hidden':'')+'></textarea></div>';
+    '<textarea class="code" id="cd" readonly'+((ONLINE||DATOS_ENDPOINT)?' hidden':'')+'></textarea></div>';
   APP.innerHTML=h;
   say(msgVoz,'es-MX');
 
@@ -3527,7 +3480,37 @@ function cierre(){
   document.getElementById('cd').value=codigo;
   document.getElementById('menu').onclick=function(){sIdx=null;router();};
 
-  if(ONLINE){
+  // se manda sola al servidor de datos
+  if(DATOS_ENDPOINT){
+    document.getElementById('stat').textContent='Enviando a Brian…';
+    var enviar=function(){
+      var o=document.getElementById('obs');
+      rec.observacion=o?o.value.trim():'';
+      rec.dudas=DUDAS.slice();
+      fetch(DATOS_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify(rec)})
+        .then(function(r){return r.ok?r.json():null;})
+        .then(function(d){
+          document.getElementById('stat').textContent=(d&&d.ok)
+            ? '✓ Enviada. Brian ya la tiene.'
+            : 'No se pudo enviar. Usa el botón de correo.';
+          if(!d||!d.ok){
+            document.getElementById('manual').hidden=false;
+            document.getElementById('cd').hidden=false;
+          }
+        })
+        .catch(function(){
+          document.getElementById('stat').textContent='Sin conexión. Usa el botón de correo.';
+          document.getElementById('manual').hidden=false;
+          document.getElementById('cd').hidden=false;
+        });
+    };
+    // se espera un poco por si escribe una observación
+    setTimeout(enviar,1200);
+    var ob=document.getElementById('obs');
+    if(ob)ob.onblur=enviar;
+  }
+  if(ONLINE&&!DATOS_ENDPOINT){
     document.getElementById('stat').textContent='Enviando…';
     google.script.run
       .withSuccessHandler(function(r){document.getElementById('stat').textContent=(r&&r.ok)?'✓ Enviada. Brian ya la tiene.':'No la aceptó el servidor.';})

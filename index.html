@@ -130,6 +130,23 @@
   .aprendi .aplista{margin-top:12px}
   .aprendi .aplista .hl{font-family:var(--mono);font-size:9px;letter-spacing:.13em;
     text-transform:uppercase;opacity:.6;margin-bottom:5px}
+  /* ---- acentos, roleplay, recuento, pares, palabra, deletreo ---- */
+  .acefila{display:flex;gap:8px;margin:12px 0}
+  .aceb{flex:1;background:var(--papel);border:1px solid var(--linea);border-radius:10px;
+    padding:11px 4px;font-size:24px;line-height:1;cursor:pointer;transition:.15s;
+    display:flex;flex-direction:column;align-items:center;gap:5px;font-family:inherit;color:var(--tinta)}
+  .aceb span{font-size:9.5px;opacity:.7;letter-spacing:.02em}
+  .aceb.on{border-color:var(--verde);background:rgba(29,158,117,.1)}
+  .aceb:active{transform:scale(.95)}
+  .quien{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
+    opacity:.6;margin:10px 0 5px}
+  .opt.gr{flex:1;text-align:center;font-size:19px;padding:15px 10px;font-family:var(--display)}
+  .palgrande{font-family:var(--display);font-size:30px;text-align:center;margin:14px 0 4px;
+    color:var(--verde)}
+  .apoyofila{display:flex;flex-wrap:wrap;gap:6px}
+  .bubble-ia.pensando .ht{opacity:.55;font-style:italic}
+  .apoyow{background:rgba(29,158,117,.1);border:1px solid rgba(29,158,117,.28);
+    border-radius:20px;padding:5px 11px;font-size:13px}
   .aprendi .apr{background:rgba(29,158,117,.08);border-left:2px solid var(--verde);
     border-radius:5px;padding:6px 9px;margin-bottom:5px;font-size:13.5px}
   .fb.no{background:rgba(216,90,48,.1);border:1px solid rgba(216,90,48,.3)}
@@ -829,7 +846,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v79 · 8 sep";
+var VERSION="v81 · 8 sep · roleplay IA";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -967,6 +984,12 @@ var EXT=['.webm','.mp3'];   // sirve cualquiera de los dos formatos
 var AUDIO_FALLA={};     // los que ya se sabe que no existen
 var AUDIO_RUTA=null;    // la ruta que sí sirvió, para no volver a probar
 var AUDIO_HAY=0;        // cuántas grabaciones se han encontrado
+var BANDERA={us:'🇺🇸',uk:'🇬🇧',au:'🇦🇺',in:'🇮🇳'};
+var NOMACE ={us:'Estados Unidos',uk:'Inglaterra',au:'Australia',in:'India'};
+var LANGACE={us:'en-US',uk:'en-GB',au:'en-AU',in:'en-IN'};
+function deletrear(t){
+  return String(t||'').toUpperCase().split('').join(', ');
+}
 function mezclar(a){
   for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}
   return a;
@@ -1526,7 +1549,10 @@ function moldePreA1(p){
       porque:'Nunca se quita el "is". En espanol decimos "me llamo Ana", en ingles siempre va el verbo.'},
      {area:'hab',  k:'model', en:'My name is '+nom+'.', es:'Me llamo '+nom+'.'},
      {area:'hab',  k:'model', en:'I am '+ofiEN+'.', es:'Soy '+ofi+'.'},
-     {area:'hab',  k:'ask',   q:'What is your name?', es:'Como te llamas?', pista:'My name is '+nom+'.'}
+     {area:'hab',  k:'ask',   q:'What is your name?', es:'Como te llamas?', pista:'My name is '+nom+'.'},
+     {area:'voc',  k:'palabra', en:'work', es:'trabajo / trabajar',
+      pide:'En cual frase va bien?',
+      ops:['I work every day.','I work a apple.','I work blue.'], bien:'I work every day.'}
    ]},
 
   // ---------- L2 ----------
@@ -1544,7 +1570,9 @@ function moldePreA1(p){
      {area:'hab',  k:'ask',   q:'What do you do every day?', es:'Que haces todos los dias?',
       pista:'I work every day.'},
      {area:'hab',  k:'ask',   q:'Do you work every day?', es:'Trabajas todos los dias? Contesta: Yes, I do.',
-      pista:'Yes, I do. I work every day.'}
+      pista:'Yes, I do. I work every day.'},
+     {area:'voc',  k:'pares', a:'work', b:'walk', bien:'a',
+      nota:'"Work" es trabajar. "Walk" es caminar. Cambia una sola vocal.'}
    ]},
 
   // ---------- L3 ----------
@@ -1561,7 +1589,11 @@ function moldePreA1(p){
      {area:'hab',  k:'ask',   q:'Where do you work?', es:'Donde trabajas?',
       pista:'I work '+lugEN+'.'},
      {area:'hab',  k:'ask',   q:'Do you work in a factory?', es:'Trabajas en una fabrica? Contesta si o no.',
-      pista:'Yes, I do.'}
+      pista:'Yes, I do.'},
+     {area:'hab',  k:'roleplay', quien:'Una visita de AVON',
+      ctx:'Llega una visita a tu area y no te conoce. Se acerca y te saluda.',
+      q:'Hi. What do you do here?', es:'Hola. Que haces aqui?',
+      pista:'I am '+ofiEN+'. I work '+lugEN+'.'}
    ]},
 
   // ---------- L4 ----------
@@ -1576,7 +1608,9 @@ function moldePreA1(p){
       es:'Empiezo a las siete.'},
      {area:'hab',  k:'model', en:'I start at seven.', es:'Empiezo a las siete.'},
      {area:'hab',  k:'ask',   q:'What time do you start?', es:'A que hora empiezas?',
-      pista:'I start at seven.'}
+      pista:'I start at seven.'},
+     {area:'voc',  k:'deletreo', bien:'box', es:'caja',
+      pide:'Escribe la palabra que te deletreo.'}
    ]},
 
   // ---------- L5 ----------
@@ -1594,7 +1628,10 @@ function moldePreA1(p){
      {area:'hab',  k:'ask',   q:'Ask me: where do I work?', es:'Preguntame donde trabajo. Di: Where do you work?',
       pista:'Where do you work?'},
      {area:'hab',  k:'ask',   q:'Now ask me the time.', es:'Ahora preguntame la hora. Di: What time is it?',
-      pista:'What time is it?'}
+      pista:'What time is it?'},
+     {area:'oir',  k:'acento', en:'Do you work here?', es:'Trabajas aqui?',
+      acentos:['us','uk','au','in'],
+      pide:'Cual se te hizo mas dificil de entender?'}
    ]},
 
   // ---------- L6 ----------
@@ -1611,7 +1648,10 @@ function moldePreA1(p){
       porque:'Con I / you / we no lleva s. Con he / she / it, siempre s.'},
      {area:'hab',  k:'model', en:'I check the boxes.', es:'Reviso las cajas.'},
      {area:'hab',  k:'ask',   q:'What do you check at work?', es:'Que revisas? Contesta: I check the...',
-      pista:'I check the boxes.'}
+      pista:'I check the boxes.'},
+     {area:'voc',  k:'palabra', en:'check', es:'revisar',
+      pide:'En cual frase va bien?',
+      ops:['I check the boxes.','I check to my house.','I check happy.'], bien:'I check the boxes.'}
    ]},
 
   // ---------- L7 ----------
@@ -1627,7 +1667,11 @@ function moldePreA1(p){
      {area:'gram', k:'transf', origen:'The machine stops.',
       pide:'Ponlo en pasado.', bien:'The machine stopped.'},
      {area:'hab',  k:'ask',   q:'Is there a problem today?', es:'Hay un problema hoy? Contesta con Yes o No.',
-      pista:'Yes, there is a problem.'}
+      pista:'Yes, there is a problem.'},
+     {area:'hab',  k:'roleplay', quien:'Tu supervisor',
+      ctx:'La maquina se paro y tu supervisor viene a preguntarte que paso.',
+      q:'What happened with the machine?', es:'Que paso con la maquina?',
+      pista:'The machine stopped at ten.'}
    ]},
 
   // ---------- L8 ----------
@@ -1648,7 +1692,11 @@ function moldePreA1(p){
       pista:'My name is '+nom+'. I am '+ofiEN+'. I work '+lugEN+'.'},
      {area:'hab',  k:'ask',   q:'Last time. As fast as you can.',
       es:'Vez 3 de 3. Lo mas suelto que puedas.',
-      pista:'My name is '+nom+'. I am '+ofiEN+'. I work '+lugEN+'.'}
+      pista:'My name is '+nom+'. I am '+ofiEN+'. I work '+lugEN+'.'},
+     {area:'hab',  k:'recuento',
+      audio:'Ana works in a factory. She starts at seven. She checks the boxes every morning.',
+      apoyo:['works','starts at seven','checks the boxes'],
+      es:'Cuentame lo que oiste de Ana, con tus palabras.'}
    ]}
   ];
 }
@@ -4193,7 +4241,7 @@ function pruebaNivel(){
 // La llave NUNCA va aquí: este archivo es público. Se pone en el Apps Script
 // y aquí solo va la dirección de ese servidor. Si está vacía, la app funciona
 // igual que antes, sin IA.
-var IA_ENDPOINT='';
+var IA_ENDPOINT='https://script.google.com/macros/s/AKfycbxlAGlMVpdjqLZ_yh-Oh3934akKkfHojlGonjHKnUE3ZncdQRsT2bMzv0Elc0Ng4DK1Hw/exec';
 // Si pones aquí la dirección del servidor de voz, la app pide el audio al vuelo
 // y ya no hace falta subir un solo archivo. El servidor lo genera y lo guarda.
 var VOZ_ENDPOINT='https://script.google.com/macros/s/AKfycbxJgynQD_GCLvdzlDNUrc8AnnWbTeS-1G6_lqIkNjelpB7Mqbjeg-qH3_tpidzNMGiK/exec';
@@ -4230,6 +4278,47 @@ function repreguntarConIA(perfil,dicho,cb){
     function(res){cb&&cb(res);},function(){cb&&cb(null);});
 }
 // la repregunta llega después, sin trabar la pantalla
+// ── role-play: la IA hace del personaje y la conversacion sigue ──
+var RP_TURNOS=[];
+function roleplayConIA(x,dicho,cb){
+  if(!hayIA()){cb&&cb(null);return;}
+  pedirIA('roleplay',{
+    quien:x.quien||'', ctx:x.ctx||'', nivel:(P&&P.nivel)||'A1',
+    trabajo:(P&&P.trabajo_es)||'', dijo:dicho, turnos:RP_TURNOS.slice(-6)
+  }, function(res){cb&&cb(res);}, function(){cb&&cb(null);});
+}
+function seguirRoleplay(x,dicho){
+  var caja=document.getElementById('res');
+  if(!caja)return;
+  RP_TURNOS.push({de:'alumno',txt:dicho});
+  caja.insertAdjacentHTML('afterbegin',
+    '<div class="bubble-ia pensando" id="rp-esp"><div class="ht">'+esc(x.quien||'')+' está pensando…</div></div>');
+  roleplayConIA(x,dicho,function(res){
+    var esp=document.getElementById('rp-esp');
+    if(esp)esp.remove();
+    if(!res||!res.dice){
+      var c2=document.getElementById('res');
+      if(c2)c2.insertAdjacentHTML('afterbegin',
+        '<div class="fb no">No pude traer su respuesta. Toca Siguiente y seguimos.</div>');
+      return;
+    }
+    RP_TURNOS.push({de:'personaje',txt:res.dice});
+    var c=document.getElementById('res');
+    if(c)c.insertAdjacentHTML('afterbegin',
+      '<div class="bubble-ia"><div class="hl">'+esc(x.quien||'te dice')+'</div>'+
+      '<div class="ht">'+esc(res.dice)+'</div>'+
+      (res.es?'<div class="pes">'+esc(res.es)+'</div>':'')+'</div>');
+    say(res.dice,'en-US');
+    attempts.push({tipo:'roleplay-ia',meta:res.dice,oido:'',pct:null});
+    if(res.fin){
+      var b=document.getElementById('mic');
+      if(b){b.disabled=true;b.innerHTML='Conversación terminada';}
+      var c3=document.getElementById('res');
+      if(c3)c3.insertAdjacentHTML('afterbegin',
+        '<div class="fb ok">Se acabó la conversación. Lo hiciste bien.</div>');
+    }
+  });
+}
 function pedirSeguimiento(dicho){
   if(!hayIA()||!P)return;
   repreguntarConIA(P,dicho,function(res){
@@ -4989,7 +5078,13 @@ function paso(){
     detalle:'Escucha y busca el dato exacto: la hora, el número, el nombre. Escúchalo las veces que quieras.',
     dosc:'Vas a oír una frase. Las dos opciones se parecen mucho. Escoge la que oíste.',
     segm:'Suena todo pegado pero son varias palabras. Escucha y ármalas en orden.',
-    dicto:'Escucha y escribe lo que alcances. No tiene que estar perfecto.'
+    dicto:'Escucha y escribe lo que alcances. No tiene que estar perfecto.',
+    acento:'La misma frase dicha por gente de distintos paises. Tocalas todas y dime cual te costo mas.',
+    roleplay:'Es una situacion de tu trabajo. Alguien te habla y tu le contestas hablando, como si estuviera enfrente.',
+    recuento:'Oyes una historia corta y luego la cuentas tu, con tus palabras. No tiene que ser igual.',
+    pares:'Dos palabras que cambian en un solo sonido. Escucha con cuidado cual dije.',
+    palabra:'Una palabra de tu trabajo. Escoge en cual frase va bien.',
+    deletreo:'Te deletreo la palabra letra por letra en ingles. Escribela.'
   };
   var quedan=S.items.length-it-1;
   var h=atras()+marcaReloj()+ayuda(ayudas[x.k]||'Sigue las instrucciones de la tarjeta.',(quedan>0?'quedan '+quedan+' ejercicios':'el cierre de la sesión'))+'<div class="prog">'+S.items.map(function(_,i){return '<i class="'+(i<=it?'on':'')+'"></i>';}).join('')+'</div>'+navPaso(it>0, it<S.items.length-1)+'<div class="qcard">';
@@ -5166,6 +5261,78 @@ function paso(){
        '</div>'+
        '<div id="res"></div>'+
        '<div class="oirfila" style="margin-top:8px"><button class="oirb alt" id="borrar">Borrar</button></div>';
+  }else if(x.k==='acento'){
+    h+='<div class="qlbl">Mismo inglés · otra boca</div>'+
+       '<div class="qsub">La misma frase, dicha por gente de otro país. Así suena en el mundo real.</div>'+
+       '<div class="acefila">'+
+         (x.acentos||['us','uk','au','in']).map(function(a,i){
+           return '<button class="aceb" data-a="'+a+'">'+esc(BANDERA[a]||a)+'<span>'+esc(NOMACE[a]||a)+'</span></button>';
+         }).join('')+
+       '</div>'+
+       '<div class="qtxt" id="acetxt" style="opacity:.25">Toca una bandera para oírla</div>'+
+       '<div class="pidebox">'+esc(x.pide||'¿Cuál se te hizo más difícil de entender?')+'</div>'+
+       '<div class="opsfila" id="aceops">'+
+         (x.acentos||['us','uk','au','in']).map(function(a){
+           return '<button class="opt" data-a="'+a+'">'+esc(NOMACE[a]||a)+'</button>';
+         }).join('')+
+       '</div>'+
+       '<div id="res"></div>';
+  }else if(x.k==='roleplay'){
+    h+='<div class="qlbl">Situación · contéstale de verdad</div>'+
+       '<div class="ctxbox">'+esc(x.ctx||'')+'</div>'+
+       '<div class="quien">'+esc(x.quien||'El cliente')+' te dice:</div>'+
+       '<div class="dijo"><span class="hl">'+esc(x.quien||'cliente')+'</span>'+esc(x.q||'')+'</div>'+
+       '<div class="oirfila">'+
+         '<button class="oirb" id="oir">'+ico('bocina',16)+' Oírlo otra vez</button>'+
+         '<button class="oirb alt" id="oires">🇲🇽 Qué significa</button>'+
+       '</div>'+
+       '<div id="res"></div>'+
+       (hayIA()?'<p class="tiny">Te va a contestar de verdad. Puedes seguirle la plática.</p>'
+               :'<p class="tiny">Contéstale como si estuviera enfrente.</p>')+
+       '<button class="mic-big" id="mic"><span class="ring2"></span> Tocar y contestarle</button>'+
+       '<button class="btn ghost" id="pista" style="margin-top:10px">No sé · dame la pista</button>'+
+       '<button class="btn ghost" id="skip" style="margin-top:8px">Saltar esta</button>';
+  }else if(x.k==='recuento'){
+    h+='<div class="qlbl">Cuéntalo con tus palabras</div>'+
+       '<div class="qsub">Primero lo oyes. Luego lo cuentas tú, como te salga.</div>'+
+       '<div class="oirfila"><button class="oirb" id="oir">'+ico('bocina',16)+' Escuchar la historia</button></div>'+
+       '<div class="conteo" id="conteo">Escúchala las veces que quieras.</div>'+
+       (x.apoyo?'<div class="aplista"><div class="hl">Palabras que te sirven</div>'+
+         '<div class="apoyofila">'+(x.apoyo||[]).map(function(w){
+           return '<span class="apoyow">'+esc(w)+'</span>';}).join('')+'</div></div>':'')+
+       '<div id="res"></div>'+
+       '<button class="mic-big" id="mic"><span class="ring2"></span> Tocar y contarlo</button>'+
+       '<button class="btn ghost" id="skip" style="margin-top:10px">Ya dije lo que pude</button>';
+  }else if(x.k==='pares'){
+    h+='<div class="qlbl">Dos sonidos parecidos</div>'+
+       '<div class="qsub">Cambian en un solo sonido. Escucha cuál dije.</div>'+
+       '<div class="oirfila"><button class="oirb" id="oir">'+ico('bocina',16)+' Escuchar</button></div>'+
+       '<div class="opsfila" id="paresops">'+
+         '<button class="opt gr" data-i="0">'+esc(x.a||'')+'</button>'+
+         '<button class="opt gr" data-i="1">'+esc(x.b||'')+'</button>'+
+       '</div>'+
+       '<div id="res"></div>'+
+       (x.nota?'<p class="tiny">'+esc(x.nota)+'</p>':'');
+  }else if(x.k==='palabra'){
+    h+='<div class="qlbl">Una palabra de tu trabajo</div>'+
+       '<div class="palgrande">'+esc(x.en||'')+'</div>'+
+       '<div class="oirfila">'+
+         '<button class="oirb" id="oir">'+ico('bocina',16)+' Oírla</button>'+
+         '<button class="oirb alt" id="oires">🇲🇽 Qué significa</button>'+
+       '</div>'+
+       '<div class="pidebox">'+esc(x.pide||'¿En cuál de estas frases va bien?')+'</div>'+
+       '<div class="opsfila col" id="palops">'+
+         (x.ops||[]).map(function(o,i){return '<button class="opt" data-i="'+i+'">'+esc(o)+'</button>';}).join('')+
+       '</div>'+
+       '<div id="res"></div>';
+  }else if(x.k==='deletreo'){
+    h+='<div class="qlbl">Deletreo · letra por letra</div>'+
+       '<div class="qsub">Te lo deletreo en inglés. Escribe la palabra.</div>'+
+       '<div class="oirfila"><button class="oirb" id="oir">'+ico('bocina',16)+' Deletréamelo</button></div>'+
+       '<div class="conteo" id="conteo">Las veces que quieras.</div>'+
+       '<input class="tx" id="deltx" placeholder="Escribe la palabra..." autocomplete="off">'+
+       '<div id="res"></div>'+
+       '<button class="btn" id="revisar" style="margin-top:10px">Revisar</button>';
   }else if(x.k==='dicto'){
     h+='<div class="qlbl">Escucha y escríbelo</div>'+
        '<div class="qsub">Escúchalo las veces que quieras. Escribe lo que alcances.</div>'+
@@ -5257,6 +5424,112 @@ function paso(){
     else{decirSeguido([[guias[x.k],'es-MX'],[x.k==='model'?x.en:x.q,'en-US']]);}
   }else if(x.k!=='free'){
     setTimeout(function(){say(x.k==='model'?x.en:x.q,'en-US');},300);
+  }
+
+  // ---- los 6 ultimos: acentos, roleplay, recuento, pares, palabra, deletreo ----
+  if(x.k==='acento'){
+    APP.querySelectorAll('.acefila .aceb').forEach(function(b){
+      b.onclick=function(){
+        var a=b.dataset.a;
+        APP.querySelectorAll('.acefila .aceb').forEach(function(z){z.classList.remove('on');});
+        b.classList.add('on');
+        var t=document.getElementById('acetxt');
+        if(t){t.textContent=x.en||x.audio||'';t.style.opacity='1';}
+        say(x.en||x.audio||'',LANGACE[a]||'en-US');
+      };
+    });
+    APP.querySelectorAll('#aceops .opt').forEach(function(b){
+      b.onclick=function(){
+        var a=b.dataset.a;
+        b.classList.add('ok');
+        attempts.push({tipo:'acento',meta:x.en||x.audio||'',oido:'mas dificil: '+(NOMACE[a]||a),pct:null});
+        var r=document.getElementById('res');
+        if(r)r.innerHTML='<div class="fb ok">Anotado. Brian va a meterte mas de ese acento.</div>';
+        APP.querySelectorAll('#aceops .opt').forEach(function(z){z.disabled=true;});
+        setTimeout(function(){it++;paso();},1800);
+      };
+    });
+  }
+  if(x.k==='roleplay'){
+    RP_TURNOS=[];   // conversacion nueva
+    var _or=document.getElementById('oir');
+    if(_or)_or.onclick=function(){say(x.q||'','en-US');};
+    setTimeout(function(){say(x.q||'','en-US');},400);
+  }
+  if(x.k==='recuento'){
+    var _oh=document.getElementById('oir');
+    if(_oh)_oh.onclick=function(){
+      VECES_OIDO++;
+      var c=document.getElementById('conteo');
+      if(c)c.textContent=VECES_OIDO===1?'Otra vez. Fijate en el orden de lo que pasa.':'Las veces que quieras.';
+      say(x.audio||x.en||'','en-US');
+    };
+    setTimeout(function(){say(x.audio||x.en||'','en-US');},400);
+  }
+  if(x.k==='pares'){
+    var _op=document.getElementById('oir');
+    var _cual=(x.bien==='b')?(x.b||''):(x.a||'');
+    if(_op)_op.onclick=function(){say(_cual,'en-US');};
+    setTimeout(function(){say(_cual,'en-US');},400);
+    APP.querySelectorAll('#paresops .opt').forEach(function(b){
+      b.onclick=function(){
+        var i=+b.dataset.i, sel=(i===0?x.a:x.b), bien=((i===0?'a':'b')===x.bien);
+        b.classList.add(bien?'ok':'no');
+        attempts.push({tipo:'pares',meta:_cual,oido:sel,pct:bien?100:0});
+        registrarEnMemoria(_cual,bien?100:0);
+        var r=document.getElementById('res');
+        if(r)r.innerHTML=bien?'<div class="fb ok">Ese era. Buen oido.</div>'
+                             :'<div class="fb no">Era <b>'+esc(_cual)+'</b>. Escuchalo otra vez.</div>';
+        APP.querySelectorAll('#paresops .opt').forEach(function(z){z.disabled=true;});
+        setTimeout(function(){it++;paso();},2400);
+      };
+    });
+  }
+  if(x.k==='palabra'){
+    var _ow=document.getElementById('oir');
+    if(_ow)_ow.onclick=function(){say(x.en||'','en-US');};
+    var _oe=document.getElementById('oires');
+    if(_oe)_oe.onclick=function(){say(x.es||'','es-MX');};
+    setTimeout(function(){say(x.en||'','en-US');},400);
+    APP.querySelectorAll('#palops .opt').forEach(function(b){
+      b.onclick=function(){
+        var o=(x.ops||[])[+b.dataset.i], bien=normal(o)===normal(x.bien);
+        b.classList.add(bien?'ok':'no');
+        attempts.push({tipo:'palabra',meta:x.en+' = '+x.bien,oido:o,pct:bien?100:0});
+        registrarEnMemoria(x.en||'',bien?100:0);
+        var r=document.getElementById('res');
+        if(r)r.innerHTML=bien?'<div class="fb ok">Asi es.</div>'
+                             :'<div class="fb no">Va en: <b>'+esc(x.bien)+'</b></div>';
+        APP.querySelectorAll('#palops .opt').forEach(function(z){z.disabled=true;});
+        say(x.bien||'','en-US');
+        setTimeout(function(){it++;paso();},2600);
+      };
+    });
+  }
+  if(x.k==='deletreo'){
+    var _od=document.getElementById('oir');
+    if(_od)_od.onclick=function(){
+      VECES_OIDO++;
+      var c=document.getElementById('conteo');
+      if(c)c.textContent='Las veces que quieras.';
+      say(deletrear(x.bien||''),'en-US');
+    };
+    setTimeout(function(){say(deletrear(x.bien||''),'en-US');},500);
+    var _rd=document.getElementById('revisar');
+    if(_rd)_rd.onclick=function(){
+      var tx=document.getElementById('deltx');
+      var dicho=((tx&&tx.value)||'').trim();
+      if(!dicho){avisito('Escribe la palabra, aunque sea a medias.');return;}
+      var bien=normal(dicho)===normal(x.bien);
+      var r=document.getElementById('res');
+      if(r)r.innerHTML=bien?'<div class="fb ok">Perfecto: <b>'+esc(x.bien)+'</b></div>'
+                           :'<div class="fb no">Casi. Era <b>'+esc(x.bien)+'</b></div>';
+      attempts.push({tipo:'deletreo',meta:x.bien||'',oido:dicho,pct:bien?100:0});
+      registrarEnMemoria(x.bien||'',bien?100:0);
+      say(x.bien||'','en-US');
+      _rd.disabled=true;
+      setTimeout(function(){it++;paso();},2600);
+    };
   }
 
   // ---- tipos nuevos: gramatica y listening ----
@@ -5547,6 +5820,7 @@ function registrar(x,t){
   if(x.k==='model'){var kk=clave(x.en);intentosDe[kk]=(intentosDe[kk]||0)+1;}
   // en la producción libre el tutor repregunta sobre lo que acaba de decir
   if(x.k==='free')pedirSeguimiento(t);
+  if(x.k==='roleplay'&&hayIA())seguirRoleplay(x,t);
   var r=document.getElementById('res');
   var h='<div class="heard"><div class="hl">te entendí</div><div class="ht">'+esc(t)+'</div>';
   if(cmp){

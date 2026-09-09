@@ -1,0 +1,601 @@
+<!doctype html><html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>English For All · Panel del maestro</title>
+<style>
+:root{--crema:#F5F1E8;--papel:#FDFBF6;--tinta:#2A2724;--tenue:#8A837A;--linea:#E7E0D3;
+  --verde:#1D9E75;--coral:#D85A30;--miel:#E8A93A;--sombra:0 2px 14px rgba(40,36,30,.07)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--crema);color:var(--tinta);
+  -webkit-font-smoothing:antialiased}
+.top{position:sticky;top:0;z-index:20;background:var(--papel);border-bottom:1px solid var(--linea);
+  padding:14px 18px;display:flex;align-items:center;gap:12px}
+.top h1{font-family:'Fraunces',Georgia,serif;font-size:19px;font-weight:600}
+.top .sub{font-size:12px;color:var(--tenue)}
+.top .sync{margin-left:auto;font-size:12px;color:var(--verde);display:flex;align-items:center;gap:6px}
+.wrap{max-width:920px;margin:0 auto;padding:18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:13px}
+.card{background:var(--papel);border:1px solid var(--linea);border-radius:16px;padding:15px;
+  box-shadow:var(--sombra);cursor:pointer;transition:transform .12s,box-shadow .12s;text-align:left;width:100%}
+.card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(40,36,30,.11)}
+.card .fila1{display:flex;align-items:center;gap:11px;margin-bottom:11px}
+.av{width:44px;height:44px;border-radius:50%;background:var(--crema);flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--verde);font-size:17px}
+.nom{font-size:16px;font-weight:600;line-height:1.1}
+.cod{font-size:11px;color:var(--tenue)}
+.barra{height:7px;background:var(--crema);border-radius:6px;overflow:hidden;margin:9px 0 5px}
+.barra i{display:block;height:100%;background:var(--verde);border-radius:6px}
+.mini{display:flex;gap:12px;font-size:12px;color:var(--tenue);flex-wrap:wrap}
+.mini b{color:var(--tinta);font-weight:600}
+.alerta{display:inline-flex;align-items:center;gap:5px;background:#FBEEE7;color:var(--coral);
+  font-size:11px;font-weight:600;border-radius:20px;padding:3px 9px;margin-top:9px}
+.vacio{text-align:center;padding:50px 20px;color:var(--tenue)}
+.vacio h2{font-family:'Fraunces',serif;color:var(--tinta);font-size:20px;margin-bottom:8px;font-weight:600}
+
+/* ficha individual */
+.ficha{display:none}
+.ficha.on{display:block}
+.lista.off{display:none}
+.volver{background:none;border:none;color:var(--verde);font-size:14px;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;gap:6px;margin-bottom:14px}
+.fh{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.fh .av{width:58px;height:58px;font-size:22px}
+.fh h2{font-family:'Fraunces',serif;font-size:23px;font-weight:600}
+.fh .cod{font-size:13px}
+.secc{background:var(--papel);border:1px solid var(--linea);border-radius:16px;padding:16px;
+  margin-bottom:14px;box-shadow:var(--sombra)}
+.secc h3{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--tenue);
+  margin-bottom:12px;font-weight:700}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.kpi{text-align:center}
+.kpi .n{font-family:'Fraunces',serif;font-size:26px;font-weight:600;color:var(--verde)}
+.kpi .l{font-size:11px;color:var(--tenue);margin-top:2px}
+.errbloque{border-bottom:1px solid var(--linea)}
+.errbloque:last-child{border:none}
+.err{display:flex;align-items:center;gap:9px;padding:11px 0;width:100%;background:none;
+  border:none;cursor:pointer;font-family:inherit;font-size:14px;color:var(--tinta);text-align:left}
+.err .flecha{color:var(--tenue);transition:transform .15s;display:inline-block;font-size:17px}
+.err.abierto .flecha{transform:rotate(90deg)}
+.casos{display:none;padding:2px 0 12px 22px}
+.caso{background:var(--crema);border-radius:11px;padding:10px 12px;margin-bottom:7px}
+.caso-f{font-size:11px;color:var(--tenue);margin-bottom:6px}
+.caso-l{font-size:14px;line-height:1.5;display:flex;gap:8px;align-items:baseline}
+.caso-l .et{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+  border-radius:5px;padding:2px 6px;flex:0 0 auto}
+.caso-l .et.mal{background:#FBEEE7;color:var(--coral)}
+.caso-l .et.bien{background:#E6F4EE;color:var(--verde)}
+.caso-l .oir{flex:0 0 auto;width:26px;height:26px;border-radius:50%;border:1px solid var(--linea);
+  background:var(--papel);color:var(--coral);cursor:pointer;font-size:10px;line-height:1;
+  display:flex;align-items:center;justify-content:center;padding:0}
+.caso-l .oir.bien{color:var(--verde)}
+.caso-l .oir.sonando{background:var(--coral);color:#fff;border-color:var(--coral)}
+.caso-l .oir.bien.sonando{background:var(--verde);border-color:var(--verde)}
+.err .cuenta{margin-left:auto;background:#FBEEE7;color:var(--coral);border-radius:20px;
+  font-size:12px;font-weight:700;padding:2px 10px}
+.grab{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--linea)}
+.grab:last-child{border:none}
+.grab .fr{flex:1;font-size:14px}
+.grab .pct{font-size:13px;font-weight:700;padding:2px 9px;border-radius:20px}
+.grab .pct.bien{background:#E6F4EE;color:var(--verde)}
+.grab .pct.mal{background:#FBEEE7;color:var(--coral)}
+.grab audio{height:32px}
+/* armador del paquete */
+.campo{margin-bottom:11px}
+.campo label{display:block;font-size:12px;color:var(--tenue);margin-bottom:5px;font-weight:600}
+.campo input,.campo textarea{width:100%;background:var(--crema);border:1px solid var(--linea);
+  border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;color:var(--tinta)}
+.campo textarea{min-height:70px;resize:vertical}
+.linkfila{display:flex;gap:7px;margin-bottom:6px}
+.linkfila input{flex:1}
+.linkfila button,.masbtn{background:var(--crema);border:1px solid var(--linea);border-radius:10px;
+  padding:0 13px;cursor:pointer;color:var(--tinta);font-size:13px}
+.masbtn{padding:8px 13px;margin-top:4px}
+.tabs{display:flex;gap:8px;margin-bottom:14px}
+.tab{flex:1;background:var(--crema);border:1px solid var(--linea);border-radius:11px;padding:9px;
+  cursor:pointer;font-size:13px;font-weight:600;color:var(--tenue)}
+.tab.on{background:var(--verde);color:#fff;border-color:var(--verde)}
+.tokfila{display:flex;align-items:center;gap:9px}
+.tokfila input{width:80px}
+.btn{background:var(--verde);color:#fff;border:none;border-radius:12px;padding:12px 18px;
+  font-size:15px;font-weight:600;cursor:pointer;width:100%;margin-top:6px}
+.btn.sec{background:var(--crema);color:var(--tinta);border:1px solid var(--linea)}
+.grabar-voz{display:flex;align-items:center;gap:10px}
+.rec-btn{background:var(--coral);color:#fff;border:none;border-radius:11px;padding:10px 15px;
+  cursor:pointer;font-size:14px;font-weight:600}
+.rec-btn.grabando{animation:lat 1s infinite}
+@keyframes lat{50%{opacity:.55}}
+.aviso{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--tinta);
+  color:#fff;padding:11px 18px;border-radius:24px;font-size:14px;opacity:0;transition:opacity .2s;z-index:40}
+.aviso.on{opacity:1}
+.dado{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--verde);margin-top:8px}
+
+/* ---- pantalla de clave ---- */
+#cerrojo{position:fixed;inset:0;z-index:999;background:var(--crema);
+  display:flex;align-items:center;justify-content:center;padding:24px}
+#cerrojo .caja{background:var(--papel);border:1px solid var(--linea);border-radius:18px;
+  box-shadow:var(--sombra);padding:30px 26px;max-width:360px;width:100%;text-align:center}
+#cerrojo h2{font-family:'Fraunces',Georgia,serif;font-size:23px;font-weight:600;margin-bottom:6px}
+#cerrojo p{font-size:13.5px;color:var(--tenue);margin-bottom:20px;line-height:1.5}
+#cerrojo input{width:100%;padding:13px 15px;font-size:17px;font-family:inherit;
+  background:var(--crema);border:1px solid var(--linea);border-radius:11px;color:var(--tinta);
+  text-align:center;letter-spacing:.06em}
+#cerrojo input:focus{outline:none;border-color:var(--verde)}
+#cerrojo button{width:100%;margin-top:11px;padding:13px;font-size:15.5px;font-family:inherit;
+  font-weight:500;background:var(--verde);color:#fff;border:none;border-radius:11px;cursor:pointer}
+#cerrojo button:active{transform:scale(.98)}
+#cerrojo .mal{color:var(--coral);font-size:13.5px;margin-top:11px;min-height:19px}
+#cerrojo .pie{font-size:11px;color:var(--tenue);margin-top:17px;line-height:1.45}
+body.trabado{overflow:hidden}
+</style></head><body class="trabado">
+
+<div id="cerrojo">
+  <div class="caja">
+    <h2>Panel del maestro</h2>
+    <p>Aquí están los datos de tus alumnas. Escribe tu clave para entrar.</p>
+    <input type="password" id="clave" placeholder="Tu clave" autocomplete="current-password">
+    <button id="entrar">Entrar</button>
+    <div class="mal" id="malmsg"></div>
+    <div class="pie">Esta clave detiene a quien llegue de casualidad.<br>No es una caja fuerte.</div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   TU CLAVE VA AQUÍ ABAJO.
+   Cambia la palabra   cambiame   por la que tú quieras.
+   Déjala entre las comillas. Ejemplo:  var CLAVE_PANEL = 'perro2026';
+   ===================================================================== */
+var CLAVE_PANEL = 'i3tzbrian';
+/* ===================================================================== */
+
+(function(){
+  var RECUERDA='efa_panel_ok';
+  function abrir(){
+    var c=document.getElementById('cerrojo');
+    if(c)c.remove();
+    document.body.classList.remove('trabado');
+  }
+  try{ if(sessionStorage.getItem(RECUERDA)==='1'){abrir();return;} }catch(e){}
+  function probar(){
+    var v=(document.getElementById('clave')||{}).value||'';
+    if(v===CLAVE_PANEL){
+      try{ sessionStorage.setItem(RECUERDA,'1'); }catch(e){}
+      abrir();
+    }else{
+      var m=document.getElementById('malmsg');
+      if(m)m.textContent='Esa no es. Inténtalo otra vez.';
+      var i=document.getElementById('clave');
+      if(i){i.value='';i.focus();}
+    }
+  }
+  document.addEventListener('DOMContentLoaded',function(){
+    var b=document.getElementById('entrar');
+    if(b)b.onclick=probar;
+    var i=document.getElementById('clave');
+    if(i){
+      i.focus();
+      i.addEventListener('keydown',function(e){if(e.key==='Enter')probar();});
+    }
+  });
+})();
+</script>
+
+
+<div class="top">
+  <div><h1>Panel del maestro</h1><div class="sub">English For All · Brian Martínez</div></div>
+  <div class="sync" id="sync">conectado</div>
+</div>
+<div class="wrap">
+  <div class="lista" id="lista"><div class="grid" id="grid"></div>
+    <div class="vacio" id="vacio" style="display:none">
+      <h2>Aún no hay alumnos</h2>
+      <p>Cuando tus alumnos practiquen, aparecerán aquí con su avance.</p></div>
+  </div>
+  <div class="ficha" id="ficha"></div>
+</div>
+<div class="aviso" id="aviso"></div>
+<script>
+var $=function(s){return document.querySelector(s);};
+function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function aviso(t){var a=$('#aviso');a.textContent=t;a.classList.add('on');
+  setTimeout(function(){a.classList.remove('on');},2200);}
+
+/* ── DATOS ──
+   El panel lee del servidor de datos (tu hoja de Google). Aquí va tu URL.
+   Mientras esté vacía, corre con 5 alumnos de EJEMPLO para que veas cómo se ve. */
+var DATOS_ENDPOINT='https://script.google.com/macros/s/AKfycbyW4nHbMi8a4pcOS_0PUOYR053PEYwQ0tFjm9hZM4Tx7kq2hK6VdrZy9PGqyrlsSrimng/exec';   // ← pega aquí tu dirección del servidor de datos
+
+var EJEMPLO=[
+ {codigo:'P-01',nombre:'Carlos Ruiz',nivel:'A1',parada:8,sesiones:11,minutos:143,dias:6,
+  porRevisar:2,ultima:'hace 1 día',
+  errores:[
+    {q:'th en "think"',casos:[
+      {frase:'I think the machine is ready.',dijo:'I tink the machine is ready.',fecha:'hoy',pct:72,audio:''},
+      {frase:'Thank you for the report.',dijo:'Tank you for the report.',fecha:'hoy',pct:68},
+      {frase:'I think we need more parts.',dijo:'I sink we need more parts.',fecha:'ayer',pct:70},
+      {frase:'Three pieces are missing.',dijo:'Tree pieces are missing.',fecha:'hace 2 días',pct:64},
+      {frase:'Nothing is broken.',dijo:'Noting is broken.',fecha:'hace 4 días',pct:61}]},
+    {q:'plural con -s',casos:[
+      {frase:'The machines are ready.',dijo:'The machine are ready.',fecha:'hoy',pct:74},
+      {frase:'I check the valves.',dijo:'I check the valve.',fecha:'ayer',pct:77},
+      {frase:'Two clients called.',dijo:'Two client called.',fecha:'hace 3 días',pct:70}]},
+    {q:'do/does',casos:[
+      {frase:'Does he work here?',dijo:'Do he work here?',fecha:'ayer',pct:66},
+      {frase:'Does the line stop at six?',dijo:'Do the line stop at six?',fecha:'hace 3 días',pct:63}]}],
+  grabaciones:[
+    {frase:'I check the machines every morning.',pct:72,fecha:'hoy'},
+    {frase:'My name is Carlos and I work here.',pct:91,fecha:'ayer'},
+    {frase:'The parts are ready for the client.',pct:64,fecha:'ayer'}]},
+ {codigo:'P-02',nombre:'María León',nivel:'B1',parada:19,sesiones:22,minutos:288,dias:12,
+  porRevisar:0,ultima:'hoy',
+  errores:[
+    {q:'presente perfecto',casos:[
+      {frase:'I have worked here for three years.',dijo:'I work here for three years.',fecha:'hoy',pct:81},
+      {frase:'She has finished the report.',dijo:'She finished the report.',fecha:'hoy',pct:84},
+      {frase:'We have not received the parts.',dijo:'We not received the parts.',fecha:'ayer',pct:79},
+      {frase:'Have you seen the new order?',dijo:'Did you seen the new order?',fecha:'hace 2 días',pct:76}]},
+    {q:'preposiciones in/on',casos:[
+      {frase:'The meeting is on Monday.',dijo:'The meeting is in Monday.',fecha:'hoy',pct:85},
+      {frase:'I start in the morning.',dijo:'I start on the morning.',fecha:'hace 2 días',pct:83}]}],
+  grabaciones:[
+    {frase:'I have worked here for three years.',pct:88,fecha:'hoy'},
+    {frase:'We need to finish this by Friday.',pct:95,fecha:'hoy'}]},
+ {codigo:'P-03',nombre:'Jorge Díaz',nivel:'A1',parada:4,sesiones:5,minutos:52,dias:3,
+  porRevisar:3,ultima:'hace 3 días',
+  errores:[
+    {q:'verbo to be',casos:[
+      {frase:'I am an operator.',dijo:'I operator.',fecha:'hace 3 días',pct:58},
+      {frase:'She is my supervisor.',dijo:'She my supervisor.',fecha:'hace 3 días',pct:55},
+      {frase:'They are in the warehouse.',dijo:'They in the warehouse.',fecha:'hace 4 días',pct:52},
+      {frase:'It is ready.',dijo:'It ready.',fecha:'hace 4 días',pct:60},
+      {frase:'We are a good team.',dijo:'We a good team.',fecha:'hace 6 días',pct:54},
+      {frase:'I am tired today.',dijo:'I tired today.',fecha:'hace 6 días',pct:57}]},
+    {q:'artículos a/an',casos:[
+      {frase:'It is an easy job.',dijo:'It is a easy job.',fecha:'hace 3 días',pct:62},
+      {frase:'I need an hour.',dijo:'I need a hour.',fecha:'hace 4 días',pct:59},
+      {frase:'This is a machine.',dijo:'This is an machine.',fecha:'hace 4 días',pct:61},
+      {frase:'He is an engineer.',dijo:'He is a engineer.',fecha:'hace 6 días',pct:58}]},
+    {q:'orden de palabras',casos:[
+      {frase:'I always check the parts.',dijo:'I check always the parts.',fecha:'hace 3 días',pct:56},
+      {frase:'Where is the manager?',dijo:'Where the manager is?',fecha:'hace 4 días',pct:53},
+      {frase:'She never arrives late.',dijo:'She arrives never late.',fecha:'hace 6 días',pct:55}]}],
+  grabaciones:[
+    {frase:'I am an operator.',pct:58,fecha:'hace 3 días'},
+    {frase:'This is my station.',pct:66,fecha:'hace 3 días'}]},
+ {codigo:'P-04',nombre:'Ana Torres',nivel:'A2',parada:12,sesiones:14,minutos:171,dias:8,
+  porRevisar:1,ultima:'hoy',
+  errores:[
+    {q:'pasado simple',casos:[
+      {frase:'Yesterday I checked forty pieces.',dijo:'Yesterday I check forty pieces.',fecha:'hoy',pct:79},
+      {frase:'We finished at six.',dijo:'We finish at six.',fecha:'ayer',pct:76},
+      {frase:'He sent the email.',dijo:'He send the email.',fecha:'hace 3 días',pct:74}]},
+    {q:'much/many',casos:[
+      {frase:'How many pieces are left?',dijo:'How much pieces are left?',fecha:'hoy',pct:78},
+      {frase:'There is not much time.',dijo:'There is not many time.',fecha:'hace 3 días',pct:75}]}],
+  grabaciones:[
+    {frase:'Yesterday I checked forty pieces.',pct:79,fecha:'hoy'}]},
+ {codigo:'P-05',nombre:'Luis Mora',nivel:'C1',parada:31,sesiones:38,minutos:512,dias:19,
+  porRevisar:0,ultima:'hoy',
+  errores:[
+    {q:'condicionales',casos:[
+      {frase:'If we had ordered earlier, we would have avoided the delay.',
+       dijo:'If we would have ordered earlier, we would avoid the delay.',fecha:'hoy',pct:92},
+      {frase:'If I were you, I would call them.',dijo:'If I was you, I would call them.',fecha:'ayer',pct:90}]}],
+  grabaciones:[
+    {frase:'If we had ordered earlier, we would have avoided the delay.',pct:92,fecha:'hoy'}]}
+];
+</script>
+
+<script>
+var ALUMNOS=[];
+
+function iniciales(n){return n.split(/\s+/).map(function(x){return x[0];}).slice(0,2).join('').toUpperCase();}
+
+function cargar(){
+  if(!DATOS_ENDPOINT){
+    ALUMNOS=EJEMPLO;
+    $('#sync').innerHTML='● modo demostración (5 alumnos de ejemplo)';
+    $('#sync').style.color='var(--miel)';
+    pintarLista();return;
+  }
+  $('#sync').textContent='cargando…';
+  fetch(DATOS_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({accion:'panel'})})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(d){
+      ALUMNOS=(d&&d.ok&&d.alumnos)||[];
+      $('#sync').textContent='conectado · '+ALUMNOS.length+' alumnos';
+      pintarLista();
+    })
+    .catch(function(){
+      $('#sync').textContent='sin conexión';$('#sync').style.color='var(--coral)';
+      ALUMNOS=EJEMPLO;pintarLista();
+    });
+}
+
+function pintarLista(){
+  $('#ficha').classList.remove('on');
+  $('#lista').classList.remove('off');
+  if(!ALUMNOS.length){$('#vacio').style.display='block';$('#grid').innerHTML='';return;}
+  $('#vacio').style.display='none';
+  $('#grid').innerHTML=ALUMNOS.map(function(a,i){
+    var pct=Math.round(a.parada/72*100);
+    return '<button class="card" data-i="'+i+'">'+
+      '<div class="fila1"><div class="av">'+iniciales(a.nombre)+'</div>'+
+      '<div><div class="nom">'+esc(a.nombre)+'</div>'+
+      '<div class="cod">'+esc(a.codigo)+' · '+esc(a.nivel)+'</div></div></div>'+
+      '<div class="barra"><i style="width:'+pct+'%"></i></div>'+
+      '<div class="mini"><span>parada <b>'+a.parada+'</b>/72</span>'+
+        '<span><b>'+a.sesiones+'</b> sesiones</span>'+
+        '<span><b>'+Math.round(a.minutos/60*10)/10+'</b> h</span></div>'+
+      '<div class="mini" style="margin-top:5px"><span>últ.: '+esc(a.ultima)+'</span>'+
+        '<span><b>'+a.dias+'</b> días seguidos</span></div>'+
+      (a.porRevisar?'<div class="alerta">● '+a.porRevisar+' grabación'+(a.porRevisar>1?'es':'')+' por revisar</div>':'')+
+    '</button>';
+  }).join('');
+  $('#grid').querySelectorAll('.card').forEach(function(b){
+    b.onclick=function(){verFicha(+b.getAttribute('data-i'));};
+  });
+}
+</script>
+
+<script>
+var ENVIAR=null;   // función que arma y manda el paquete del alumno actual
+
+function verFicha(i){
+  var a=ALUMNOS[i];
+  $('#lista').classList.add('off');
+  var f=$('#ficha');f.classList.add('on');
+  var pct=Math.round(a.parada/72*100);
+  f.innerHTML=
+    '<button class="volver" id="volver">‹ Todos mis alumnos</button>'+
+    '<div class="fh"><div class="av">'+iniciales(a.nombre)+'</div>'+
+      '<div><h2>'+esc(a.nombre)+'</h2><div class="cod">'+esc(a.codigo)+' · nivel '+esc(a.nivel)+' · '+esc(a.ultima)+'</div></div></div>'+
+    // KPIs
+    '<div class="secc"><div class="kpis">'+
+      '<div class="kpi"><div class="n">'+a.parada+'</div><div class="l">parada de 72</div></div>'+
+      '<div class="kpi"><div class="n">'+a.sesiones+'</div><div class="l">sesiones</div></div>'+
+      '<div class="kpi"><div class="n">'+(Math.round(a.minutos/60*10)/10)+'h</div><div class="l">practicadas</div></div>'+
+      '<div class="kpi"><div class="n">'+a.dias+'</div><div class="l">días seguidos</div></div>'+
+    '</div></div>'+
+    // errores comunes
+    '<div class="secc"><h3>Errores más comunes</h3>'+
+      (a.errores.length?a.errores.map(function(e,ei){
+        // acepta las dos formas: la vieja ['error',5] y la nueva con casos
+        var q=e.q||e[0], casos=e.casos||[], n=casos.length||e[1]||0;
+        return '<div class="errbloque">'+
+          '<button class="err" data-e="'+ei+'"><span class="flecha">›</span>'+
+            '<span>'+esc(q)+'</span><span class="cuenta">'+n+' veces</span></button>'+
+          '<div class="casos" data-c="'+ei+'">'+
+            (casos.length?casos.map(function(c){
+              var ref=ei+'-'+(casos.indexOf(c));
+              return '<div class="caso">'+
+                '<div class="caso-f">'+esc(c.fecha||'')+
+                  (c.pct!=null?' · <b>'+c.pct+'%</b>':'')+'</div>'+
+                '<div class="caso-l">'+
+                  '<button class="oir" data-oir="alumno" data-ref="'+ref+'" '+
+                    'data-url="'+esc(c.audio||'')+'" title="Oír al alumno">▶</button>'+
+                  '<span class="et mal">dijo</span>'+esc(c.dijo||'')+'</div>'+
+                '<div class="caso-l">'+
+                  '<button class="oir bien" data-oir="modelo" data-ref="'+ref+'" '+
+                    'data-txt="'+esc(c.frase||'')+'" title="Oír cómo debe sonar">▶</button>'+
+                  '<span class="et bien">era</span>'+esc(c.frase||'')+'</div>'+
+              '</div>';
+            }).join(''):'<div class="caso" style="color:var(--tenue)">Sin detalle guardado de estas veces.</div>')+
+          '</div></div>';
+      }).join(''):'<div style="color:var(--tenue);font-size:14px">Sin errores repetidos. Va muy bien.</div>')+
+    '</div>'+
+    // grabaciones
+    '<div class="secc"><h3>Sus grabaciones</h3>'+
+      a.grabaciones.map(function(g){
+        var cl=g.pct>=80?'bien':'mal';
+        return '<div class="grab"><span class="fr">'+esc(g.frase)+'<br><span style="font-size:11px;color:var(--tenue)">'+esc(g.fecha)+'</span></span>'+
+          '<span class="pct '+cl+'">'+g.pct+'%</span>'+
+          '<audio controls preload="none"><source src=""></audio></div>';
+      }).join('')+
+      '<div style="font-size:11px;color:var(--tenue);margin-top:8px">En modo demostración el audio no suena; con tu servidor conectado, aquí se oye cada grabación real.</div>'+
+    '</div>'+
+    // ── ARMADOR DEL PAQUETE ──
+    armador(a);
+  $('#volver').onclick=pintarLista;
+  // oír la grabación del alumno, y oír cómo debía sonar
+  f.querySelectorAll('.oir').forEach(function(b){
+    b.onclick=function(e){
+      e.stopPropagation();
+      if(b.getAttribute('data-oir')==='alumno')oirAlumno(b);
+      else oirModelo(b);
+    };
+  });
+  // abrir y cerrar cada error para ver las veces exactas
+  f.querySelectorAll('.err').forEach(function(b){
+    b.onclick=function(){
+      var i=b.getAttribute('data-e');
+      var caja=f.querySelector('.casos[data-c="'+i+'"]');
+      var abierto=b.classList.toggle('abierto');
+      if(caja)caja.style.display=abierto?'block':'none';
+    };
+  });
+  ligarArmador(a);
+}
+</script>
+
+<script>
+function armador(a){
+  return '<div class="secc"><h3>Mandarle material</h3>'+
+    '<div class="tabs">'+
+      '<button class="tab on" data-t="tarea">Tarea</button>'+
+      '<button class="tab" data-t="bonus">Bonus (con tokens)</button>'+
+      '<button class="tab" data-t="frase">Frase a corregir</button>'+
+    '</div>'+
+    // TAREA
+    '<div class="panel-tab" data-p="tarea">'+
+      '<div class="campo"><label>Título</label><input id="t-titulo" placeholder="Ej. Repasa los saludos"></div>'+
+      '<div class="campo"><label>Tu nota para el alumno</label>'+
+        '<textarea id="t-nota" placeholder="Carlos, cuida la R en ready…"></textarea></div>'+
+      '<div class="campo"><label>Tu voz (grábale una explicación)</label>'+
+        '<div class="grabar-voz"><button class="rec-btn" id="t-rec" type="button">● Grabar</button>'+
+        '<span id="t-recst" style="font-size:13px;color:var(--tenue)">sin audio</span></div></div>'+
+      '<div class="campo"><label>Videos (link de YouTube o Drive)</label><div id="t-vids"></div>'+
+        '<button class="masbtn" id="t-masv" type="button">+ agregar video</button></div>'+
+      '<div class="campo"><label>Material y ejercicios (links)</label><div id="t-links"></div>'+
+        '<button class="masbtn" id="t-masl" type="button">+ agregar link</button></div>'+
+      '<div class="campo tokfila"><label style="margin:0">Tokens por hacerla:</label>'+
+        '<input id="t-tok" type="number" value="30" min="0"></div>'+
+      '<button class="btn" id="t-enviar">Enviar tarea a '+esc(a.nombre.split(' ')[0])+'</button>'+
+    '</div>'+
+    // BONUS
+    '<div class="panel-tab" data-p="bonus" style="display:none">'+
+      '<div class="campo"><label>Título del reto</label><input id="b-titulo" placeholder="Ej. Di 3 números en inglés"></div>'+
+      '<div class="campo"><label>Instrucción</label><textarea id="b-nota" placeholder="Qué tiene que hacer…"></textarea></div>'+
+      '<div class="campo"><label>Link (opcional)</label><div id="b-links"></div>'+
+        '<button class="masbtn" id="b-masl" type="button">+ agregar link</button></div>'+
+      '<div class="campo tokfila"><label style="margin:0">Tokens que gana:</label>'+
+        '<input id="b-tok" type="number" value="15" min="0"></div>'+
+      '<p style="font-size:12px;color:var(--tenue);margin-bottom:8px">El bonus aparece en su mapa. Gana los tokens por hacerlo, sin importar qué tan bien le salga.</p>'+
+      '<button class="btn" id="b-enviar">Enviar bonus al mapa de '+esc(a.nombre.split(' ')[0])+'</button>'+
+    '</div>'+
+    // FRASE
+    '<div class="panel-tab" data-p="frase" style="display:none">'+
+      '<div class="campo"><label>Frase que debe volver a practicar</label>'+
+        '<input id="f-frase" placeholder="The parts are ready."></div>'+
+      '<p style="font-size:12px;color:var(--tenue);margin-bottom:8px">Aparece al inicio de su próxima sesión, con la forma correcta y tu voz.</p>'+
+      '<button class="btn" id="f-enviar">Mandar la frase</button>'+
+    '</div>'+
+  '</div>';
+}
+</script>
+
+<script>
+var GRABADO=null;   // audio del maestro en base64
+
+function filaLink(cont,ph){
+  var d=document.createElement('div');d.className='linkfila';
+  d.innerHTML='<input placeholder="'+ph+' (título)"><input placeholder="https://…"><button type="button">×</button>';
+  d.querySelector('button').onclick=function(){d.remove();};
+  cont.appendChild(d);
+}
+function leerLinks(cont){
+  return [].slice.call(cont.querySelectorAll('.linkfila')).map(function(d){
+    var ins=d.querySelectorAll('input');
+    return {titulo:ins[0].value.trim(),url:ins[1].value.trim()};
+  }).filter(function(l){return l.url;});
+}
+
+function ligarArmador(a){
+  // tabs
+  $('#ficha').querySelectorAll('.tab').forEach(function(tb){
+    tb.onclick=function(){
+      $('#ficha').querySelectorAll('.tab').forEach(function(x){x.classList.remove('on');});
+      tb.classList.add('on');
+      var t=tb.getAttribute('data-t');
+      $('#ficha').querySelectorAll('.panel-tab').forEach(function(p){
+        p.style.display=(p.getAttribute('data-p')===t)?'block':'none';
+      });
+    };
+  });
+  // +video / +link
+  $('#t-masv').onclick=function(){filaLink($('#t-vids'),'Video');};
+  $('#t-masl').onclick=function(){filaLink($('#t-links'),'Material');};
+  $('#b-masl').onclick=function(){filaLink($('#b-links'),'Link');};
+
+  // grabar la voz del maestro
+  var mr=null,trozos=[];
+  $('#t-rec').onclick=function(){
+    var b=$('#t-rec');
+    if(b.classList.contains('grabando')){
+      b.classList.remove('grabando');b.textContent='● Grabar';
+      if(mr)mr.stop();return;
+    }
+    if(!navigator.mediaDevices||!window.MediaRecorder){aviso('Tu navegador no graba audio.');return;}
+    navigator.mediaDevices.getUserMedia({audio:true}).then(function(st){
+      trozos=[];mr=new MediaRecorder(st);
+      mr.ondataavailable=function(e){trozos.push(e.data);};
+      mr.onstop=function(){
+        st.getTracks().forEach(function(t){t.stop();});
+        var blob=new Blob(trozos,{type:mr.mimeType});
+        var fr=new FileReader();
+        fr.onload=function(){GRABADO=fr.result.split(',')[1];$('#t-recst').textContent='audio listo ('+Math.round(blob.size/1024)+' KB)';};
+        fr.readAsDataURL(blob);
+      };
+      mr.start();b.classList.add('grabando');b.textContent='■ Parar';
+    }).catch(function(){aviso('No diste permiso al micrófono.');});
+  };
+
+  // enviar tarea
+  $('#t-enviar').onclick=function(){
+    var titulo=$('#t-titulo').value.trim();
+    if(!titulo){aviso('Ponle un título a la tarea.');return;}
+    enviar({tipo:'tarea',titulo:titulo,nota:$('#t-nota').value.trim(),
+      audio:GRABADO,videos:leerLinks($('#t-vids')),links:leerLinks($('#t-links')),
+      tokens:+$('#t-tok').value||0},a);
+  };
+  $('#b-enviar').onclick=function(){
+    var titulo=$('#b-titulo').value.trim();
+    if(!titulo){aviso('Ponle un título al bonus.');return;}
+    enviar({tipo:'bonus',titulo:titulo,nota:$('#b-nota').value.trim(),
+      links:leerLinks($('#b-links')),tokens:+$('#b-tok').value||0},a);
+  };
+  $('#f-enviar').onclick=function(){
+    var fr=$('#f-frase').value.trim();
+    if(!fr){aviso('Escribe la frase.');return;}
+    enviar({tipo:'correccion',frase:fr},a);
+  };
+}
+
+/* ═══ oír ═══
+   Un solo audio a la vez: si tocas otro, el anterior se calla. */
+var SONANDO=null, BOTON_SONANDO=null;
+function callar(){
+  if(SONANDO){try{SONANDO.pause();SONANDO.currentTime=0;}catch(x){}SONANDO=null;}
+  if(BOTON_SONANDO){BOTON_SONANDO.textContent='▶';BOTON_SONANDO.classList.remove('sonando');BOTON_SONANDO=null;}
+}
+function tocar(url,b){
+  callar();
+  var a=new Audio(url);
+  SONANDO=a;BOTON_SONANDO=b;
+  b.textContent='■';b.classList.add('sonando');
+  a.onended=callar;
+  a.onerror=function(){callar();aviso('No pude abrir ese audio.');};
+  var p=a.play();
+  if(p&&p.catch)p.catch(function(){callar();aviso('El navegador bloqueó el audio.');});
+}
+function oirAlumno(b){
+  var url=b.getAttribute('data-url');
+  if(!url){aviso('En demostración no hay grabación. Conectado, aquí suena su voz.');return;}
+  tocar(url,b);
+}
+// la forma correcta, con el servidor de voz que ya tienes
+var VOZ_ENDPOINT='';   // ← pega aquí la MISMA dirección del servidor de voz de la app
+var VOZ_CACHE={};
+function oirModelo(b){
+  var t=b.getAttribute('data-txt');
+  if(!t)return;
+  if(VOZ_CACHE[t]){tocar(VOZ_CACHE[t],b);return;}
+  if(!VOZ_ENDPOINT){aviso('Falta pegar la dirección del servidor de voz en este panel.');return;}
+  callar();b.textContent='…';
+  fetch(VOZ_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({texto:t,idioma:'en',paquete:'audio-us',sexo:'m'})})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(d){
+      b.textContent='▶';
+      if(d&&d.ok&&d.audio){VOZ_CACHE[t]='data:audio/mpeg;base64,'+d.audio;tocar(VOZ_CACHE[t],b);}
+      else aviso('El servidor de voz no respondió.');
+    })
+    .catch(function(){b.textContent='▶';aviso('Sin conexión con el servidor de voz.');});
+}
+
+function enviar(paquete,a){
+  paquete.id=paquete.tipo+'-'+Date.now();
+  if(!DATOS_ENDPOINT){
+    aviso('Demo: en real, esto le llega a '+a.nombre.split(' ')[0]+' en su próxima sesión.');
+    return;
+  }
+  fetch(DATOS_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({accion:'dejar',codigo:a.codigo,nombre:a.nombre,paquete:paquete})})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(d){aviso(d&&d.ok?'Enviado a '+a.nombre.split(' ')[0]:'No se pudo enviar');})
+    .catch(function(){aviso('Sin conexión: no se envió');});
+}
+
+cargar();
+</script></body></html>

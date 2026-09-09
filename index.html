@@ -116,6 +116,22 @@
   .dictoin:focus{outline:none;border-color:var(--verde)}
   .fb{border-radius:9px;padding:10px 12px;margin:10px 0;font-size:14px;line-height:1.45}
   .fb.ok{background:rgba(29,158,117,.12);border:1px solid rgba(29,158,117,.35)}
+  .grabando{display:flex;align-items:center;gap:9px;background:rgba(216,90,48,.1);
+    border:1px solid rgba(216,90,48,.35);border-radius:9px;padding:11px 13px;margin:10px 0;
+    font-size:14px;font-weight:500}
+  .grabando .punto{width:11px;height:11px;border-radius:50%;background:var(--coral);
+    animation:latir 1s infinite;flex:none}
+  @keyframes latir{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.8)}}
+  .aprendi .apfila{display:flex;gap:8px;margin:12px 0}
+  .aprendi .apbox{flex:1;background:var(--papel);border:1px solid var(--linea);border-radius:9px;
+    padding:10px 6px;text-align:center}
+  .aprendi .apbox b{display:block;font-family:var(--display);font-size:22px;color:var(--verde)}
+  .aprendi .apbox span{font-size:10.5px;opacity:.7}
+  .aprendi .aplista{margin-top:12px}
+  .aprendi .aplista .hl{font-family:var(--mono);font-size:9px;letter-spacing:.13em;
+    text-transform:uppercase;opacity:.6;margin-bottom:5px}
+  .aprendi .apr{background:rgba(29,158,117,.08);border-left:2px solid var(--verde);
+    border-radius:5px;padding:6px 9px;margin-bottom:5px;font-size:13.5px}
   .fb.no{background:rgba(216,90,48,.1);border:1px solid rgba(216,90,48,.3)}
   .opt{text-align:left;background:var(--crema);border:1px solid var(--linea);color:var(--tinta);
        border-radius:10px;padding:13px 15px;font-family:var(--display);font-size:16px;cursor:pointer}
@@ -813,7 +829,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v77 · 8 sep · pre-A1";
+var VERSION="v79 · 8 sep";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -1483,10 +1499,16 @@ var METAS=[
 // ============================================================
 function moldePreA1(p){
   var nom  = p.nombre || 'amiga';
-  var ofi  = limpiarOficio(p.trabajo_es||'') || 'operadora';
-  var ofiEN= (p.trabajo_en||'an operator');
-  var lug  = p.lugar_es || 'la fabrica';
-  var lugEN= (p.lugar_en||'a factory');
+  // quita el prefijo si el dato ya lo trae, para no repetir ("I work in I work in sales")
+  function _sinPre(t,pre){
+    t=String(t||'').trim().replace(/\.$/,'');
+    var r=new RegExp('^'+pre.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s*','i');
+    return t.replace(r,'').trim();
+  }
+  var ofi  = _sinPre(limpiarOficio(p.trabajo_es||'')||'operadora','Soy') || 'operadora';
+  var ofiEN= _sinPre(p.trabajo_en||'an operator','I am') || 'an operator';
+  var lug  = _sinPre(p.lugar_es||'en la fabrica','Trabajo') || 'en la fabrica';
+  var lugEN= _sinPre(p.lugar_en||'in a factory','I work') || 'in a factory';
 
   return [
   // ---------- L1 ----------
@@ -1521,7 +1543,8 @@ function moldePreA1(p){
      {area:'hab',  k:'model', en:'I work every day.', es:'Trabajo todos los dias.'},
      {area:'hab',  k:'ask',   q:'What do you do every day?', es:'Que haces todos los dias?',
       pista:'I work every day.'},
-     {area:'hab',  k:'free',  q:'Tell me about your day.', es:'Cuentame tu dia. Lo que puedas.'}
+     {area:'hab',  k:'ask',   q:'Do you work every day?', es:'Trabajas todos los dias? Contesta: Yes, I do.',
+      pista:'Yes, I do. I work every day.'}
    ]},
 
   // ---------- L3 ----------
@@ -1534,10 +1557,11 @@ function moldePreA1(p){
       pide:'A que hora empieza?', ops:['At six','At seven','At eight'], bien:'At seven'},
      {area:'gram', k:'cazar', frase:'She work in quality.', mala:'work', buena:'works',
       es:'Ella trabaja en calidad.'},
-     {area:'hab',  k:'model', en:'I work in '+lugEN+'.', es:'Trabajo en '+lug+'.'},
+     {area:'hab',  k:'model', en:'I work '+lugEN+'.', es:'Trabajo '+lug+'.'},
      {area:'hab',  k:'ask',   q:'Where do you work?', es:'Donde trabajas?',
-      pista:'I work in '+lugEN+'.'},
-     {area:'hab',  k:'free',  q:'Tell me about your work.', es:'Cuentame de tu trabajo.'}
+      pista:'I work '+lugEN+'.'},
+     {area:'hab',  k:'ask',   q:'Do you work in a factory?', es:'Trabajas en una fabrica? Contesta si o no.',
+      pista:'Yes, I do.'}
    ]},
 
   // ---------- L4 ----------
@@ -1567,7 +1591,10 @@ function moldePreA1(p){
      {area:'gram', k:'transf', origen:'You work here.',
       pide:'Ponlo en pregunta. Empieza con "Do".', bien:'Do you work here?'},
      {area:'hab',  k:'model', en:'Do you work here?', es:'Trabajas aqui?'},
-     {area:'hab',  k:'free',  q:'Ask me three questions.', es:'Hazme tres preguntas. Las que sepas.'}
+     {area:'hab',  k:'ask',   q:'Ask me: where do I work?', es:'Preguntame donde trabajo. Di: Where do you work?',
+      pista:'Where do you work?'},
+     {area:'hab',  k:'ask',   q:'Now ask me the time.', es:'Ahora preguntame la hora. Di: What time is it?',
+      pista:'What time is it?'}
    ]},
 
   // ---------- L6 ----------
@@ -1583,7 +1610,8 @@ function moldePreA1(p){
       bien:'She checks the boxes.', mal:'She check the boxes.',
       porque:'Con I / you / we no lleva s. Con he / she / it, siempre s.'},
      {area:'hab',  k:'model', en:'I check the boxes.', es:'Reviso las cajas.'},
-     {area:'hab',  k:'free',  q:'What do you check at work?', es:'Que revisas en tu trabajo?'}
+     {area:'hab',  k:'ask',   q:'What do you check at work?', es:'Que revisas? Contesta: I check the...',
+      pista:'I check the boxes.'}
    ]},
 
   // ---------- L7 ----------
@@ -1598,8 +1626,8 @@ function moldePreA1(p){
       es:'La maquina no funciona hoy.'},
      {area:'gram', k:'transf', origen:'The machine stops.',
       pide:'Ponlo en pasado.', bien:'The machine stopped.'},
-     {area:'hab',  k:'free',  q:'Tell me about a problem at work.',
-      es:'Cuentame de un problema en tu trabajo.'}
+     {area:'hab',  k:'ask',   q:'Is there a problem today?', es:'Hay un problema hoy? Contesta con Yes o No.',
+      pista:'Yes, there is a problem.'}
    ]},
 
   // ---------- L8 ----------
@@ -1612,12 +1640,15 @@ function moldePreA1(p){
       audio:'She works in quality.'},
      {area:'gram', k:'ordenar', piezas:['I','work','in','a','factory'],
       es:'Trabajo en una fabrica.'},
-     {area:'hab',  k:'free',  q:'Tell me everything about you. Take your time.',
-      es:'Dime todo de ti. Sin prisa. (vez 1 de 3)'},
-     {area:'hab',  k:'free',  q:'Again, a little faster.',
-      es:'Otra vez, un poco mas rapido. (vez 2 de 3)'},
-     {area:'hab',  k:'free',  q:'Last time. As fast as you can.',
-      es:'Ultima vez, lo mas suelto que puedas. (vez 3 de 3)'}
+     {area:'hab',  k:'ask',   q:'Who are you? Name, job, place.',
+      es:'Vez 1 de 3. Di tres cosas: tu nombre, tu trabajo y donde. Sin prisa.',
+      pista:'My name is '+nom+'. I am '+ofiEN+'. I work '+lugEN+'.'},
+     {area:'hab',  k:'ask',   q:'Again. A little faster.',
+      es:'Vez 2 de 3. Las mismas tres cosas, un poco mas rapido.',
+      pista:'My name is '+nom+'. I am '+ofiEN+'. I work '+lugEN+'.'},
+     {area:'hab',  k:'ask',   q:'Last time. As fast as you can.',
+      es:'Vez 3 de 3. Lo mas suelto que puedas.',
+      pista:'My name is '+nom+'. I am '+ofiEN+'. I work '+lugEN+'.'}
    ]}
   ];
 }
@@ -4907,7 +4938,16 @@ function portadaSesion(){
   APP.querySelectorAll('.spk').forEach(function(b){
     b.onclick=function(){say(modelos[+b.dataset.i].en,'en-US');};
   });
-  precargarLista(modelos);   // ← se van bajando mientras el alumno lee la pantalla
+  // precarga TODA la leccion (no solo los modelos) para que nada tarde al tocar
+  (function(){
+    var todo=[];
+    (S.items||[]).forEach(function(y){
+      var t=y.audio||y.en||y.origen||y.bien||y.q;
+      if(t)todo.push(t);
+      if(y.es)todo.push({texto:y.es,lang:'es-MX'});
+    });
+    precargarLista(todo.length?todo:modelos);
+  })();
   document.getElementById('go').onclick=function(){t0=Date.now();vistos={};arrancarReloj();paso();};
   document.getElementById('atras').onclick=function(){speechSynthesis&&speechSynthesis.cancel();sIdx=null;router();};
 }
@@ -4939,10 +4979,20 @@ function paso(){
     free:'Ahora di lo que puedas, con tus palabras. Cuando ya no tengas más que decir, toca "Ya dije todo lo que puedo".',
     drill:'Es la misma frase con una pieza cambiada. Fíjate en lo que se movió y dila en voz alta.',
     num:'Se oyen parecido a propósito. Escúchalo las veces que quieras antes de escoger.',
-    sit:'Primero escucha sin ver el texto. La primera vez capta de qué se trata; la segunda, los detalles. Luego contestas.'
+    sit:'Primero escucha sin ver el texto. La primera vez capta de qué se trata; la segunda, los detalles. Luego contestas.',
+    regla:'Lee la regla y mira los dos ejemplos: el bueno y el malo. Cuando la entiendas, toca Entendido.',
+    cazar:'Una palabra de la frase está mal escrita. Léela con calma y toca la palabra que no va.',
+    hueco:'Falta una palabra. Escoge de las opciones cuál completa bien la frase.',
+    ordenar:'Las palabras están revueltas. Tócalas una por una en el orden correcto para armar la frase.',
+    transf:'Te doy una frase y te pido cambiarla. Dila en voz alta ya cambiada.',
+    idea:'Escucha y capta de qué se trata. No tienes que entender cada palabra, solo la idea.',
+    detalle:'Escucha y busca el dato exacto: la hora, el número, el nombre. Escúchalo las veces que quieras.',
+    dosc:'Vas a oír una frase. Las dos opciones se parecen mucho. Escoge la que oíste.',
+    segm:'Suena todo pegado pero son varias palabras. Escucha y ármalas en orden.',
+    dicto:'Escucha y escribe lo que alcances. No tiene que estar perfecto.'
   };
   var quedan=S.items.length-it-1;
-  var h=atras()+marcaReloj()+ayuda(ayudas[x.k],(quedan>0?'quedan '+quedan+' ejercicios':'el cierre de la sesión'))+'<div class="prog">'+S.items.map(function(_,i){return '<i class="'+(i<=it?'on':'')+'"></i>';}).join('')+'</div>'+navPaso(it>0, it<S.items.length-1)+'<div class="qcard">';
+  var h=atras()+marcaReloj()+ayuda(ayudas[x.k]||'Sigue las instrucciones de la tarjeta.',(quedan>0?'quedan '+quedan+' ejercicios':'el cierre de la sesión'))+'<div class="prog">'+S.items.map(function(_,i){return '<i class="'+(i<=it?'on':'')+'"></i>';}).join('')+'</div>'+navPaso(it>0, it<S.items.length-1)+'<div class="qcard">';
 
   if(x.k==='model'){
     var vars=variantesDe(x.en,P);
@@ -5141,6 +5191,19 @@ function paso(){
   ligarDuda();
   ligarVideo();
 
+  // --- precarga: el audio de este paso y del siguiente, para que suene al instante ---
+  (function(){
+    function textoDe(y){
+      if(!y)return null;
+      return y.audio||y.en||y.origen||y.bien||y.q||null;
+    }
+    var pend=[];
+    var t0=textoDe(x); if(t0)pend.push(t0);
+    var sig=S.items[it+1]; var t1=textoDe(sig); if(t1)pend.push(t1);
+    if(x.es)pend.push({texto:x.es,lang:'es-MX'});   // el boton MX tambien listo
+    try{ precargarLista(pend); }catch(e){}
+  })();
+
   if(x.k==='model'){
     buscarVisualCompleto(x.en,'vis-model');
     var otras=variantesDe(x.en,P).filter(function(v){return v!==x.en;});
@@ -5173,15 +5236,13 @@ function paso(){
     rev.outerHTML='<div class="oirfila"><button class="oirb alt" id="oires2">🇲🇽 Qué significa</button></div>';
     var o2=document.getElementById('oires2');
     if(o2)o2.onclick=function(){
-      say(x.q,'en-US',function(){setTimeout(function(){say(x.es||'','es-MX');},350);});
+      say(x.es||'','es-MX');   // solo español
     };
   };
   var oires=document.getElementById('oires');
   // primero el inglés, luego el español: el orden importa para que asocie
   if(oires)oires.onclick=function(){
-    say(x.k==='model'?x.en:x.q,'en-US',function(){
-      setTimeout(function(){say(x.es||x.ctx||'','es-MX');},350);
-    });
+    say(x.es||x.ctx||'','es-MX');   // solo español: es el boton de "que significa"
   };
 
   // el tutor explica en español la primera vez que aparece cada tipo de ejercicio
@@ -5343,10 +5404,13 @@ function paso(){
     pb.remove();
   };
 
-  document.getElementById('mic').onclick=function(){
+  var _mic=document.getElementById('mic');
+  if(_mic)_mic.onclick=function(){
     var b=this;
     if(!HAY_MIC){grabarPaso(x,b);return;}
-    b.classList.add('rec');b.innerHTML='<span class="ring2"></span> Escuchando…';b.disabled=true;
+    b.classList.add('rec');b.innerHTML='<span class="ring2"></span> Grabando…';b.disabled=true;
+    var _r0=document.getElementById('res');
+    if(_r0)_r0.innerHTML='<div class="grabando"><span class="punto"></span>Te estoy grabando. Habla ahora.</div>';
     MI_GRABACION=null;
     if(x.k==='model'||x.k==='drill')empezarGrabacion();
     listen('en-US',function(t){
@@ -5356,13 +5420,19 @@ function paso(){
     },function(err){
       pararGrabacion();
       b.classList.remove('rec');b.disabled=false;
-      if(err==='no-speech'){b.innerHTML='<span class="ring2"></span> No te oí · intenta otra vez';return;}
+      if(err==='no-speech'){
+        b.innerHTML='<span class="ring2"></span> No te oí · intenta otra vez';
+        var _r1=document.getElementById('res');
+        if(_r1)_r1.innerHTML='<div class="fb no">No te oí. Acércate al micrófono y toca otra vez.</div>';
+        return;
+      }
       HAY_MIC=false;grabarPaso(x,b);
     });
   };
-  ligarAyuda(ayudas[x.k]);
+  ligarAyuda(ayudas[x.k]||'Sigue las instrucciones de la tarjeta.');
   ligarBilingue();
-  document.getElementById('skip').onclick=function(){it++;paso();};
+  var _sk=document.getElementById('skip');
+  if(_sk)_sk.onclick=function(){it++;paso();};
   ligarAtras(function(){
     if(it>0){it--;paso();}
     else{it=0;attempts=[];portadaSesion();}
@@ -5502,6 +5572,35 @@ function registrar(x,t){
 }
 
 /* ═══════════ cierre y envío ═══════════ */
+// Explica en corto QUE se aprendio en la sesion, por area.
+function resumenAprendido(S,ats){
+  var items=(S&&S.items)||[];
+  var GRAM={regla:1,cazar:1,hueco:1,ordenar:1,transf:1};
+  var OIR ={idea:1,detalle:1,dosc:1,segm:1,dicto:1};
+  var nOir=0,nGram=0,nHab=0, reglas=[], frases=[];
+  items.forEach(function(x){
+    if(OIR[x.k])nOir++;
+    else if(GRAM[x.k]){nGram++; if(x.k==='regla'&&x.titulo)reglas.push(x.titulo);
+                       if(x.k==='cazar'&&x.buena)reglas.push(x.mala+' → '+x.buena);}
+    else {nHab++; if(x.en)frases.push(x.en);}
+  });
+  var bien=(ats||[]).filter(function(a){return a.pct>=80;}).length;
+  var conP=(ats||[]).filter(function(a){return a.pct!==null&&a.pct!==undefined;}).length;
+  var h='<div class="sumcard aprendi"><h3>Qué aprendiste hoy</h3>'+
+    '<p class="sub">'+esc(S.obj||S.hoy||'')+'</p>'+
+    '<div class="apfila">'+
+      '<div class="apbox"><b>'+nOir+'</b><span>de oído</span></div>'+
+      '<div class="apbox"><b>'+nGram+'</b><span>de gramática</span></div>'+
+      '<div class="apbox"><b>'+nHab+'</b><span>de hablar</span></div>'+
+    '</div>';
+  if(reglas.length)h+='<div class="aplista"><div class="hl">Las reglas de hoy</div>'+
+    reglas.slice(0,3).map(function(r){return '<div class="apr">'+esc(r)+'</div>';}).join('')+'</div>';
+  if(frases.length)h+='<div class="aplista"><div class="hl">Tus frases nuevas</div>'+
+    frases.slice(0,4).map(function(f){return '<div class="apr">'+esc(f)+'</div>';}).join('')+'</div>';
+  if(conP)h+='<p class="sub" style="margin-top:10px">Te salieron bien '+bien+' de '+conP+' ejercicios calificados.</p>';
+  return h+'</div>';
+}
+
 function cierre(){
   pararReloj();
   var S=MAT[sIdx];
@@ -5553,6 +5652,7 @@ function cierre(){
   var h='<div class="qcard"><div class="qlbl">Cierre</div><div class="qtxt">Buen trabajo, '+esc(P.nombre)+'.</div>'+
     '<div class="qsub">'+msg+(prom!==null?' Tus repeticiones salieron al '+prom+'% de parecido con el modelo.':'')+'</div>'+
     '<button class="btn" id="menu">Volver al camino</button></div>'+
+    resumenAprendido(S,attempts)+
     '<div class="sumcard"><h3>Lo que se le manda a tu maestro</h3><p class="sub">Cada intento, tal como salió. Brian lo revisa y te devuelve máximo tres correcciones.</p>'+
     attempts.map(function(a){
       if(a.tipo==='pista')return '<div class="att"><span class="hd">pidió pista · '+esc(a.meta)+'</span></div>';
@@ -5565,7 +5665,7 @@ function cierre(){
     (HAY_MIC?'<button class="btn ghost" id="obsmic"><span class="pulse"></span> Decirlo en voz alta</button>':'')+
     '<p class="tiny" style="text-align:left;margin:6px 0 0">Es opcional, pero es lo que más le sirve a Brian.</p></div>'+
     '<p class="why" id="stat"></p><div class="actrow" id="manual"'+((ONLINE||DATOS_ENDPOINT)?' hidden':'')+'>'+
-    '<button class="p" id="mail">Enviar por correo</button><button id="cop">Copiar código</button></div>'+
+    '<button id="cop">Copiar código</button></div>'+
     '<textarea class="code" id="cd" readonly'+((ONLINE||DATOS_ENDPOINT)?' hidden':'')+'></textarea></div>';
   APP.innerHTML=h;
   say(msgVoz,'es-MX');

@@ -82,6 +82,41 @@
   .pick button.sel i{opacity:.9}
 
   .opts{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+  /* ---- tipos nuevos: gramatica y listening ---- */
+  .reglabox{background:var(--papel);border:1px solid var(--linea);border-left:3px solid var(--verde);
+    border-radius:10px;padding:12px 14px;margin:10px 0}
+  .regla-t{font-family:var(--display);font-size:16px;margin-bottom:4px}
+  .regla-d{font-size:13.5px;line-height:1.5;opacity:.85}
+  .parfila{display:flex;gap:8px;margin:10px 0}
+  .par{flex:1;border-radius:9px;padding:10px 12px;font-size:14px;border:1px solid var(--linea)}
+  .par-et{display:block;font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;
+    text-transform:uppercase;opacity:.6;margin-bottom:3px}
+  .par.bien{background:rgba(29,158,117,.09);border-color:rgba(29,158,117,.35)}
+  .par.mal{background:rgba(216,90,48,.08);border-color:rgba(216,90,48,.3);text-decoration:line-through;opacity:.75}
+  .cazafila,.piezasfila{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}
+  .palb{background:var(--papel);border:1px solid var(--linea);color:var(--tinta);
+    border-radius:8px;padding:9px 13px;font-size:15px;font-family:inherit;cursor:pointer;transition:.15s}
+  .palb:active{transform:scale(.96)}
+  .palb.usada{opacity:.25;pointer-events:none}
+  .palb.ok{background:rgba(29,158,117,.2);border-color:var(--verde)}
+  .palb.no{background:rgba(216,90,48,.18);border-color:var(--coral)}
+  .hueco{display:inline-block;min-width:64px;border-bottom:2px dashed var(--verde);
+    margin:0 4px;color:transparent}
+  .opsfila{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+  .opsfila.col{flex-direction:column}
+  .armado{min-height:46px;background:var(--papel);border:1px dashed var(--linea);
+    border-radius:9px;padding:10px 12px;margin:10px 0;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .armado-vacio{font-size:12.5px;opacity:.45}
+  .armw{background:rgba(29,158,117,.13);border:1px solid rgba(29,158,117,.3);
+    border-radius:6px;padding:5px 10px;font-size:14.5px}
+  .pidebox{background:rgba(216,90,48,.08);border:1px solid rgba(216,90,48,.25);
+    border-radius:8px;padding:9px 12px;margin:10px 0;font-size:13.5px}
+  .dictoin{width:100%;background:var(--papel);border:1px solid var(--linea);border-radius:9px;
+    padding:11px 12px;font-family:inherit;font-size:15px;color:var(--tinta);margin:10px 0;resize:vertical}
+  .dictoin:focus{outline:none;border-color:var(--verde)}
+  .fb{border-radius:9px;padding:10px 12px;margin:10px 0;font-size:14px;line-height:1.45}
+  .fb.ok{background:rgba(29,158,117,.12);border:1px solid rgba(29,158,117,.35)}
+  .fb.no{background:rgba(216,90,48,.1);border:1px solid rgba(216,90,48,.3)}
   .opt{text-align:left;background:var(--crema);border:1px solid var(--linea);color:var(--tinta);
        border-radius:10px;padding:13px 15px;font-family:var(--display);font-size:16px;cursor:pointer}
   .opt:hover{border-color:var(--verde);background:var(--verde-suave)}
@@ -120,6 +155,13 @@
        width:32px;height:32px;flex:0 0 32px;cursor:pointer;font-size:11px}
   .spk:hover{background:var(--verde-suave);border-color:var(--verde)}
 
+  .navpaso{display:flex;align-items:center;gap:10px;margin:14px 0 4px}
+  .navpaso .np{flex:0 0 auto;background:var(--crema,#F5F1E8);border:1px solid var(--linea,#E7E0D3);
+    border-radius:11px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;
+    color:var(--tinta,#2A2724);font-family:inherit}
+  .navpaso .np:disabled{opacity:.35;cursor:default}
+  .navpaso .np-mid{flex:1;text-align:center;font-size:11px;color:var(--tenue,#8A837A);
+    font-family:var(--mono);letter-spacing:.06em}
   .prog{display:flex;gap:4px;margin-bottom:20px}
   .prog i{flex:1;height:3px;border-radius:2px;background:var(--linea)}
   .prog i.on{background:var(--verde)}
@@ -219,6 +261,11 @@
   .why{font-size:11.5px;color:var(--tenue);margin-top:9px;line-height:1.6}
 </style>
 <style>
+  .cargando-audio{position:relative;opacity:.75}
+  .cargando-audio::after{content:'';position:absolute;left:0;bottom:0;height:2px;width:100%;
+    background:linear-gradient(90deg,transparent,var(--verde,#1D9E75),transparent);
+    animation:cargaudio 1.1s linear infinite}
+  @keyframes cargaudio{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
   .volver{background:none;border:0;font-family:var(--mono);font-size:11px;letter-spacing:.1em;
     text-transform:uppercase;color:var(--tenue);cursor:pointer;padding:8px 2px;margin-bottom:10px}
   .volver:hover{color:var(--verde-hondo)}
@@ -700,7 +747,47 @@
     .tutor-aro{animation:none}.tutor-globo{animation:none}
   }
 </style>
-
+<style>
+  .datf{display:block;width:100%;text-align:left;background:var(--papel);
+    border:1px solid var(--linea);border-radius:12px;padding:11px 13px;margin-bottom:7px;
+    font-size:15px;color:var(--tinta);cursor:pointer;position:relative}
+  .datf span{display:block;font-size:11px;color:var(--tenue,#8A837A);margin-bottom:2px}
+  .datl-e{position:absolute;right:12px;top:50%;transform:translateY(-50%);
+    font-size:11px;color:var(--verde);font-weight:600}
+  .datn{margin-top:10px;font-size:13px;color:var(--suave,#57534E)}
+</style>
+<style>
+  .cj-badge{background:var(--coral,#D85A30);color:#fff;border-radius:20px;font-size:11px;
+    font-weight:700;padding:1px 7px;margin-left:auto;position:absolute;right:12px}
+  .tareas-h{padding:0 2px 4px}
+  .tareas-l{display:flex;flex-direction:column;gap:9px}
+  .tarea-c{display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+    background:var(--papel);border:1px solid var(--linea);border-radius:14px;padding:12px 13px;cursor:pointer}
+  .tarea-c.hecha{opacity:.62}
+  .tc-ic{flex:0 0 auto;color:var(--verde)}
+  .tc-t{font-size:15px;color:var(--tinta);font-weight:600}
+  .tc-s{font-size:12px;color:var(--tenue,#8A837A);margin-top:2px}
+  .tc-tok{margin-left:auto;background:var(--verde);color:#fff;font-weight:700;font-size:13px;
+    border-radius:20px;padding:3px 10px;flex:0 0 auto}
+  .tarea-v{padding:2px}
+  .tv-de{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .tv-de b{display:block;font-size:14px;color:var(--tinta)}
+  .tv-de span{font-size:11px;color:var(--tenue,#8A837A)}
+  .brian-av{flex:0 0 auto}
+  .tv-nota{background:var(--papel);border:1px solid var(--linea);border-radius:12px;
+    padding:12px 13px;font-size:15px;line-height:1.55;color:var(--tinta);margin-bottom:12px}
+  .tv-blq{margin-bottom:13px}
+  .tv-lbl{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tenue,#8A837A);
+    margin-bottom:6px;font-weight:600}
+  .tv-link{display:flex;align-items:center;gap:9px;background:var(--papel);border:1px solid var(--linea);
+    border-radius:11px;padding:11px 12px;margin-bottom:6px;color:var(--tinta);
+    text-decoration:none;font-size:14px}
+  .tv-link span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tv-ya{display:flex;align-items:center;gap:7px;color:var(--verde);font-size:14px;
+    font-weight:600;margin-top:14px}
+  .tareas-vacio{text-align:center}
+  .tv-ic{color:var(--verde);opacity:.5;margin-bottom:8px}
+</style>
 
 
 </head>
@@ -726,7 +813,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v72 · 8 sep";
+var VERSION="v77 · 8 sep · pre-A1";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -806,6 +893,8 @@ function aplicarVoz(id){
 }
 
 function say(t,lang,cb){
+  callarTodo();          // ← al primer clic se hace silencio, sin esperar la descarga
+  marcarCargando(true);  // ← el botón avisa que viene en camino
   var k=clave(t);
   var archivo=(typeof GRABABLES!=='undefined'&&GRABABLES[k])?GRABABLES[k]:k;
   // se intenta SIEMPRE el audio: si el archivo existe, suena la voz buena;
@@ -850,7 +939,7 @@ var PAQUETES=[
   {id:'audio-in', nombre:'India',          nota:'muy común en el trabajo técnico'}
 ];
 var PAQUETE_ACTIVO='audio-us';   // por defecto, sin pasar por el selector
-var VEL_AUDIO=1;   // 0.7 muy lento · 1 normal · 1.15 rápido
+var VEL_AUDIO=1;   // 0.85 pausado · 1 normal · 1.15 rápido. Nunca 0.7: es irreal
 var RUTAS=['audio/',''];
 function armarRutas(){
   var r=[];
@@ -862,6 +951,13 @@ var EXT=['.webm','.mp3'];   // sirve cualquiera de los dos formatos
 var AUDIO_FALLA={};     // los que ya se sabe que no existen
 var AUDIO_RUTA=null;    // la ruta que sí sirvió, para no volver a probar
 var AUDIO_HAY=0;        // cuántas grabaciones se han encontrado
+function mezclar(a){
+  for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}
+  return a;
+}
+function normal(t){
+  return String(t||'').toLowerCase().replace(/[.,!?;:'"]/g,'').replace(/\s+/g,' ').trim();
+}
 function clave(t){
   return String(t).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 }
@@ -900,6 +996,7 @@ function reproducir(url,onOk,onNoExiste,onBloqueado){
     if(resuelto)return;resuelto=true;
     if(miTurno!==TURNO)return;   // llegó tarde
     AUDIO_ACTUAL=a;
+    marcarCargando(false);   // ya está sonando: se quita el aviso del botón
     a.onended=function(){onOk&&onOk();};
     var p=a.play();
     if(p&&p.catch)p.catch(function(){
@@ -928,16 +1025,40 @@ function nombresPosibles(texto,archivo){
 var VOZ_CACHE={};
 // Hombre o mujer según la frase, siempre igual para la misma frase.
 // Así no suena todo con la misma voz, pero tampoco cambia cada vez.
+// Antes la voz se sorteaba con un hash: "My name is Sarah" podía salir con
+// voz de hombre. Ahora se lee la frase: si hay un nombre o un pronombre,
+// manda eso. Solo si no hay ninguna pista se recurre al sorteo.
+var NOM_F=('sarah maria maría ana laura karen lucia lucía sofia sofía elena julia rosa carmen diana '+
+  'patricia claudia veronica verónica alejandra gabriela mariana andrea paola daniela fernanda '+
+  'emily emma olivia sophia isabella mia charlotte amelia harper evelyn abigail lisa mary jennifer '+
+  'linda susan jessica karla brenda mónica monica silvia norma leticia guadalupe alma').split(' ');
+var NOM_M=('carlos juan jose josé luis miguel jorge pedro antonio manuel francisco javier ricardo '+
+  'roberto fernando alberto raul raúl sergio hector héctor arturo eduardo martin martín pablo '+
+  'james john robert michael william david richard joseph thomas charles daniel matthew mark paul '+
+  'steven andrew kevin brian george edward samuel oscar óscar rafael victor víctor').split(' ');
+
 function sexoDeLaFrase(t){
-  var n=0,x=String(t);
-  for(var i=0;i<x.length;i++)n+=x.charCodeAt(i);
+  var x=' '+String(t).toLowerCase().replace(/[^a-záéíóúñ ]/g,' ')+' ';
+  // pronombres y tratamientos: mandan sobre todo lo demás
+  if(/ (she|her|hers|ms|mrs|miss|ella|señora|señorita|sra) /.test(x))return 'f';
+  if(/ (he|him|his|mr|sir|el señor|señor|sr) /.test(x))return 'm';
+  // un nombre reconocido
+  for(var i=0;i<NOM_F.length;i++)if(x.indexOf(' '+NOM_F[i]+' ')>=0)return 'f';
+  for(var j=0;j<NOM_M.length;j++)if(x.indexOf(' '+NOM_M[j]+' ')>=0)return 'm';
+  // si la frase es del propio alumno, su voz es la que él escogió
+  if(/ (my name is|i am|i'm|soy|me llamo) /.test(x)){
+    var a=(progreso().avatar)||{};
+    if(a.sexo)return a.sexo==='m'?'f':'m';
+  }
+  var n=0;
+  for(var k=0;k<x.length;k++)n+=x.charCodeAt(k);
   return (n%2===0)?'f':'m';
 }
 function vozDelServidor(texto,lang,cb,onFalla){
   if(!VOZ_ENDPOINT){onFalla&&onFalla();return;}
   var miTurno=TURNO;
   var k=clave(texto)+'|'+(PAQUETE_ACTIVO||'audio-us')+'|'+sexoDeLaFrase(texto);
-  if(VOZ_CACHE[k]==='no'){onFalla&&onFalla();return;}
+
   if(VOZ_CACHE[k]){
     if(miTurno!==TURNO)return;
     reproducir(VOZ_CACHE[k],function(){cb&&cb();},function(){onFalla&&onFalla();},function(){cb&&cb();});
@@ -948,18 +1069,75 @@ function vozDelServidor(texto,lang,cb,onFalla){
       paquete:PAQUETE_ACTIVO||'audio-us',sexo:sexoDeLaFrase(texto)})})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){
-      if(!d||!d.ok||!d.audio){VOZ_CACHE[k]='no';onFalla&&onFalla();return;}
+      if(!d||!d.ok||!d.audio){delete VOZ_CACHE[k];onFalla&&onFalla();return;}
       var url='data:audio/mpeg;base64,'+d.audio;
       VOZ_CACHE[k]=url;
       if(miTurno!==TURNO)return;   // ya cambió de pantalla: no suena
       reproducir(url,function(){cb&&cb();},function(){onFalla&&onFalla();},function(){cb&&cb();});
     })
-    .catch(function(){VOZ_CACHE[k]='no';onFalla&&onFalla();});
+    .catch(function(){delete VOZ_CACHE[k];onFalla&&onFalla();});   // reintentable
 }
 
+/* ═══ precarga ═══
+   La causa real de que el audio llegara tarde: cada frase se pedía al servidor
+   apenas se tocaba el botón, y Apps Script tarda 1-3 segundos en responder.
+   Ahora las frases de la pantalla se piden desde que la pantalla se dibuja,
+   una por una y sin sonar. Cuando el alumno toca, ya están en memoria. */
+var PRECARGANDO=false;
+function precargarVoz(texto,lang,listo){
+  if(!VOZ_ENDPOINT||!texto){listo&&listo();return;}
+  var k=clave(texto)+'|'+(PAQUETE_ACTIVO||'audio-us')+'|'+sexoDeLaFrase(texto);
+  if(VOZ_CACHE[k]){listo&&listo();return;}   // ya la tenemos
+  fetch(VOZ_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({texto:texto,idioma:(lang==='es-MX'?'es':'en'),
+      paquete:PAQUETE_ACTIVO||'audio-us',sexo:sexoDeLaFrase(texto)})})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(d){
+      if(d&&d.ok&&d.audio)VOZ_CACHE[k]='data:audio/mpeg;base64,'+d.audio;
+      listo&&listo();
+    })
+    .catch(function(){listo&&listo();});
+}
+// de una en una: si se piden 12 de golpe, Apps Script las encola y tarda más
+function precargarLista(frases){
+  if(!frases||!frases.length||PRECARGANDO)return;
+  PRECARGANDO=true;
+  var i=0;
+  (function siguiente(){
+    if(i>=frases.length){PRECARGANDO=false;return;}
+    var f=frases[i++];
+    var texto=(typeof f==='string')?f:(f&&(f.en||f.texto||f.q));
+    var lang=(typeof f==='object'&&f&&f.lang)?f.lang:'en-US';
+    if(!texto){siguiente();return;}
+    precargarVoz(texto,lang,siguiente);
+  })();
+}
+
+/* El botón no puede sentirse muerto mientras baja el audio. */
+var BOTON_ULTIMO=null;
+document.addEventListener('click',function(e){
+  var b=e.target&&e.target.closest&&e.target.closest('button');
+  if(b)BOTON_ULTIMO=b;
+},true);
+function marcarCargando(si){
+  var b=BOTON_ULTIMO;
+  if(!b)return;
+  if(si){b.classList.add('cargando-audio');
+    setTimeout(function(){b.classList.remove('cargando-audio');},6000);}
+  else b.classList.remove('cargando-audio');
+}
+
+var SIN_PAQUETE_LOCAL=false;   // se aprende a la primera y ya no se insiste
 function decirConTuVoz(texto,lang,cb,archivo){
+  // si ya se comprobó que no hay grabaciones locales, se va directo al servidor
+  if(SIN_PAQUETE_LOCAL){
+    vozDelServidor(texto,lang,cb,function(){avisoDeAudio();cb&&cb();});
+    return;
+  }
   var nombres=nombresPosibles(texto,archivo);
-  if(nombres.every(function(k){return AUDIO_FALLA[k];})){say2(texto,lang,cb);return;}
+  if(nombres.every(function(k){return AUDIO_FALLA[k];})){
+    vozDelServidor(texto,lang,cb,function(){avisoDeAudio();cb&&cb();});return;
+  }
   var combos=[];
   nombres.forEach(function(k){
     (AUDIO_RUTA!==null?[AUDIO_RUTA]:RUTAS).forEach(function(r){
@@ -970,7 +1148,8 @@ function decirConTuVoz(texto,lang,cb,archivo){
   (function intenta(){
     if(n>=combos.length){
       nombres.forEach(function(k){AUDIO_FALLA[k]=1;});
-      vozDelServidor(texto,lang,cb,function(){say2(texto,lang,cb);});
+      if(AUDIO_HAY===0)SIN_PAQUETE_LOCAL=true;   // no hay paquete: no volver a probar
+      vozDelServidor(texto,lang,cb,function(){avisoDeAudio();cb&&cb();});
       return;
     }
     var c=combos[n++];
@@ -980,6 +1159,18 @@ function decirConTuVoz(texto,lang,cb,archivo){
       function(){AUDIO_RUTA=c.r;cb&&cb();}                // existe pero bloqueado: no se marca
     );
   })();
+}
+// El silencio era el peor error: parecía que el botón no servía.
+// Si el audio no se pudo traer, se dice en pantalla, con el porqué.
+var AVISO_AUDIO_DADO=false;
+function avisoDeAudio(){
+  if(AVISO_AUDIO_DADO)return;
+  AVISO_AUDIO_DADO=true;
+  if(!VOZ_ENDPOINT){
+    avisito('No hay voz configurada todavía. Avísale a Brian: falta pegar la dirección del servidor de voz.');
+  }else{
+    avisito('No pude traer el audio. Revisa tu internet y vuelve a tocar el botón.');
+  }
 }
 // habla siempre con la voz del navegador, sin buscar grabación
 function say2(t,lang,cb){
@@ -1039,7 +1230,7 @@ var HAY_MIC=!!SR;
 // por qué no va a abrir el micrófono, en palabras que se entiendan
 function diagnostico(){
   if(!SR)return {ok:false,corto:'Este navegador no reconoce voz',
-    largo:'Safari y algunos navegadores de Android no traen reconocimiento de voz. Abre esto en Chrome.'};
+    largo:'Este navegador no transcribe lo que dices. Practicas igual en voz alta: hablas, y luego escribes lo que dijiste para revisarlo.'};
   if(EN_MARCO)return {ok:false,corto:'Estás viéndolo dentro de una vista previa',
     largo:'El micrófono solo abre cuando la página está en su propia pestaña. Copia el enlace y ábrelo directo.'};
   if(!SEGURO)return {ok:false,corto:'La página no está en https',
@@ -1286,8 +1477,159 @@ var METAS=[
 ];
 
 /* ═══════════ armar el material desde el perfil ═══════════ */
+// ============================================================
+// MOLDE pre-A1  ·  8 lecciones · 3 areas (listening, gramatica, produccion)
+// Los tipos ROTAN de leccion a leccion. La sesion 1 es el alta del alumno.
+// ============================================================
+function moldePreA1(p){
+  var nom  = p.nombre || 'amiga';
+  var ofi  = limpiarOficio(p.trabajo_es||'') || 'operadora';
+  var ofiEN= (p.trabajo_en||'an operator');
+  var lug  = p.lugar_es || 'la fabrica';
+  var lugEN= (p.lugar_en||'a factory');
+
+  return [
+  // ---------- L1 ----------
+  {t:'Quien eres', hoy:'decir tu nombre y tu trabajo',
+   obj:'Decir tu nombre y a que te dedicas, sin leer.',
+   tip:'Busca un lugar sin ruido. Si tienes audifonos, mejor.',
+   enc:'Hoy son tres cosas: vas a OIR ingles, vas a ver una regla chiquita, y vas a HABLAR. Empezamos.',
+   items:[
+     {area:'oir',  k:'idea', audio:'Hello. My name is Ana. I work in a factory.',
+      pide:'De que habla?', ops:['Se presenta y dice donde trabaja','Pide comida','Habla del clima'],
+      bien:'Se presenta y dice donde trabaja'},
+     {area:'gram', k:'regla', titulo:'I am / My name is',
+      regla:'Para decir tu nombre hay dos formas. Las dos sirven igual.',
+      bien:'My name is '+nom+'.', mal:'My name '+nom+'.',
+      porque:'Nunca se quita el "is". En espanol decimos "me llamo Ana", en ingles siempre va el verbo.'},
+     {area:'hab',  k:'model', en:'My name is '+nom+'.', es:'Me llamo '+nom+'.'},
+     {area:'hab',  k:'model', en:'I am '+ofiEN+'.', es:'Soy '+ofi+'.'},
+     {area:'hab',  k:'ask',   q:'What is your name?', es:'Como te llamas?', pista:'My name is '+nom+'.'}
+   ]},
+
+  // ---------- L2 ----------
+  {t:'Lo que haces cada dia', hoy:'contar tu rutina',
+   obj:'Decir que haces y a que hora empiezas.',
+   tip:'Si no te sale a la primera, dilo otra vez. Nadie te califica el intento.',
+   enc:'Hoy oyes dos frases muy parecidas, ves como cambia el verbo, y cuentas tu dia.',
+   items:[
+     {area:'oir',  k:'dosc', a:'I work at six.', b:'I walk at six.', bien:'a',
+      audio:'I work at six.'},
+     {area:'gram', k:'hueco', antes:'I ', despues:' every day.',
+      ops:['work','works','working'], bien:'work',
+      es:'Trabajo todos los dias.'},
+     {area:'hab',  k:'model', en:'I work every day.', es:'Trabajo todos los dias.'},
+     {area:'hab',  k:'ask',   q:'What do you do every day?', es:'Que haces todos los dias?',
+      pista:'I work every day.'},
+     {area:'hab',  k:'free',  q:'Tell me about your day.', es:'Cuentame tu dia. Lo que puedas.'}
+   ]},
+
+  // ---------- L3 ----------
+  {t:'Tu lugar de trabajo', hoy:'decir donde trabajas',
+   obj:'Decir donde trabajas y con quien.',
+   tip:'Escucha primero sin adivinar. La segunda vez ya buscas el dato.',
+   enc:'Hoy cazamos un error. Es de los ejercicios que mas ensenan.',
+   items:[
+     {area:'oir',  k:'detalle', audio:'I work in a factory. I start at seven.',
+      pide:'A que hora empieza?', ops:['At six','At seven','At eight'], bien:'At seven'},
+     {area:'gram', k:'cazar', frase:'She work in quality.', mala:'work', buena:'works',
+      es:'Ella trabaja en calidad.'},
+     {area:'hab',  k:'model', en:'I work in '+lugEN+'.', es:'Trabajo en '+lug+'.'},
+     {area:'hab',  k:'ask',   q:'Where do you work?', es:'Donde trabajas?',
+      pista:'I work in '+lugEN+'.'},
+     {area:'hab',  k:'free',  q:'Tell me about your work.', es:'Cuentame de tu trabajo.'}
+   ]},
+
+  // ---------- L4 ----------
+  {t:'Numeros y horas', hoy:'los numeros que mas se usan',
+   obj:'Oir y decir numeros sin dudar.',
+   tip:'Los numeros se confunden mucho. Por eso los practicamos aparte.',
+   enc:'Hoy la parte de oir es la mas dificil: habla rapida. Va pegado pero son varias palabras.',
+   items:[
+     {area:'oir',  k:'segm', audio:'What do you do?',
+      piezas:['What','do','you','do'], es:'A que te dedicas?'},
+     {area:'gram', k:'ordenar', piezas:['I','start','at','seven'],
+      es:'Empiezo a las siete.'},
+     {area:'hab',  k:'model', en:'I start at seven.', es:'Empiezo a las siete.'},
+     {area:'hab',  k:'ask',   q:'What time do you start?', es:'A que hora empiezas?',
+      pista:'I start at seven.'}
+   ]},
+
+  // ---------- L5 ----------
+  {t:'Preguntar y contestar', hoy:'hacer preguntas tu tambien',
+   obj:'No solo contestar: tambien preguntar.',
+   tip:'Preguntar cuesta mas que contestar. Es normal.',
+   enc:'Hoy cambias una frase de lugar. De afirmacion a pregunta.',
+   items:[
+     {area:'oir',  k:'idea', audio:'Do you work here? Yes, I do. I work in the line.',
+      pide:'Que pasa aqui?', ops:['Alguien pregunta y el otro contesta','Alguien se despide','Hablan de comida'],
+      bien:'Alguien pregunta y el otro contesta'},
+     {area:'gram', k:'transf', origen:'You work here.',
+      pide:'Ponlo en pregunta. Empieza con "Do".', bien:'Do you work here?'},
+     {area:'hab',  k:'model', en:'Do you work here?', es:'Trabajas aqui?'},
+     {area:'hab',  k:'free',  q:'Ask me three questions.', es:'Hazme tres preguntas. Las que sepas.'}
+   ]},
+
+  // ---------- L6 ----------
+  {t:'En la linea', hoy:'palabras de tu trabajo',
+   obj:'Usar las palabras de tu area en ingles.',
+   tip:'Escribe lo que alcances. No tiene que estar perfecto.',
+   enc:'Hoy escribes lo que oyes. Se llama dictado y es de los que mas sirven.',
+   items:[
+     {area:'oir',  k:'dicto', audio:'I check the boxes every morning.',
+      bien:'I check the boxes every morning.', es:'Reviso las cajas cada manana.'},
+     {area:'gram', k:'regla', titulo:'El "s" de el / ella',
+      regla:'Cuando hablas de OTRA persona (he, she), el verbo lleva "s".',
+      bien:'She checks the boxes.', mal:'She check the boxes.',
+      porque:'Con I / you / we no lleva s. Con he / she / it, siempre s.'},
+     {area:'hab',  k:'model', en:'I check the boxes.', es:'Reviso las cajas.'},
+     {area:'hab',  k:'free',  q:'What do you check at work?', es:'Que revisas en tu trabajo?'}
+   ]},
+
+  // ---------- L7 ----------
+  {t:'Cuando algo sale mal', hoy:'avisar de un problema',
+   obj:'Decir que algo esta mal, con calma.',
+   tip:'Estas frases son las que mas vas a usar de verdad.',
+   enc:'Hoy cazas otro error y cambias una frase al pasado.',
+   items:[
+     {area:'oir',  k:'detalle', audio:'There is a problem with the machine. It stopped at ten.',
+      pide:'A que hora paro?', ops:['At nine','At ten','At eleven'], bien:'At ten'},
+     {area:'gram', k:'cazar', frase:'The machine no work today.', mala:'no', buena:"doesn't",
+      es:'La maquina no funciona hoy.'},
+     {area:'gram', k:'transf', origen:'The machine stops.',
+      pide:'Ponlo en pasado.', bien:'The machine stopped.'},
+     {area:'hab',  k:'free',  q:'Tell me about a problem at work.',
+      es:'Cuentame de un problema en tu trabajo.'}
+   ]},
+
+  // ---------- L8 ----------
+  {t:'Todo junto', hoy:'juntamos lo de las siete lecciones',
+   obj:'Hablar de ti seguido, sin parar tanto.',
+   tip:'Esta es de fluidez. Repites lo mismo tres veces, cada vez mas rapido.',
+   enc:'Ultima del nivel. Hoy no aprendes cosa nueva: la sacas mas suelta.',
+   items:[
+     {area:'oir',  k:'dosc', a:'She works in quality.', b:'She walks in quality.', bien:'a',
+      audio:'She works in quality.'},
+     {area:'gram', k:'ordenar', piezas:['I','work','in','a','factory'],
+      es:'Trabajo en una fabrica.'},
+     {area:'hab',  k:'free',  q:'Tell me everything about you. Take your time.',
+      es:'Dime todo de ti. Sin prisa. (vez 1 de 3)'},
+     {area:'hab',  k:'free',  q:'Again, a little faster.',
+      es:'Otra vez, un poco mas rapido. (vez 2 de 3)'},
+     {area:'hab',  k:'free',  q:'Last time. As fast as you can.',
+      es:'Ultima vez, lo mas suelto que puedas. (vez 3 de 3)'}
+   ]}
+  ];
+}
+
 function materialDe(p){
   var n=p.nivel_n||0;
+  // --- pre-A1 usa el molde nuevo de 3 areas (listening, gramatica, produccion) ---
+  if(n===0 && typeof moldePreA1==='function'){
+    var mp=moldePreA1(p);
+    try{ mp = frasesDeBrian().concat(mp); }catch(e){}
+    return mp;
+  }
   function frase(t,pre){
     t=(t||'').trim();
     if(!t)return null;
@@ -1457,6 +1799,21 @@ function router(){
 /* ═══════════ botón de regreso ═══════════ */
 function atras(fn){
   return '<button class="volver" id="volver">← Atrás</button>';
+}
+/* Navegación dentro del ejercicio. Antes solo se podía avanzar, y el botón
+   de atrás sacaba de la sesión entera: si te equivocabas de tecla, perdías
+   todo lo andado. Ahora se mueve de un ejercicio a otro en los dos sentidos. */
+function navPaso(hayAtras,hayAdelante){
+  return '<div class="navpaso">'+
+    '<button class="np" id="np-ant"'+(hayAtras?'':' disabled')+'>‹ Anterior</button>'+
+    '<span class="np-mid" id="np-mid"></span>'+
+    '<button class="np" id="np-sig"'+(hayAdelante?'':' disabled')+'>Siguiente ›</button>'+
+  '</div>';
+}
+function ligarNavPaso(){
+  var a=document.getElementById('np-ant'), b=document.getElementById('np-sig');
+  if(a)a.onclick=function(){ if(it>0){callarTodo();it--;paso();} };
+  if(b)b.onclick=function(){ callarTodo();it++;paso(); };
 }
 function ligarAtras(fn){
   var b=document.getElementById('volver');
@@ -1943,7 +2300,7 @@ function ligarShadow(frase){
     e.stopPropagation();
     SH_RONDA=0;
     var velAnterior=VEL_AUDIO;
-    VEL_AUDIO=0.75;
+    VEL_AUDIO=0.85;
     b.disabled=true;b.textContent='Habla conmigo…';
     (function ronda(){
       SH_RONDA++;
@@ -2140,6 +2497,12 @@ function pintarCajon(){
     '<div class="cj-pts"><b>'+puntosLibres()+'</b> puntos · <b>'+diasSeguidos(pr.dias)+'</b> días seguidos</div>'+
     (yaPersonalizo()?'':'<button class="cj-b cj-urge" data-a="personalizar">'+
        ico('estrella')+' Arma tu personaje y tu material</button>')+
+    (function(){
+      var pend=tareasPendientes();
+      return '<div class="cj-sec">De tu maestro</div>'+
+        '<button class="cj-b'+(pend?' cj-urge':'')+'" data-a="tareas">'+ico('nota')+' Mis tareas'+
+        (pend?'<span class="cj-badge">'+pend+'</span>':'')+'</button>';
+    })()+
     '<div class="cj-sec">Practicar</div>'+
     '<button class="cj-b" data-a="mapa">'+ico('camino')+' El camino</button>'+
     '<button class="cj-b" data-a="leccion">'+ico('chispa')+' Pedir una lección</button>'+
@@ -2159,7 +2522,8 @@ function pintarCajon(){
     b.onclick=function(){
       cerrarCajon();
       var a=b.getAttribute('data-a');
-      if(a==='personalizar')personalizar();
+      if(a==='tareas')pantallaTareas();
+      else if(a==='personalizar')personalizar();
       else if(a==='mapa')mapa();
       else if(a==='tutorial'){ mapa(); setTimeout(arrancarTutor,300); }
       else if(a==='leccion')pantallaLeccion();
@@ -2259,7 +2623,7 @@ function pantallaVoz(){
       return '<button class="acb'+(p.id===PAQUETE_ACTIVO?' on':'')+'" data-id="'+p.id+'">'+esc(p.nombre)+'</button>';
     }).join('')+'</div>'+
     '<div class="qsub" style="margin-top:16px">Velocidad</div>'+
-    '<div class="acfila">'+[['0.7','Despacio'],['0.85','Normal'],['1','Rápido']].map(function(v){
+    '<div class="acfila">'+[['0.85','Despacio'],['1','Normal'],['1.15','Rápido']].map(function(v){
       return '<button class="acb'+(String(VEL_AUDIO)===v[0]?' on':'')+'" data-v="'+v[0]+'">'+v[1]+'</button>';
     }).join('')+'</div></div>';
   ligarAtras(function(){mapa();});
@@ -2276,21 +2640,60 @@ function pantallaVoz(){
 
 /* ═══════════ mis datos ═══════════ */
 function pantallaDatos(){
-  APP.innerHTML=atras()+'<div class="qcard"><div class="qlbl">Mis datos</div>'+
-    '<div class="qtxt">'+esc((P&&P.nombre)||'')+'</div>'+
-    '<div class="datl">'+
-      ['trabajo_es|A qué te dedicas','accion_es|Qué haces cada día','hora_es|A qué hora entras',
-       'gusto_es|Qué te gusta','meta_es|Para qué quieres el inglés'].map(function(par){
-        var k=par.split('|')[0], et=par.split('|')[1];
-        return '<div class="datf"><span>'+et+'</span>'+esc((P&&P[k])||'—')+'</div>';
-      }).join('')+
-    '</div>'+
-    '<button class="btn ghost" id="rehacer" style="margin-top:14px">Cambiar mis datos</button>'+
-    '<button class="btn ghost" id="solonombre2" style="margin-top:6px">Cambiar solo mi nombre</button>'+
-    '</div>';
-  ligarAtras(function(){mapa();});
-  document.getElementById('rehacer').onclick=function(){ E={}; eIdx=0; entrevista(); };
-  document.getElementById('solonombre2').onclick=function(){ soloNombre(); };
+  // Cada dato se corrige por separado. Antes, para cambiar una palabra había
+  // que rehacer la entrevista entera, y el botón usaba variables que no existen
+  // (E, eIdx): tronaba en silencio. Ese era el fallo que viste.
+  var CAMPOS=[
+    ['nombre',    'Cómo te llamas'],
+    ['trabajo_es','A qué te dedicas'],
+    ['accion_es', 'Qué haces cada día'],
+    ['hora_es',   'A qué hora entras'],
+    ['gusto_es',  'Qué te gusta'],
+    ['meta_es',   'Para qué quieres el inglés']
+  ];
+  function pinta(){
+    APP.innerHTML=atras()+'<div class="qcard"><div class="qlbl">Mis datos</div>'+
+      '<div class="qtxt">'+esc((P&&P.nombre)||'')+'</div>'+
+      '<div class="qsub">Toca cualquiera para corregirlo. Con esto armo tus frases: '+
+      'entre más exacto, más te sirve.</div>'+
+      '<div class="datl">'+
+        CAMPOS.map(function(c,i){
+          return '<button class="datf" data-i="'+i+'"><span>'+esc(c[1])+'</span>'+
+                 esc((P&&P[c[0]])||'—')+'<b class="datl-e">cambiar</b></button>';
+        }).join('')+
+      '</div>'+
+      '<div class="datn">Tu nivel: <b>'+esc((P&&P.nivel)||'—')+'</b></div>'+
+      '<button class="btn ghost" id="rehacer" style="margin-top:14px">Rehacer todas las preguntas</button>'+
+      '</div>';
+    ligarAtras(function(){mapa();});
+    APP.querySelectorAll('.datf').forEach(function(b){
+      b.onclick=function(){ editar(+b.getAttribute('data-i')); };
+    });
+    document.getElementById('rehacer').onclick=function(){
+      epaso=0; edatos={}; D.perfil=null; P=null; save(D); PERSONALIZANDO=true;
+      entrevista();
+    };
+  }
+  function editar(i){
+    var c=CAMPOS[i];
+    APP.innerHTML=atras()+'<div class="qcard"><div class="qlbl">'+esc(c[1])+'</div>'+
+      '<input class="tx" id="tx" value="'+esc((P&&P[c[0]])||'')+'" autocomplete="off">'+
+      '<button class="btn" id="ok" style="margin-top:12px">Guardar</button></div>';
+    ligarAtras(pinta);
+    var tx=document.getElementById('tx');
+    if(tx&&tx.focus)tx.focus();
+    document.getElementById('ok').onclick=function(){
+      var v=((tx&&tx.value)||'').trim();
+      if(!v){ avisito('Escribe algo antes de guardar.'); return; }
+      P[c[0]]=v;
+      if(c[0]==='trabajo_es'||c[0]==='accion_es'){ try{ P=interpretar(P); }catch(e){} }
+      D.perfil=P; save(D);
+      try{ MAT=materialDe(P); }catch(e){}
+      avisito('Guardado. Tus frases ya se rehicieron con eso.');
+      pinta();
+    };
+  }
+  pinta();
 }
 
 /* ═══════════ el tablero: losetas con grosor, visto desde arriba ═══════════ */
@@ -2670,6 +3073,9 @@ function ico(n,tam){
     nota:'M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5M9 13h6M9 17h4',
     estrella:'M12 3l2.6 6.3L21 10l-5 4.3 1.5 6.7L12 17.6 6.5 21 8 14.3 3 10l6.4-.7z',
     volver:'M3 12a9 9 0 1 0 3-6.7M3 4v5h5',
+    play:'M8 5v14l11-7z',
+    libro:'M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V2H6.5A2.5 2.5 0 0 0 4 4.5z',
+    palomita:'M20 6L9 17l-5-5',
     oido:'M6 8.5a6 6 0 1 1 12 0c0 2-1 3-2.5 4S13 14.5 13 16.5a2.5 2.5 0 0 1-5 0M9.5 8.5a2.5 2.5 0 0 1 5 0',
     boca:'M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3M19 10v1a7 7 0 0 1-14 0v-1M12 19v3',
     charla:'M21 14a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z',
@@ -3042,7 +3448,12 @@ function curvaDeAvance(){
 // la firma se queda en la hoja y el alumno nunca la ve.
 var DE_BRIAN=[];
 function pedirCorrecciones(cb){
-  if(!DATOS_ENDPOINT||!P||!P.nombre){cb&&cb([]);return;}
+  // sin conexión o sin endpoint: se usa lo último que se guardó, no se vacía.
+  // Así el alumno sigue viendo sus tareas aunque abra la app sin internet.
+  if(!DATOS_ENDPOINT||!P||!P.nombre){
+    try{DE_BRIAN=(load().deBrian)||[];}catch(e){DE_BRIAN=[];}
+    cb&&cb(DE_BRIAN);return;
+  }
   fetch(DATOS_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify({accion:'correcciones',nombre:P.nombre})})
     .then(function(r){return r.ok?r.json():null;})
@@ -3065,6 +3476,134 @@ function frasesDeBrian(){
 function mensajeDeBrian(){
   var m=DE_BRIAN.filter(function(x){return x.mensaje;})[0];
   return m?m.mensaje:'';
+}
+// Las tareas que Brian le dejó (texto, su audio, videos, links, ejercicios).
+// Cada una trae: titulo, nota, audio (base64 o url), videos[], links[], hecha.
+function tareasDeBrian(){
+  return DE_BRIAN.filter(function(x){return x.tipo==='tarea';});
+}
+// El material bonus: aparece en el mapa, da tokens fijos por HACERLO (no por nota).
+function bonusDeBrian(){
+  return DE_BRIAN.filter(function(x){return x.tipo==='bonus';});
+}
+// se recuerda localmente qué tareas/bonus ya cerró, para no repagar tokens
+function hechosDeBrian(){var d=load();return d.hechosBrian||{};}
+function marcarHecho(id,tokens){
+  var d=load();d.hechosBrian=d.hechosBrian||{};
+  if(d.hechosBrian[id])return false;   // ya estaba, no se vuelve a pagar
+  d.hechosBrian[id]=hoyISO();
+  if(tokens){d.camino=d.camino||{};d.camino.puntos=(d.camino.puntos||0)+tokens;}
+  save(d);D=d;
+  // se le avisa al servidor que ya la hizo, para que Brian lo vea en su panel
+  if(DATOS_ENDPOINT&&P&&P.nombre){
+    try{fetch(DATOS_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({accion:'tarea_hecha',nombre:P.nombre,id:id})});}catch(e){}
+  }
+  return true;
+}
+function tareasPendientes(){
+  var h=hechosDeBrian();
+  return tareasDeBrian().filter(function(t){return !h[t.id];}).length;
+}
+
+
+/* ═══════════ lo que el maestro le dejó: tareas y su material ═══════════ */
+function pantallaTareas(){
+  pedirCorrecciones(function(){
+    var ts=tareasDeBrian(), h=hechosDeBrian();
+    if(!ts.length){
+      APP.innerHTML=atras()+'<div class="qcard tareas-vacio">'+
+        '<div class="tv-ic">'+ico('nota',34)+'</div>'+
+        '<div class="qlbl">Aún no tienes tareas</div>'+
+        '<div class="qsub">Cuando Brian revise tu práctica y te deje material '+
+        '—un video, un audio suyo, ejercicios para casa— aparece aquí.</div>'+
+        '<button class="btn" id="volm" style="margin-top:14px">Volver al camino</button></div>';
+      ligarAtras(mapa);
+      var v=document.getElementById('volm'); if(v)v.onclick=mapa;
+      return;
+    }
+    APP.innerHTML=atras()+'<div class="tareas-h">'+
+      '<div class="qlbl">Mis tareas</div>'+
+      '<div class="qsub">Lo que tu maestro te dejó esta semana. Ábrelas y márcalas cuando las hagas.</div></div>'+
+      '<div class="tareas-l">'+ts.map(function(t){
+        var hecha=!!h[t.id];
+        return '<button class="tarea-c'+(hecha?' hecha':'')+'" data-id="'+esc(t.id)+'">'+
+          '<div class="tc-ic">'+(hecha?ico('palomita',20):ico('nota',20))+'</div>'+
+          '<div class="tc-txt"><div class="tc-t">'+esc(t.titulo||'Tarea')+'</div>'+
+          '<div class="tc-s">'+
+            (t.audio?'audio · ':'')+
+            ((t.videos&&t.videos.length)?t.videos.length+' video'+(t.videos.length>1?'s':'')+' · ':'')+
+            ((t.links&&t.links.length)?t.links.length+' link'+(t.links.length>1?'s':'')+' · ':'')+
+            (hecha?'hecha':'pendiente')+
+          '</div></div>'+
+          (t.tokens&&!hecha?'<div class="tc-tok">+'+t.tokens+'</div>':'')+
+        '</button>';
+      }).join('')+'</div>';
+    ligarAtras(mapa);
+    APP.querySelectorAll('.tarea-c').forEach(function(b){
+      b.onclick=function(){ verTarea(b.getAttribute('data-id')); };
+    });
+  });
+}
+
+function verTarea(id){
+  var t=tareasDeBrian().filter(function(x){return x.id===id;})[0];
+  if(!t){pantallaTareas();return;}
+  var hecha=!!hechosDeBrian()[id];
+  var h=atras()+'<div class="tarea-v">'+
+    '<div class="tv-de">'+iconoBrian()+'<div><b>Brian Martínez</b><span>tu maestro</span></div></div>'+
+    '<div class="qlbl">'+esc(t.titulo||'Tarea')+'</div>';
+  if(t.nota)h+='<div class="tv-nota">'+esc(t.nota)+'</div>';
+  // el audio del maestro
+  if(t.audio){
+    var src=/^https?:|^data:/.test(t.audio)?t.audio:('data:audio/mpeg;base64,'+t.audio);
+    h+='<div class="tv-blq"><div class="tv-lbl">'+ico('audifonos',16)+' Escucha a tu maestro</div>'+
+       '<audio controls src="'+src+'" style="width:100%"></audio></div>';
+  }
+  // videos (link de YouTube o Drive: no se cargan pesados, se abren)
+  if(t.videos&&t.videos.length){
+    h+='<div class="tv-blq"><div class="tv-lbl">'+ico('play',16)+' Videos para ver</div>'+
+       t.videos.map(function(v){
+         return '<a class="tv-link" href="'+esc(v.url)+'" target="_blank" rel="noopener">'+
+           ico('play',16)+'<span>'+esc(v.titulo||v.url)+'</span></a>';
+       }).join('')+'</div>';
+  }
+  // links y ejercicios para casa
+  if(t.links&&t.links.length){
+    h+='<div class="tv-blq"><div class="tv-lbl">'+ico('libro',16)+' Material y ejercicios</div>'+
+       t.links.map(function(l){
+         return '<a class="tv-link" href="'+esc(l.url)+'" target="_blank" rel="noopener">'+
+           ico('libro',16)+'<span>'+esc(l.titulo||l.url)+'</span></a>';
+       }).join('')+'</div>';
+  }
+  if(hecha){
+    h+='<div class="tv-ya">'+ico('palomita',18)+' Ya marcaste esta tarea como hecha.</div>';
+  }else{
+    h+='<button class="btn" id="hice" style="margin-top:16px">'+
+       'Ya la hice'+(t.tokens?' · gana '+t.tokens+' puntos':'')+'</button>';
+  }
+  h+='</div>';
+  APP.innerHTML=h;
+  ligarAtras(pantallaTareas);
+  var b=document.getElementById('hice');
+  if(b)b.onclick=function(){
+    var gano=marcarHecho(id,t.tokens||0);
+    if(gano&&t.tokens){
+      say('Muy bien. Ganaste '+t.tokens+' puntos por hacer tu tarea.','es-MX');
+      avisito('¡Hecha! Ganaste '+t.tokens+' puntos.');
+    }else{
+      say('Bien hecho.','es-MX');
+    }
+    pantallaTareas();
+  };
+}
+
+// carita del maestro para encabezar sus mensajes
+function iconoBrian(){
+  return '<div class="brian-av">'+
+    '<svg viewBox="0 0 40 40" width="40" height="40"><circle cx="20" cy="20" r="20" fill="var(--verde)"/>'+
+    '<circle cx="20" cy="16" r="6.5" fill="#fff"/>'+
+    '<path d="M8 34c0-7 5.5-11 12-11s12 4 12 11z" fill="#fff"/></svg></div>';
 }
 
 /* ═══════════ repetición espaciada ═══════════ */
@@ -3963,8 +4502,7 @@ function vozPicker(){
     '<div id="vl"><p class="tiny" style="text-align:left">Buscando voces…</p></div>'+
     '<div class="vel"><span>Qué tan rápido te hablo</span>'+
       '<div class="velb">'+
-      '<button data-v="0.7">Muy<br>lento</button>'+
-      '<button data-v="0.85">Lento</button>'+
+      '<button data-v="0.85">Despacio</button>'+
       '<button data-v="1" class="on">Normal</button>'+
       '<button data-v="1.15">Rápido</button>'+
       '</div>'+
@@ -4350,7 +4888,7 @@ function portadaSesion(){
         '<div><div class="pen">'+esc(m.en)+'</div><div class="pes">'+esc(m.es)+'</div></div></div>';
     }).join('')+'</div>'+
     (S.tip?'<div class="tipx">'+esc(S.tip)+'</div>':'')+
-    (HAY_MIC?'':'<div class="tipx warn2">Este navegador no me deja oírte. Vas a practicar en voz alta igual, pero escribiendo lo que dijiste. Se recomienda Chrome.</div>')+
+    (HAY_MIC?'':'<div class="tipx warn2">Este navegador no transcribe. Di la frase en voz alta y luego escríbela: se revisa igual.</div>')+
     '<button class="btn" id="go" style="margin-top:14px">Empezar</button>'+
     '<button class="btn ghost" id="atras" style="margin-top:8px">Ver las otras sesiones</button>'+
     '</div>';
@@ -4369,6 +4907,7 @@ function portadaSesion(){
   APP.querySelectorAll('.spk').forEach(function(b){
     b.onclick=function(){say(modelos[+b.dataset.i].en,'en-US');};
   });
+  precargarLista(modelos);   // ← se van bajando mientras el alumno lee la pantalla
   document.getElementById('go').onclick=function(){t0=Date.now();vistos={};arrancarReloj();paso();};
   document.getElementById('atras').onclick=function(){speechSynthesis&&speechSynthesis.cancel();sIdx=null;router();};
 }
@@ -4403,7 +4942,7 @@ function paso(){
     sit:'Primero escucha sin ver el texto. La primera vez capta de qué se trata; la segunda, los detalles. Luego contestas.'
   };
   var quedan=S.items.length-it-1;
-  var h=atras()+marcaReloj()+ayuda(ayudas[x.k],(quedan>0?'quedan '+quedan+' ejercicios':'el cierre de la sesión'))+'<div class="prog">'+S.items.map(function(_,i){return '<i class="'+(i<=it?'on':'')+'"></i>';}).join('')+'</div><div class="qcard">';
+  var h=atras()+marcaReloj()+ayuda(ayudas[x.k],(quedan>0?'quedan '+quedan+' ejercicios':'el cierre de la sesión'))+'<div class="prog">'+S.items.map(function(_,i){return '<i class="'+(i<=it?'on':'')+'"></i>';}).join('')+'</div>'+navPaso(it>0, it<S.items.length-1)+'<div class="qcard">';
 
   if(x.k==='model'){
     var vars=variantesDe(x.en,P);
@@ -4486,6 +5025,104 @@ function paso(){
        '<button class="mic-big" id="mic"><span class="ring2"></span> Tocar y contestar</button>'+
        '<button class="btn ghost" id="pista" style="margin-top:10px">No sé · dame la pista</button>'+
        '<button class="btn ghost" id="skip" style="margin-top:8px">Saltar esta</button>';
+  }else if(x.k==='regla'){
+    h+='<div class="qlbl">La regla · míralo una vez</div>'+
+       '<div class="reglabox"><div class="regla-t">'+esc(x.titulo||'')+'</div>'+
+       '<div class="regla-d">'+esc(x.regla||'')+'</div></div>'+
+       '<div class="parfila">'+
+         '<div class="par bien"><span class="par-et">Así sí</span>'+esc(x.bien||'')+'</div>'+
+         '<div class="par mal"><span class="par-et">Así no</span>'+esc(x.mal||'')+'</div>'+
+       '</div>'+
+       (x.porque?'<div class="qsub">'+esc(x.porque)+'</div>':'')+
+       '<div class="oirfila"><button class="oirb" id="oir">'+ico('bocina',16)+' Oír el ejemplo</button></div>'+
+       '<button class="btn" id="sigue" style="margin-top:12px">Entendido</button>';
+  }else if(x.k==='cazar'){
+    h+='<div class="qlbl">Caza el error · toca la palabra mala</div>'+
+       '<div class="qsub">Una palabra está mal. Tócala.</div>'+
+       '<div class="cazafila" id="cazafila">'+
+         (x.frase||'').split(' ').map(function(w,i){
+           return '<button class="palb" data-w="'+esc(w)+'" data-i="'+i+'">'+esc(w)+'</button>';
+         }).join('')+
+       '</div>'+
+       '<div id="res"></div>'+
+       '<button class="btn ghost" id="skip" style="margin-top:10px">No la veo</button>';
+  }else if(x.k==='hueco'){
+    h+='<div class="qlbl">Llena el hueco</div>'+
+       '<div class="qtxt">'+esc(x.antes||'')+'<span class="hueco">____</span>'+esc(x.despues||'')+'</div>'+
+       (x.es?'<div class="qsub">'+esc(x.es)+'</div>':'')+
+       '<div class="opsfila" id="huecops">'+
+         (x.ops||[]).map(function(o,i){return '<button class="opt" data-i="'+i+'">'+esc(o)+'</button>';}).join('')+
+       '</div>'+
+       '<div id="res"></div>';
+  }else if(x.k==='ordenar'){
+    h+='<div class="qlbl">Ordena la frase · tócalas en orden</div>'+
+       (x.es?'<div class="qsub">'+esc(x.es)+'</div>':'')+
+       '<div class="armado" id="armado"><span class="armado-vacio">Toca las palabras de abajo</span></div>'+
+       '<div class="piezasfila" id="piezas">'+
+         mezclar((x.piezas||[]).slice()).map(function(w,i){
+           return '<button class="palb" data-w="'+esc(w)+'">'+esc(w)+'</button>';
+         }).join('')+
+       '</div>'+
+       '<div id="res"></div>'+
+       '<div class="oirfila" style="margin-top:8px">'+
+         '<button class="oirb alt" id="borrar">Borrar y empezar</button>'+
+       '</div>';
+  }else if(x.k==='transf'){
+    h+='<div class="qlbl">Cambia la frase · dilo hablando</div>'+
+       '<div class="qtxt">'+esc(x.origen||'')+'</div>'+
+       '<div class="pidebox">'+esc(x.pide||'')+'</div>'+
+       '<div class="oirfila">'+
+         '<button class="oirb" id="oir">'+ico('bocina',16)+' Oír la original</button>'+
+       '</div>'+
+       '<div id="res"></div>'+
+       '<button class="mic-big" id="mic"><span class="ring2"></span> Tocar y decirlo</button>'+
+       '<button class="btn ghost" id="pista" style="margin-top:10px">No sé · dame la pista</button>';
+  }else if(x.k==='idea'){
+    h+='<div class="qlbl">Escucha · ¿de qué se trata?</div>'+
+       '<div class="qsub">No tienes que entender cada palabra. Solo de qué habla.</div>'+
+       '<div class="oirfila"><button class="oirb" id="oir">'+ico('bocina',16)+' Escuchar</button></div>'+
+       '<div class="conteo" id="conteo">Escúchalo las veces que quieras.</div>'+
+       '<div class="opsfila col" id="ideaops">'+
+         (x.ops||[]).map(function(o,i){return '<button class="opt" data-i="'+i+'">'+esc(o)+'</button>';}).join('')+
+       '</div>'+
+       '<div id="res"></div>';
+  }else if(x.k==='detalle'){
+    h+='<div class="qlbl">Escucha · el dato exacto</div>'+
+       '<div class="oirfila"><button class="oirb" id="oir">'+ico('bocina',16)+' Escuchar</button></div>'+
+       '<div class="conteo" id="conteo">Fíjate bien en el dato.</div>'+
+       '<div class="pidebox">'+esc(x.pide||'')+'</div>'+
+       '<div class="opsfila" id="detops">'+
+         (x.ops||[]).map(function(o,i){return '<button class="opt" data-i="'+i+'">'+esc(o)+'</button>';}).join('')+
+       '</div>'+
+       '<div id="res"></div>';
+  }else if(x.k==='dosc'){
+    h+='<div class="qlbl">¿Cuál oíste?</div>'+
+       '<div class="qsub">Se parecen mucho. Escúchalo otra vez si hace falta.</div>'+
+       '<div class="oirfila"><button class="oirb" id="oir">'+ico('bocina',16)+' Escuchar</button></div>'+
+       '<div class="opsfila col" id="doscops">'+
+         '<button class="opt" data-i="0">'+esc(x.a||'')+'</button>'+
+         '<button class="opt" data-i="1">'+esc(x.b||'')+'</button>'+
+       '</div>'+
+       '<div id="res"></div>';
+  }else if(x.k==='segm'){
+    h+='<div class="qlbl">Habla rápida · ¿cuántas palabras?</div>'+
+       '<div class="qsub">Suena pegado, pero son varias palabras. Escucha y arma.</div>'+
+       '<div class="oirfila"><button class="oirb" id="oir">'+ico('bocina',16)+' Escuchar</button></div>'+
+       '<div class="armado" id="armado"><span class="armado-vacio">Toca las palabras en el orden que las oíste</span></div>'+
+       '<div class="piezasfila" id="piezas">'+
+         mezclar((x.piezas||[]).slice()).map(function(w){
+           return '<button class="palb" data-w="'+esc(w)+'">'+esc(w)+'</button>';
+         }).join('')+
+       '</div>'+
+       '<div id="res"></div>'+
+       '<div class="oirfila" style="margin-top:8px"><button class="oirb alt" id="borrar">Borrar</button></div>';
+  }else if(x.k==='dicto'){
+    h+='<div class="qlbl">Escucha y escríbelo</div>'+
+       '<div class="qsub">Escúchalo las veces que quieras. Escribe lo que alcances.</div>'+
+       '<div class="oirfila"><button class="oirb" id="oir">'+ico('bocina',16)+' Escuchar</button></div>'+
+       '<textarea class="dictoin" id="dictoin" rows="3" placeholder="Escribe aquí lo que oíste..."></textarea>'+
+       '<div id="res"></div>'+
+       '<button class="btn" id="revisar" style="margin-top:10px">Revisar</button>';
   }else{
     h+='<div class="qlbl">'+(x.tras?'Tu turno · contéstale':'Tu turno · lo que puedas')+'</div>'+
        (x.ctx?'<div class="ctxbox">'+esc(x.ctx)+'</div>':'')+
@@ -4498,6 +5135,9 @@ function paso(){
        '<button class="btn ghost" id="skip" style="margin-top:10px">Ya dije todo lo que puedo</button>';
   }
   APP.innerHTML=h+botonDuda()+'</div>';
+  ligarNavPaso();
+  var _mid=document.getElementById('np-mid');
+  if(_mid)_mid.textContent=(it+1)+' de '+S.items.length;
   ligarDuda();
   ligarVideo();
 
@@ -4558,6 +5198,128 @@ function paso(){
     setTimeout(function(){say(x.k==='model'?x.en:x.q,'en-US');},300);
   }
 
+  // ---- tipos nuevos: gramatica y listening ----
+  var _audioDe = x.audio || x.bien || x.origen || x.en || x.q || '';
+  if(x.k==='regla'||x.k==='transf'){
+    var _o=document.getElementById('oir');
+    if(_o)_o.onclick=function(){say(x.k==='regla'?(x.bien||''):(x.origen||''),'en-US');};
+  }
+  if(x.k==='idea'||x.k==='detalle'||x.k==='dosc'||x.k==='segm'||x.k==='dicto'){
+    var _oL=document.getElementById('oir');
+    if(_oL)_oL.onclick=function(){
+      VECES_OIDO++;
+      var c=document.getElementById('conteo');
+      if(c)c.textContent = VECES_OIDO===1 ? 'Otra vez. Ahora fijate en los detalles.' : 'Las veces que quieras.';
+      say(_audioDe,'en-US');
+    };
+    setTimeout(function(){say(_audioDe,'en-US');},400);
+  }
+  if(x.k==='regla'){
+    var _sg=document.getElementById('sigue');
+    if(_sg)_sg.onclick=function(){
+      attempts.push({tipo:'regla',meta:x.titulo||'',oido:'vio la regla',pct:null});
+      it++;paso();
+    };
+  }
+  if(x.k==='cazar'){
+    APP.querySelectorAll('#cazafila .palb').forEach(function(b){
+      b.onclick=function(){
+        var w=b.dataset.w, bien=normal(w)===normal(x.mala);
+        b.classList.add(bien?'ok':'no');
+        attempts.push({tipo:'cazar',meta:x.mala+' -> '+x.buena,oido:w,pct:bien?100:0});
+        registrarEnMemoria(x.frase||'',bien?100:0);
+        var r=document.getElementById('res');
+        if(r)r.innerHTML = bien
+          ? '<div class="fb ok">Esa era. Va asi: <b>'+esc(x.buena)+'</b></div>'
+          : '<div class="fb no">Esa esta bien. La mala era <b>'+esc(x.mala)+'</b>, va <b>'+esc(x.buena)+'</b></div>';
+        APP.querySelectorAll('#cazafila .palb').forEach(function(o){o.disabled=true;});
+        setTimeout(function(){it++;paso();},2200);
+      };
+    });
+  }
+  if(x.k==='hueco'){
+    APP.querySelectorAll('#huecops .opt').forEach(function(b){
+      b.onclick=function(){
+        var o=(x.ops||[])[+b.dataset.i], bien=normal(o)===normal(x.bien);
+        b.classList.add(bien?'ok':'no');
+        attempts.push({tipo:'hueco',meta:x.bien,oido:o,pct:bien?100:0});
+        registrarEnMemoria((x.antes||'')+x.bien+(x.despues||''),bien?100:0);
+        var r=document.getElementById('res');
+        if(r)r.innerHTML = bien ? '<div class="fb ok">Correcto.</div>'
+                                : '<div class="fb no">Era <b>'+esc(x.bien)+'</b></div>';
+        APP.querySelectorAll('#huecops .opt').forEach(function(z){z.disabled=true;});
+        say((x.antes||'')+' '+x.bien+' '+(x.despues||''),'en-US');
+        setTimeout(function(){it++;paso();},2400);
+      };
+    });
+  }
+  if(x.k==='ordenar'||x.k==='segm'){
+    var _arm=[];
+    function _pinta(){
+      var a=document.getElementById('armado');
+      if(!a)return;
+      a.innerHTML = _arm.length ? _arm.map(function(w){return '<span class="armw">'+esc(w)+'</span>';}).join('')
+                                : '<span class="armado-vacio">Toca las palabras</span>';
+    }
+    function _revisa(){
+      var dicho=_arm.join(' '), meta=(x.piezas||[]).join(' ');
+      var bien=normal(dicho)===normal(meta);
+      var r=document.getElementById('res');
+      if(r)r.innerHTML = bien ? '<div class="fb ok">Asi es.</div>'
+                              : '<div class="fb no">Va asi: <b>'+esc(meta)+'</b></div>';
+      attempts.push({tipo:x.k,meta:meta,oido:dicho,pct:bien?100:0});
+      registrarEnMemoria(meta,bien?100:0);
+      say(meta,'en-US');
+      setTimeout(function(){it++;paso();},2600);
+    }
+    APP.querySelectorAll('#piezas .palb').forEach(function(b){
+      b.onclick=function(){
+        if(b.disabled)return;
+        _arm.push(b.dataset.w); b.disabled=true; b.classList.add('usada'); _pinta();
+        if(_arm.length===(x.piezas||[]).length)setTimeout(_revisa,300);
+      };
+    });
+    var _br=document.getElementById('borrar');
+    if(_br)_br.onclick=function(){
+      _arm=[]; _pinta();
+      APP.querySelectorAll('#piezas .palb').forEach(function(z){z.disabled=false;z.classList.remove('usada');});
+    };
+  }
+  if(x.k==='idea'||x.k==='detalle'||x.k==='dosc'){
+    var _cid = x.k==='idea'?'#ideaops':(x.k==='detalle'?'#detops':'#doscops');
+    APP.querySelectorAll(_cid+' .opt').forEach(function(b){
+      b.onclick=function(){
+        var i=+b.dataset.i, sel, bien;
+        if(x.k==='dosc'){ sel=(i===0?x.a:x.b); bien=(i===0?'a':'b')===x.bien; }
+        else { sel=(x.ops||[])[i]; bien=normal(sel)===normal(x.bien); }
+        b.classList.add(bien?'ok':'no');
+        attempts.push({tipo:x.k,meta:x.k==='dosc'?(x.bien==='a'?x.a:x.b):x.bien,oido:sel,pct:bien?100:0});
+        registrarEnMemoria(_audioDe,bien?100:0);
+        var r=document.getElementById('res');
+        if(r)r.innerHTML = bien ? '<div class="fb ok">Correcto.</div>'
+              : '<div class="fb no">Era <b>'+esc(x.k==='dosc'?(x.bien==='a'?x.a:x.b):x.bien)+'</b></div>';
+        APP.querySelectorAll(_cid+' .opt').forEach(function(z){z.disabled=true;});
+        setTimeout(function(){it++;paso();},2400);
+      };
+    });
+  }
+  if(x.k==='dicto'){
+    var _rv=document.getElementById('revisar');
+    if(_rv)_rv.onclick=function(){
+      var ta=document.getElementById('dictoin');
+      var dicho=ta?ta.value:'';
+      var cmp=comparar(x.bien||'',dicho);
+      var pct=cmp?cmp.pct:0;
+      var r=document.getElementById('res');
+      if(r)r.innerHTML='<div class="fb '+(pct>=70?'ok':'no')+'">Le atinaste al '+pct+'%.<br>Era: <b>'+esc(x.bien||'')+'</b></div>';
+      attempts.push({tipo:'dicto',meta:x.bien||'',oido:dicho,pct:pct});
+      registrarEnMemoria(x.bien||'',pct);
+      say(x.bien||'','en-US');
+      _rv.disabled=true;
+      setTimeout(function(){it++;paso();},3200);
+    };
+  }
+
   if(x.k==='num'){
     setTimeout(function(){say(x.en,'en-US');},300);
     APP.querySelectorAll('#numops .opt').forEach(function(b){
@@ -4609,6 +5371,7 @@ function paso(){
 
 
 function grabarPaso(x,b){
+  var meta=(x.k==='model'||x.k==='drill')?x.en:'';
   if(!HAY_GRAB){escribir(x);return;}
   var r=document.getElementById('res');
   if(b.dataset.grabando==='1'){
@@ -4627,9 +5390,23 @@ function grabarPaso(x,b){
                      audio:b64,audiotipo:blob.type,seg:Math.round(blob.size/2000)});
       r.innerHTML='<div class="heard"><div class="hl">tu grabación</div>'+
         '<audio controls src="'+url+'" style="width:100%;margin-top:4px"></audio>'+
-        '<div class="tst-r"><span class="ok2">Guardada. Se le manda a Brian con la sesión.</span></div></div>'+
-        '<button class="btn" id="sig">Siguiente</button>';
-      document.getElementById('sig').onclick=function(){it++;paso();};
+        '<div class="tst-r"><span class="ok2">Guardada. Brian la escucha después.</span></div></div>'+
+        // Sin reconocimiento de voz, el alumno se quedaba sin saber si le salió.
+        // Ahora escribe lo que dijo y recibe la MISMA revisión que los demás.
+        (meta?'<div class="qcard" style="margin-top:10px"><div class="qlbl">Ahora escribe lo que dijiste</div>'+
+          '<div class="qsub">Tal como te salió, aunque creas que estuvo mal. Así te digo en qué falló.</div>'+
+          '<input class="tx" id="dicho" placeholder="What I said…" autocomplete="off">'+
+          '<button class="btn" id="revisa" style="margin-top:10px">Revisar lo que dije</button></div>'
+        :'<button class="btn" id="sig">Siguiente</button>');
+      var sg=document.getElementById('sig');
+      if(sg)sg.onclick=function(){it++;paso();};
+      var rv=document.getElementById('revisa');
+      if(rv)rv.onclick=function(){
+        var tx=document.getElementById('dicho');
+        var dicho=((tx&&tx.value)||'').trim();
+        if(!dicho){avisito('Escribe lo que dijiste, aunque sea a medias.');return;}
+        registrar(x,dicho);
+      };
     });
   },function(err){
     var m=err==='NotAllowedError'?'No diste permiso al micrófono. Revisa el candado de la barra de direcciones.'

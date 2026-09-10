@@ -174,6 +174,23 @@
     color:var(--verde)}
   .apoyofila{display:flex;flex-wrap:wrap;gap:6px}
   .bubble-ia.pensando .ht{opacity:.55;font-style:italic}
+  /* ---- variantes con traduccion y duda ---- */
+  .varfila{display:flex;align-items:stretch;gap:5px;margin-bottom:6px;flex-wrap:wrap}
+  .varfila .varb{flex:1;margin-bottom:0;min-width:0}
+  .varmx,.varuse{background:var(--papel);border:1px solid var(--linea);color:var(--tinta);
+    border-radius:9px;padding:0 11px;font-family:inherit;font-size:13px;cursor:pointer;
+    white-space:nowrap;flex:none}
+  .varuse{font-size:12.5px;color:var(--verde);border-color:rgba(29,158,117,.35)}
+  .varmx:active,.varuse:active{transform:scale(.95)}
+  .vartrad{flex-basis:100%;font-size:13.5px;color:var(--tenue);padding:5px 4px 2px;
+    border-left:2px solid rgba(29,158,117,.3);margin-left:3px;padding-left:9px}
+  .vartrad.pensando{opacity:.55;font-style:italic}
+  .dudab{border-style:dashed}
+  .dudabox{background:var(--papel);border:1px solid var(--linea);border-radius:12px;
+    padding:14px 15px;margin-top:10px}
+  .dudabox .hl{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;
+    text-transform:uppercase;opacity:.65}
+
   /* ---- barra flotante del jefe ---- */
   #barrajefe{position:fixed;left:0;right:0;bottom:0;z-index:900;
     background:rgba(42,39,36,.96);backdrop-filter:blur(8px);
@@ -919,7 +936,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v85 · 9 sep · jefe ve el mapa";
+var VERSION="v86 · 9 sep · variantes y dudas";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -2633,6 +2650,120 @@ function abrirDuda(){
       },
       function(){r.innerHTML='<div class="heard"><span class="ok2">Anotada. Brian te la contesta al revisar tu sesión.</span></div>';});
   };
+}
+
+/* ═══════════ variantes: traducir y preguntar ═══════════ */
+
+// El botón de "qué significa" solo servía en la frase principal.
+// Las variantes no traían traducción escrita, así que se le pide al cerebro
+// (y si no hay cerebro, se dice al menos en inglés para no dejar al alumno colgado).
+var TRAD_CACHE={};
+function traducirVariante(en,caja,listo){
+  if(!en)return;
+  function pinta(es){
+    if(es&&caja){
+      var d=document.createElement('div');
+      d.className='vartrad';
+      d.textContent=es;
+      caja.appendChild(d);
+    }
+    if(es)say(es,'es-MX');
+    else say(en,'en-US');
+    listo&&listo(es);
+  }
+  if(TRAD_CACHE[en]){ pinta(TRAD_CACHE[en]); return; }
+  if(!hayIA()){ pinta(null); return; }
+  if(caja){
+    var esp=document.createElement('div');
+    esp.className='vartrad pensando'; esp.textContent='traduciendo…';
+    caja.appendChild(esp);
+  }
+  pedirIA('duda',{
+      pregunta:'Traduce esta frase al español de México, natural y corta. '+
+               'Responde SOLO con la traducción, sin comillas ni explicación: "'+en+'"',
+      nivel:(P&&P.nivel)||'', trabajo:(P&&P.trabajo_es)||''},
+    function(res){
+      var esp2=caja&&caja.querySelector('.vartrad.pensando');
+      if(esp2)esp2.remove();
+      var es=(res&&res.respuesta)?String(res.respuesta).replace(/^["']|["']$/g,'').trim():null;
+      if(es)TRAD_CACHE[en]=es;
+      pinta(es);
+    },
+    function(){
+      var esp3=caja&&caja.querySelector('.vartrad.pensando');
+      if(esp3)esp3.remove();
+      pinta(null);
+    });
+}
+
+// "¿Y si quiero decir otra cosa?" — el alumno pregunta en español lo que
+// se le ocurra en ese momento, y el cerebro le da la frase en inglés.
+function abrirDudaFrase(x){
+  var caja=document.getElementById('dudacaja');
+  if(!caja)return;
+  if(caja.innerHTML.trim()){ caja.innerHTML=''; return; }
+  caja.innerHTML=
+    '<div class="dudabox">'+
+      '<div class="hl">Dímelo en español y te lo paso a inglés</div>'+
+      '<p class="tiny" style="margin:4px 0 8px">Por ejemplo: "yo trabajo solo los lunes" '+
+      'o "trabajo cada dos días".</p>'+
+      '<input class="tx" id="dftx" placeholder="Escribe lo que quieres decir..." autocomplete="off">'+
+      '<button class="btn" id="dfok" style="margin-top:8px">Dímelo en inglés</button>'+
+      '<div id="dfres"></div>'+
+    '</div>';
+  var inp=document.getElementById('dftx');
+  if(inp)inp.focus();
+  function mandar(){
+    var q=(inp&&inp.value||'').trim();
+    if(!q){avisito('Escribe lo que quieres decir.');return;}
+    var r=document.getElementById('dfres');
+    if(!hayIA()){
+      if(r)r.innerHTML='<div class="heard"><span class="ok2">Anotada. Brian te la contesta al revisar tu sesión.</span></div>';
+      try{ DUDAS.push(q); }catch(e){}
+      attempts.push({tipo:'duda-frase',meta:x.en||'',oido:q,pct:null});
+      return;
+    }
+    if(r)r.innerHTML='<div class="heard"><span class="hl">pensando…</span></div>';
+    pedirIA('duda',{
+        pregunta:'Un alumno de nivel '+((P&&P.nivel)||'A1')+' está practicando la frase "'+
+                 (x.en||'')+'". Ahora quiere decir: "'+q+'". '+
+                 'Dale la frase en inglés, corta y natural. Después, en UNA línea, '+
+                 'explícale en español qué cambió respecto a la frase original. '+
+                 'Nada más. Sin saludos ni relleno.',
+        nivel:(P&&P.nivel)||'', trabajo:(P&&P.trabajo_es)||''},
+      function(res){
+        if(!res||!res.respuesta){
+          if(r)r.innerHTML='<div class="heard"><span class="ok2">Anotada. Brian te la contesta.</span></div>';
+          return;
+        }
+        var t=String(res.respuesta).trim();
+        var eng=(t.split('\n')[0]||'').replace(/^["']|["']$/g,'').trim();
+        if(r)r.innerHTML=
+          '<div class="heard"><div class="hl">así se dice</div>'+
+          '<div style="font-size:16px;line-height:1.5;margin-bottom:6px">'+esc(t)+'</div>'+
+          '<button class="oirb" id="dfoir">'+ico('bocina',16)+' Oírla</button> '+
+          '<button class="oirb alt" id="dfusar">Practicar esta</button></div>';
+        say(eng||t,'en-US');
+        attempts.push({tipo:'duda-frase',meta:q,oido:t,pct:null});
+        try{ DUDAS.push(q+'  →  '+t); }catch(e){}
+        var o=document.getElementById('dfoir');
+        if(o)o.onclick=function(ev){ev.stopPropagation();say(eng||t,'en-US');};
+        var u=document.getElementById('dfusar');
+        if(u)u.onclick=function(ev){
+          ev.stopPropagation();
+          if(!eng){avisito('No entendí bien la frase. Inténtalo otra vez.');return;}
+          x.en=eng; x.es=q;
+          paso();
+          avisito('Ahora practicas la tuya.');
+        };
+      },
+      function(){
+        if(r)r.innerHTML='<div class="heard"><span class="ok2">No pude traerla. Brian te la contesta al revisar.</span></div>';
+      });
+  }
+  var ok=document.getElementById('dfok');
+  if(ok)ok.onclick=function(e){e.stopPropagation();mandar();};
+  if(inp)inp.addEventListener('keydown',function(e){if(e.key==='Enter')mandar();});
 }
 
 /* ═══════════ cambiar una pieza ═══════════ */
@@ -5499,7 +5630,11 @@ function paso(){
        botonVideo(x.en)+
        (vars.length>1?'<div class="varbox"><span>Todas estas sirven · tócalas para oírlas y repítelas</span>'+
          vars.filter(function(v){return v!==x.en;}).map(function(v,vi){
-           return '<button class="varb" data-v="'+vi+'">'+esc(v)+' <i>▶</i></button>';
+           return '<div class="varfila">'+
+             '<button class="varb" data-v="'+vi+'">'+esc(v)+' <i>▶</i></button>'+
+             '<button class="varmx" data-vmx="'+vi+'" title="Qué significa">🇲🇽</button>'+
+             '<button class="varuse" data-vuse="'+vi+'" title="Practicar esta">Usar</button>'+
+           '</div>';
          }).join('')+'</div>':'')+
        '<div class="oirfila">'+
          '<button class="oirb" id="oir">'+ico('bocina',16)+' Oírla otra vez</button>'+
@@ -5508,7 +5643,10 @@ function paso(){
        '<div id="res"></div>'+
        '<button class="mic-big" id="mic"><span class="ring2"></span> Tocar y repetir</button>'+
        '<p class="tiny">Habla claro y sin prisa. Si el micrófono falla, hay un botón para seguir.</p>'+
-       '<button class="btn ghost" id="skip" style="margin-top:10px">Ya la dije · siguiente</button>';
+       '<button class="btn ghost" id="skip" style="margin-top:10px">Ya la dije · siguiente</button>'+
+       '<button class="btn ghost dudab" id="dudafrase" style="margin-top:8px">'+
+         '¿Y si quiero decir otra cosa?</button>'+
+       '<div id="dudacaja"></div>';
   }else if(x.k==='num'){
     h+='<div class="qlbl">Números · el que más se confunde</div>'+
        '<div class="qtxt">¿Cuál oíste?</div>'+
@@ -5767,9 +5905,38 @@ function paso(){
   if(x.k==='model'){
     buscarVisualCompleto(x.en,'vis-model');
     var otras=variantesDe(x.en,P).filter(function(v){return v!==x.en;});
+
+    // oírla en inglés
     APP.querySelectorAll('.varb').forEach(function(b2){
       b2.onclick=function(e){e.stopPropagation();say(otras[+b2.dataset.v],'en-US');};
     });
+
+    // qué significa — antes solo servía en la frase principal
+    APP.querySelectorAll('.varmx').forEach(function(b2){
+      b2.onclick=function(e){
+        e.stopPropagation();
+        var en=otras[+b2.dataset.vmx];
+        var caja=b2.closest('.varfila');
+        var ya=caja&&caja.querySelector('.vartrad');
+        if(ya){ ya.remove(); }
+        traducirVariante(en,caja);
+      };
+    });
+
+    // convertirla en la principal y practicar esa
+    APP.querySelectorAll('.varuse').forEach(function(b2){
+      b2.onclick=function(e){
+        e.stopPropagation();
+        var en=otras[+b2.dataset.vuse];
+        x.en=en;
+        x.es='';                       // se vuelve a traducir sola
+        traducirVariante(en,null,function(es){ x.es=es||''; paso(); });
+        avisito('Ahora practicas: '+en);
+      };
+    });
+
+    var db=document.getElementById('dudafrase');
+    if(db)db.onclick=function(e){ e.stopPropagation(); abrirDudaFrase(x); };
   }
 
   if(x.k==='drill')setTimeout(function(){say(x.en,'en-US');},300);

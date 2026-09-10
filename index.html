@@ -871,7 +871,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v82 · 9 sep · modo jefe";
+var VERSION="v83 · 9 sep · modo jefe";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -1924,7 +1924,11 @@ function muestrasJefe(){
 
 function pantallaJefe(){
   callarTodo();
-  var c=progreso();
+  var tb=document.querySelector('.topbar');
+  if(tb)tb.style.display='';
+  var c; try{ c=progreso(); }catch(e){ c={parada:1,puntos:0,gastados:0}; }
+  var pts; try{ pts=puntosLibres(); }catch(e){ pts=0; }
+  var LEC=(MAT&&MAT.length)?MAT:[];      // sin perfil, MAT viene en null
   var nivAhora=(P&&P.nivel_n)||0;
   var h='<div class="card jefe">'+
     '<div class="jefe-tag">Modo jefe · solo tú ves esto</div>'+
@@ -1950,15 +1954,20 @@ function pantallaJefe(){
       ' · cambiarlo vuelve a armar el material.</div>'+
     '</div>'+
 
-    '<div class="jefe-bloque"><div class="jefe-h">Lecciones ('+MAT.length+')</div>'+
-      '<div class="jefe-lista">'+
-        MAT.map(function(S,i){
-          return '<button class="jefe-lec" data-lec="'+i+'">'+
-                 '<span class="jefe-num">'+(i+1)+'</span>'+
-                 '<span class="jefe-nom">'+esc(S.t||'sin nombre')+'</span>'+
-                 '<span class="jefe-cnt">'+((S.items||[]).length)+'</span></button>';
-        }).join('')+
-      '</div>'+
+    '<div class="jefe-bloque"><div class="jefe-h">Lecciones ('+LEC.length+')</div>'+
+      (LEC.length
+        ? '<div class="jefe-lista">'+
+            LEC.map(function(S,i){
+              return '<button class="jefe-lec" data-lec="'+i+'">'+
+                     '<span class="jefe-num">'+(i+1)+'</span>'+
+                     '<span class="jefe-nom">'+esc(S.t||'sin nombre')+'</span>'+
+                     '<span class="jefe-cnt">'+((S.items||[]).length)+'</span></button>';
+            }).join('')+
+          '</div>'
+        : '<div class="jefe-nota">Todavia no hay material. Los 20 tipos de abajo si '+
+          'funcionan sin perfil. Para ver las lecciones completas, arma primero un '+
+          'personaje o toca el boton de aqui abajo.</div>'+
+          '<button class="jefe-b" id="jefe-armar" style="margin-top:8px">Armar un alumno de prueba</button>')+
     '</div>'+
 
     '<div class="jefe-bloque"><div class="jefe-h">Los 20 tipos, uno por uno</div>'+
@@ -1976,7 +1985,7 @@ function pantallaJefe(){
         '<button class="jefe-b" data-par="'+Math.min(PARADAS,c.parada+5)+'">Avanzar 5</button>'+
         '<button class="jefe-b peligro" id="jefe-borrar">Borrar todo y empezar de cero</button>'+
       '</div>'+
-      '<div class="jefe-nota">Parada '+c.parada+' de '+PARADAS+' · '+puntosLibres()+' puntos</div>'+
+      '<div class="jefe-nota">Parada '+c.parada+' de '+PARADAS+' · '+pts+' puntos</div>'+
     '</div>'+
 
     '<button class="btn ghost" id="jefe-salir" style="margin-top:14px">Salir del modo jefe</button>'+
@@ -2018,7 +2027,8 @@ function pantallaJefe(){
   APP.querySelectorAll('[data-tipo]').forEach(function(b){
     b.onclick=function(){
       var m=muestrasJefe()[+b.dataset.tipo];
-      MAT=[{t:'Muestra · '+m.k, hoy:'ver este tipo', obj:'Revisión', items:[m]}].concat(MAT);
+      MAT=[{t:'Muestra · '+m.k, hoy:'ver este tipo', obj:'Revisión', items:[m]}]
+              .concat((MAT&&MAT.length)?MAT:[]);
       sIdx=0; it=0; attempts=[]; t0=Date.now();
       correr();
     };
@@ -2037,6 +2047,17 @@ function pantallaJefe(){
     if(!confirm('¿Seguro? Se borra el avance, el perfil y el avatar de este teléfono.'))return;
     try{ localStorage.clear(); }catch(e){}
     location.reload();
+  };
+  var arm=document.getElementById('jefe-armar');
+  if(arm)arm.onclick=function(){
+    P={nombre:'Prueba', sexo:'f', nivel:'Pre-A1', nivel_n:0,
+       trabajo_es:'operadora', trabajo_en:'an operator',
+       lugar_es:'en la fabrica', lugar_en:'in a factory',
+       acc:'reviso cajas', hor:'a las siete', gus:'la musica', met:'hablar con clientes'};
+    var d=load(); d.perfil=P; save(d); D=d;
+    try{ MAT=materialDe(P); }catch(e){ MAT=null; }
+    if(!MAT||!MAT.length){ avisito('No pude armar el material.'); return; }
+    pantallaJefe();
   };
   var sal=document.getElementById('jefe-salir');
   if(sal)sal.onclick=function(){ router(); };
@@ -2067,7 +2088,16 @@ function router(){
     if(f==='sonido'){pruebaSonido();return;}
     if(f==='voz'){vozPicker();return;}
   }
-  if(MODO_JEFE){ MODO_JEFE=false; pantallaJefe(); return; }
+  if(MODO_JEFE){
+    MODO_JEFE=false;
+    try{ pantallaJefe(); }
+    catch(e){
+      APP.innerHTML='<div class="card"><h2>Modo jefe</h2>'+
+        '<p class="tiny">Algo falló al pintarlo: '+esc(String(e))+'</p>'+
+        '<button class="btn" onclick="location.href=location.pathname">Volver a la app</button></div>';
+    }
+    return;
+  }
   if(!vioMarca){marca();return;}
   if(!vioSaludo){portada();return;}
 

@@ -174,6 +174,23 @@
     color:var(--verde)}
   .apoyofila{display:flex;flex-wrap:wrap;gap:6px}
   .bubble-ia.pensando .ht{opacity:.55;font-style:italic}
+  .hilox{background:rgba(29,158,117,.07);border-left:3px solid var(--verde);
+    border-radius:0 10px 10px 0;padding:11px 14px;margin:11px 0;font-size:14px;line-height:1.5}
+  .hilox span{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.13em;
+    text-transform:uppercase;opacity:.6;margin-bottom:3px}
+
+  /* ---- corrección al momento ---- */
+  .corr{background:rgba(216,90,48,.07);border:1px solid rgba(216,90,48,.28);
+    border-radius:11px;padding:13px 15px;margin:11px 0}
+  .corr.ok{background:rgba(29,158,117,.08);border-color:rgba(29,158,117,.3)}
+  .corr.pensando{opacity:.6;font-style:italic;font-size:13.5px;
+    background:var(--papel);border-color:var(--linea)}
+  .corr-h{font-family:var(--mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;
+    opacity:.65;margin-bottom:3px}
+  .corr-q{font-size:15px;line-height:1.5}
+  .corr-c{font-size:15px;line-height:1.5}
+  .corr-k{margin-top:9px;padding-top:8px;border-top:1px solid rgba(0,0,0,.07);font-size:13.5px}
+
   /* ---- phrasal verbs y expresiones ---- */
   .phrgrande{font-family:var(--display);font-size:29px;text-align:center;margin:14px 0 3px;
     color:var(--verde);line-height:1.15}
@@ -961,7 +978,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v89 · 9 sep · saltos arreglados";
+var VERSION="v91 · 9 sep · lecciones amarradas";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -1651,6 +1668,7 @@ function moldePreA1(p){
   return [
   // ---------- L1 ----------
   {t:'Quien eres', hoy:'decir tu nombre y tu trabajo',
+   hilo:'Todo lo de hoy gira alrededor de una sola frase: quien eres y a que te dedicas.',
    obj:'Decir tu nombre y a que te dedicas, sin leer.',
    tip:'Busca un lugar sin ruido. Si tienes audifonos, mejor.',
    enc:'Hoy son tres cosas: vas a OIR ingles, vas a ver una regla chiquita, y vas a HABLAR. Empezamos.',
@@ -1672,6 +1690,7 @@ function moldePreA1(p){
 
   // ---------- L2 ----------
   {t:'Lo que haces cada dia', hoy:'contar tu rutina',
+   hilo:'Hoy todo gira sobre el verbo work en tu rutina: lo oyes, lo escribes, lo dices y lo estiras con wake up.',
    obj:'Decir que haces y a que hora empiezas.',
    tip:'Si no te sale a la primera, dilo otra vez. Nadie te califica el intento.',
    enc:'Hoy oyes dos frases muy parecidas, ves como cambia el verbo, y cuentas tu dia.',
@@ -1695,12 +1714,14 @@ function moldePreA1(p){
 
   // ---------- L3 ----------
   {t:'Tu lugar de trabajo', hoy:'decir donde trabajas',
+   hilo:'Hoy todo es el LUGAR: donde trabajas. Hasta el error que vas a cazar es de una frase de lugar.',
    obj:'Decir donde trabajas y con quien.',
    tip:'Escucha primero sin adivinar. La segunda vez ya buscas el dato.',
    enc:'Hoy cazamos un error. Es de los ejercicios que mas ensenan.',
    items:[
-     {area:'oir',  k:'detalle', audio:'I work in a factory. I start at seven.',
-      pide:'A que hora empieza?', ops:['At six','At seven','At eight'], bien:'At seven'},
+     {area:'oir',  k:'detalle', audio:'I am Ana. I work in a factory, in quality.',
+      pide:'Donde trabaja?', ops:['In a factory','In a store','In an office'],
+      bien:'In a factory'},
      {area:'gram', k:'cazar', frase:'She work in quality.', mala:'work', buena:'works',
       es:'Ella trabaja en calidad.'},
      {area:'hab',  k:'model', en:'I work '+lugEN+'.', es:'Trabajo '+lug+'.'},
@@ -1716,19 +1737,20 @@ function moldePreA1(p){
 
   // ---------- L4 ----------
   {t:'Numeros y horas', hoy:'los numeros que mas se usan',
+   hilo:'Hoy todo es la HORA: la oyes pegada, la ordenas, la dices, la deletreas y la checas al entrar.',
    obj:'Oir y decir numeros sin dudar.',
    tip:'Los numeros se confunden mucho. Por eso los practicamos aparte.',
    enc:'Hoy la parte de oir es la mas dificil: habla rapida. Va pegado pero son varias palabras.',
    items:[
-     {area:'oir',  k:'segm', audio:'What do you do?',
-      piezas:['What','do','you','do'], es:'A que te dedicas?'},
+     {area:'oir',  k:'segm', audio:'What time do you start?',
+      piezas:['What','time','do','you','start'], es:'A que hora empiezas?'},
      {area:'gram', k:'ordenar', piezas:['I','start','at','seven'],
       es:'Empiezo a las siete.'},
      {area:'hab',  k:'model', en:'I start at seven.', es:'Empiezo a las siete.'},
      {area:'hab',  k:'ask',   q:'What time do you start?', es:'A que hora empiezas?',
       pista:'I start at seven.'},
-     {area:'voc',  k:'deletreo', bien:'box', es:'caja',
-      pide:'Escribe la palabra que te deletreo.'},
+     {area:'voc',  k:'deletreo', bien:'seven', es:'siete',
+      pide:'Escribe el numero que te deletreo.'},
      {area:'voc',  k:'phrasal', en:'clock in', es:'checar entrada',
       ojo:'Para la salida se dice "clock out".',
       frase:'I clock in at seven.', frase_es:'Checo entrada a las siete.'}
@@ -1736,6 +1758,7 @@ function moldePreA1(p){
 
   // ---------- L5 ----------
   {t:'Preguntar y contestar', hoy:'hacer preguntas tu tambien',
+   hilo:'Hoy una sola frase se transforma en pregunta y la sigues por cuatro acentos distintos.',
    obj:'No solo contestar: tambien preguntar.',
    tip:'Preguntar cuesta mas que contestar. Es normal.',
    enc:'Hoy cambias una frase de lugar. De afirmacion a pregunta.',
@@ -1757,6 +1780,7 @@ function moldePreA1(p){
 
   // ---------- L6 ----------
   {t:'En la linea', hoy:'palabras de tu trabajo',
+   hilo:'Hoy todo sale de check the boxes: lo escribes, ves por que ella lleva s, lo dices y aprendes turn on.',
    obj:'Usar las palabras de tu area en ingles.',
    tip:'Escribe lo que alcances. No tiene que estar perfecto.',
    enc:'Hoy escribes lo que oyes. Se llama dictado y es de los que mas sirven.',
@@ -1780,6 +1804,7 @@ function moldePreA1(p){
 
   // ---------- L7 ----------
   {t:'Cuando algo sale mal', hoy:'avisar de un problema',
+   hilo:'Hoy todo es la maquina descompuesta: la oyes, cazas el error, la pasas a pasado y se lo cuentas a tu supervisor.',
    obj:'Decir que algo esta mal, con calma.',
    tip:'Estas frases son las que mas vas a usar de verdad.',
    enc:'Hoy cazas otro error y cambias una frase al pasado.',
@@ -1803,6 +1828,7 @@ function moldePreA1(p){
 
   // ---------- L8 ----------
   {t:'Todo junto', hoy:'juntamos lo de las siete lecciones',
+   hilo:'Hoy no hay tema nuevo: todo lo de las siete lecciones sale otra vez, junto y mas suelto.',
    obj:'Hablar de ti seguido, sin parar tanto.',
    tip:'Esta es de fluidez. Repites lo mismo tres veces, cada vez mas rapido.',
    enc:'Ultima del nivel. Hoy no aprendes cosa nueva: la sacas mas suelta.',
@@ -2700,6 +2726,44 @@ function abrirDuda(){
       },
       function(){r.innerHTML='<div class="heard"><span class="ok2">Anotada. Brian te la contesta al revisar tu sesión.</span></div>';});
   };
+}
+
+/* ═══════════ corrección al momento ═══════════ */
+// Antes solo se marcaba en rojo lo que falló. Eso no enseña: el alumno ve
+// que se equivocó pero no sabe en qué ni cómo arreglarlo. Ahora se le dice.
+function pedirCorreccion(x,meta,dicho,pct,estuvoBien){
+  var caja=document.getElementById('correccion');
+  if(caja)caja.innerHTML='<div class="corr pensando">viendo qué te faltó…</div>';
+  pedirIA('corregir',{
+      meta:meta, dijo:dicho, pct:pct,
+      nivel:(P&&P.nivel)||'A1', trabajo:(P&&P.trabajo_es)||''},
+    function(res){
+      var c=document.getElementById('correccion');
+      if(!res||(!res.que&&!res.como)){
+        if(c)c.innerHTML='';
+        say(estuvoBien?'Muy bien.':'Casi. Escúchala otra vez y repítela sin prisa.','es-MX');
+        return;
+      }
+      if(c)c.innerHTML=
+        '<div class="corr'+(res.bien?' ok':'')+'">'+
+          '<div class="corr-h">'+(res.bien?'Lo que hiciste bien':'Qué te faltó')+'</div>'+
+          '<div class="corr-q">'+esc(res.que)+'</div>'+
+          (res.como?'<div class="corr-h" style="margin-top:9px">Cómo arreglarlo</div>'+
+                    '<div class="corr-c">'+esc(res.como)+'</div>':'')+
+          (res.clave?'<div class="corr-k">Fíjate en: <b>'+esc(res.clave)+'</b></div>':'')+
+          '<button class="oirb alt" id="corroir" style="margin-top:9px">'+ico('bocina',15)+' Vuélvemelo a decir</button>'+
+        '</div>';
+      var dilo=res.que+(res.como?'. '+res.como:'');
+      say(dilo,'es-MX');
+      var b=document.getElementById('corroir');
+      if(b)b.onclick=function(e){e.stopPropagation();say(dilo,'es-MX');};
+      attempts.push({tipo:'correccion',meta:meta,oido:res.que+' | '+res.como,pct:null});
+    },
+    function(){
+      var c=document.getElementById('correccion');
+      if(c)c.innerHTML='';
+      say(estuvoBien?'Muy bien.':'Casi. Escúchala otra vez y repítela sin prisa.','es-MX');
+    });
 }
 
 /* ═══════════ variantes: traducir y preguntar ═══════════ */
@@ -5671,6 +5735,7 @@ function portadaSesion(){
     '<div class="qsub">Hola '+esc((P&&P.nombre)||'')+'. '+esc(S.enc||'')+'</div>'+
 
     '<div class="objx"><span>Al terminar vas a poder</span>'+esc(S.obj||'')+'</div>'+
+    (S.hilo?'<div class="hilox"><span>Cómo se amarra todo hoy</span>'+esc(S.hilo)+'</div>':'')+
     planDeHoy(S)+
 
     '';
@@ -5710,7 +5775,7 @@ function portadaSesion(){
   setTimeout(function(){
     var m=modoIdioma();
     say(m==='es'
-      ? 'Hoy '+(S.hoy||'practicamos')+'. Primero escuchas, luego repites, y después contestas tú.'
+      ? 'Hoy '+(S.hoy||'practicamos')+'. '+(S.hilo||'')+' Primero escuchas, luego repites, y después contestas tú.'
       : 'Today: first you listen, then you repeat, then you answer.',
       m==='es'?'es-MX':'en-US');
   },250);
@@ -6193,6 +6258,11 @@ function paso(){
   }
 
   if(x.k==='phrasal'){
+    // la explicación se DICE, no solo se lee: muchos alumnos no leen bien
+    setTimeout(function(){
+      say('Este es un verbo con preposición. '+(x.es||'')+
+          (x.ojo?' '+x.ojo:''),'es-MX');
+    },900);
     var _op=document.getElementById('oir');
     if(_op)_op.onclick=function(){say(x.en||'','en-US');};
     var _oe=document.getElementById('oires');
@@ -6347,6 +6417,9 @@ function paso(){
     setTimeout(function(){say(_audioDe,'en-US');},400);
   }
   if(x.k==='regla'){
+    setTimeout(function(){
+      say((x.regla||'')+' '+(x.porque||''),'es-MX');
+    },700);
     var _sg=document.getElementById('sigue');
     if(_sg)_sg.onclick=function(){
       attempts.push({tipo:'regla',meta:x.titulo||'',oido:'vio la regla',pct:null});
@@ -6628,12 +6701,15 @@ function registrar(x,t){
   h+='</div>';
   if(meta)h+=bloqueComparar(meta);
   if(cmp&&cmp.pct>=80){
-    h+=bloqueShadow(meta)+'<button class="btn" id="sig">Bien · siguiente</button>';
-    say(['Muy bien.','Eso es.','Así se dice.'][Math.floor(Math.random()*3)],'es-MX');
+    h+='<div id="correccion"></div>'+bloqueShadow(meta)+'<button class="btn" id="sig">Bien · siguiente</button>';
+    if(cmp.pct<97&&hayIA())pedirCorreccion(x,meta,t,cmp.pct,true);
+    else say(['Muy bien.','Eso es.','Así se dice.'][Math.floor(Math.random()*3)],'es-MX');
   }
   else if(cmp){
-    h+='<button class="btn ghost" id="otra" style="margin-bottom:8px">Intentar otra vez</button><button class="btn" id="sig">Seguir de todos modos</button>';
-    say('Casi. Escúchala otra vez y repítela sin prisa.','es-MX');
+    h+='<div id="correccion"></div>'+
+       '<button class="btn ghost" id="otra" style="margin-bottom:8px">Intentar otra vez</button><button class="btn" id="sig">Seguir de todos modos</button>';
+    if(hayIA())pedirCorreccion(x,meta,t,cmp.pct,false);
+    else say('Casi. Escúchala otra vez y repítela sin prisa.','es-MX');
   }
   else h+='<button class="btn" id="sig">Siguiente</button>';
   r.innerHTML=h;

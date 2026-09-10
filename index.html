@@ -961,7 +961,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v88 · 9 sep · phrasals y expresiones";
+var VERSION="v89 · 9 sep · saltos arreglados";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -2087,8 +2087,12 @@ function pintarBarraJefe(){
 
       if(a==='adelante'){ it++; if(it>=(MAT[sIdx].items||[]).length){it=0;} paso(); }
       if(a==='atras'){ it--; if(it<0){it=Math.max(0,(MAT[sIdx].items||[]).length-1);} paso(); }
-      if(a==='lecmas'){ sIdx=(sIdx+1)%MAT.length; it=0; attempts=[]; paso(); }
-      if(a==='lecmenos'){ sIdx=(sIdx-1+MAT.length)%MAT.length; it=0; attempts=[]; paso(); }
+      if(a==='lecmas'||a==='lecmenos'){
+        sIdx=(sIdx+(a==='lecmas'?1:-1)+MAT.length)%MAT.length;
+        it=0; attempts=[]; vistos={};
+        try{ paso(); }
+        catch(err){ avisito('Esa lección truena: '+String(err).slice(0,80)); }
+      }
       if(a==='parmas'||a==='parmenos'){
         var cc=progreso();
         cc.parada=Math.max(1,Math.min(PARADAS,cc.parada+(a==='parmas'?1:-1)));
@@ -2213,8 +2217,12 @@ function pantallaJefe(){
 
   APP.querySelectorAll('[data-lec]').forEach(function(b){
     b.onclick=function(){
-      sIdx=+b.dataset.lec; it=0; attempts=[]; t0=Date.now();
-      correr();
+      sIdx=+b.dataset.lec; it=0; attempts=[]; vistos={}; t0=Date.now();
+      try{ correr(); }
+      catch(err){
+        APP.innerHTML='<div class="card"><h2>Esa lección truena</h2>'+
+          '<p class="tiny">'+esc(String(err))+'</p></div>';
+      }
     };
   });
 
@@ -5646,7 +5654,10 @@ function ultimoDato(){
 }
 
 function portadaSesion(){
+  if(!MAT||!MAT.length){ if(typeof mapa==='function')mapa(); return; }
+  if(sIdx==null||sIdx<0||sIdx>=MAT.length)sIdx=0;
   var S=MAT[sIdx];
+  if(!S||!S.items){ if(typeof mapa==='function')mapa(); return; }
   var modelos=S.items.filter(function(x){return x.k==='model';});
   var preg=S.items.filter(function(x){return x.k==='ask';}).length;
   var libres=S.items.filter(function(x){return x.k==='free';}).length;
@@ -5655,11 +5666,11 @@ function portadaSesion(){
 
   var h='<div class="qcard">'+
     '<div class="qlbl">Sesión '+(sIdx+1)+' de '+MAT.length+'</div>'+
-    '<div class="hoy">Hoy '+esc(S.hoy||('practicamos '+S.t.toLowerCase()))+'</div>'+
-    '<div class="qtxt" style="font-size:26px">Sesión '+(sIdx+1)+' · '+esc(S.t)+'</div>'+
-    '<div class="qsub">Hola '+esc(P.nombre)+'. '+esc(S.enc)+'</div>'+
+    '<div class="hoy">Hoy '+esc(S.hoy||('practicamos '+String(S.t||'').toLowerCase()))+'</div>'+
+    '<div class="qtxt" style="font-size:26px">Sesión '+(sIdx+1)+' · '+esc(S.t||'')+'</div>'+
+    '<div class="qsub">Hola '+esc((P&&P.nombre)||'')+'. '+esc(S.enc||'')+'</div>'+
 
-    '<div class="objx"><span>Al terminar vas a poder</span>'+esc(S.obj)+'</div>'+
+    '<div class="objx"><span>Al terminar vas a poder</span>'+esc(S.obj||'')+'</div>'+
     planDeHoy(S)+
 
     '';
@@ -5731,7 +5742,11 @@ function paso(){
   callarTodo();
   VECES_OIDO=0;
   setTimeout(pintarReloj,50);
+  if(!MAT||!MAT.length){ if(typeof mapa==='function')mapa(); return; }
+  if(sIdx==null||sIdx<0||sIdx>=MAT.length)sIdx=0;
   var S=MAT[sIdx];
+  if(!S||!S.items||!S.items.length){ if(typeof mapa==='function')mapa(); return; }
+  if(it<0)it=0;
   if(it>=S.items.length){cierre();return;}
   var x=S.items[it];
   var INS={

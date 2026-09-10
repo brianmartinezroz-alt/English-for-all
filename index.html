@@ -30,6 +30,35 @@
   body{background:var(--crema);color:var(--tinta);font-family:var(--body);line-height:1.55;
        -webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
   .shell{max-width:1140px;margin:0 auto;padding:22px 16px 80px}
+
+  /* ── En celular la pantalla NO se mueve. El encabezado se queda arriba
+        y solo el contenido de en medio se desliza por dentro.
+        Así el alumno nunca tiene que subir o bajar la página entera. ── */
+  @media (max-width:760px){
+    html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+    .shell{
+      height:100dvh;              /* dvh: cuenta la barra del navegador del celular */
+      max-height:100dvh;
+      display:flex;flex-direction:column;
+      padding:12px 14px 0;
+      overflow:hidden;
+    }
+    .topbar{flex:none;padding-bottom:10px;margin-bottom:12px}
+    .brand{font-size:19px}
+    #app{
+      flex:1 1 auto;
+      min-height:0;               /* sin esto flex no deja encoger y se desborda */
+      overflow-y:auto;
+      -webkit-overflow-scrolling:touch;
+      padding-bottom:18px;
+      scrollbar-width:none;
+    }
+    #app::-webkit-scrollbar{display:none}
+    .card{margin-bottom:0}
+  }
+  @supports not (height:100dvh){
+    @media (max-width:760px){ .shell{height:100vh;max-height:100vh} }
+  }
   .wrapc{max-width:540px;margin:0 auto}
 
   .topbar{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;
@@ -145,6 +174,25 @@
     color:var(--verde)}
   .apoyofila{display:flex;flex-wrap:wrap;gap:6px}
   .bubble-ia.pensando .ht{opacity:.55;font-style:italic}
+  /* ---- barra flotante del jefe ---- */
+  #barrajefe{position:fixed;left:0;right:0;bottom:0;z-index:900;
+    background:rgba(42,39,36,.96);backdrop-filter:blur(8px);
+    padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+    display:flex;flex-direction:column;gap:5px;
+    box-shadow:0 -3px 18px rgba(0,0,0,.22)}
+  .bj-fila{display:flex;align-items:center;gap:6px;justify-content:center;flex-wrap:wrap}
+  .bj-b{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);
+    color:#F5F1E8;border-radius:7px;padding:7px 11px;font-size:12.5px;font-family:inherit;
+    cursor:pointer;white-space:nowrap}
+  .bj-b.chico{padding:5px 9px;font-size:11px}
+  .bj-b.apaga{background:rgba(216,90,48,.3);border-color:rgba(216,90,48,.5)}
+  .bj-b:active{transform:scale(.95)}
+  .bj-txt{color:#F5F1E8;font-size:12px;opacity:.85;max-width:150px;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
+  .bj-txt.mono{font-family:var(--mono);font-size:11px}
+  body:has(#barrajefe) #app{padding-bottom:130px}
+  @media (max-width:760px){ body:has(#barrajefe) .shell{padding-bottom:0} }
+
   /* ---- modo jefe ---- */
   .jefe-tag{display:inline-block;background:rgba(216,90,48,.12);border:1px solid rgba(216,90,48,.35);
     color:var(--coral);border-radius:6px;padding:4px 9px;font-family:var(--mono);font-size:9px;
@@ -871,7 +919,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v83 · 9 sep · modo jefe";
+var VERSION="v84 · 9 sep · pantalla fija";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -1922,6 +1970,92 @@ function muestrasJefe(){
   ];
 }
 
+/* ── Barra flotante del jefe ──
+   Va encima de la app de verdad. Sirve para moverse libre por las mismas
+   pantallas que ve el alumno, sin tener que contestar los ejercicios. */
+var JEFE_LIBRE=false;
+
+function tipoActual(){
+  try{
+    var S=MAT&&MAT[sIdx];
+    if(!S||!S.items)return '—';
+    var x=S.items[it];
+    return x?x.k:'fin';
+  }catch(e){ return '—'; }
+}
+
+function pintarBarraJefe(){
+  var b=document.getElementById('barrajefe');
+  if(!JEFE_LIBRE){ if(b)b.remove(); return; }
+  if(!b){
+    b=document.createElement('div');
+    b.id='barrajefe';
+    document.body.appendChild(b);
+  }
+  var S=(MAT&&MAT[sIdx])||null;
+  var tot=S&&S.items?S.items.length:0;
+  var c; try{ c=progreso(); }catch(e){ c={parada:1}; }
+  b.innerHTML=
+    '<div class="bj-fila">'+
+      '<button class="bj-b" data-j="lecmenos">‹ Lec</button>'+
+      '<span class="bj-txt">'+(S?esc(S.t||''):'sin lección')+'</span>'+
+      '<button class="bj-b" data-j="lecmas">Lec ›</button>'+
+    '</div>'+
+    '<div class="bj-fila">'+
+      '<button class="bj-b" data-j="atras">‹ Ejercicio</button>'+
+      '<span class="bj-txt mono">'+(tot?(it+1)+'/'+tot:'—')+' · '+esc(tipoActual())+'</span>'+
+      '<button class="bj-b" data-j="adelante">Ejercicio ›</button>'+
+    '</div>'+
+    '<div class="bj-fila">'+
+      '<button class="bj-b chico" data-j="mapa">Mapa</button>'+
+      '<button class="bj-b chico" data-j="parmenos">‹ Parada</button>'+
+      '<span class="bj-txt mono">'+c.parada+'</span>'+
+      '<button class="bj-b chico" data-j="parmas">Parada ›</button>'+
+      '<button class="bj-b chico" data-j="cierre">Cierre</button>'+
+      '<button class="bj-b chico" data-j="panel">Menú jefe</button>'+
+      '<button class="bj-b chico apaga" data-j="salir">Salir</button>'+
+    '</div>';
+
+  b.querySelectorAll('[data-j]').forEach(function(bt){
+    bt.onclick=function(e){
+      e.stopPropagation();
+      var a=bt.dataset.j;
+      if(a==='salir'){ JEFE_LIBRE=false; pintarBarraJefe(); return; }
+      if(a==='panel'){ pantallaJefe(); return; }
+      if(a==='mapa'){ mapa(); setTimeout(pintarBarraJefe,60); return; }
+      if(a==='cierre'){ try{cierre();}catch(err){} setTimeout(pintarBarraJefe,60); return; }
+      if(!MAT||!MAT.length){ avisito('Primero arma material desde el menú jefe.'); return; }
+
+      if(a==='adelante'){ it++; if(it>=(MAT[sIdx].items||[]).length){it=0;} paso(); }
+      if(a==='atras'){ it--; if(it<0){it=Math.max(0,(MAT[sIdx].items||[]).length-1);} paso(); }
+      if(a==='lecmas'){ sIdx=(sIdx+1)%MAT.length; it=0; attempts=[]; paso(); }
+      if(a==='lecmenos'){ sIdx=(sIdx-1+MAT.length)%MAT.length; it=0; attempts=[]; paso(); }
+      if(a==='parmas'||a==='parmenos'){
+        var cc=progreso();
+        cc.parada=Math.max(1,Math.min(PARADAS,cc.parada+(a==='parmas'?1:-1)));
+        if(cc.maxima<cc.parada)cc.maxima=cc.parada;
+        guardarProgreso(cc); mapa();
+      }
+      setTimeout(pintarBarraJefe,60);
+    };
+  });
+}
+
+// después de cada pintada de la app, la barra se vuelve a poner encima
+(function(){
+  var _paso=null,_mapa=null;
+  setTimeout(function(){
+    if(typeof paso==='function'&&!_paso){
+      _paso=paso;
+      paso=function(){ _paso.apply(null,arguments); if(JEFE_LIBRE)setTimeout(pintarBarraJefe,30); };
+    }
+    if(typeof mapa==='function'&&!_mapa){
+      _mapa=mapa;
+      mapa=function(){ _mapa.apply(null,arguments); if(JEFE_LIBRE)setTimeout(pintarBarraJefe,30); };
+    }
+  },400);
+})();
+
 function pantallaJefe(){
   callarTodo();
   var tb=document.querySelector('.topbar');
@@ -1988,7 +2122,8 @@ function pantallaJefe(){
       '<div class="jefe-nota">Parada '+c.parada+' de '+PARADAS+' · '+pts+' puntos</div>'+
     '</div>'+
 
-    '<button class="btn ghost" id="jefe-salir" style="margin-top:14px">Salir del modo jefe</button>'+
+    '<button class="btn" id="jefe-libre" style="margin-top:14px">Ver la app como el alumno · con controles</button>'+
+    '<button class="btn ghost" id="jefe-salir" style="margin-top:8px">Salir del modo jefe</button>'+
     '</div>';
   APP.innerHTML=h;
 
@@ -2058,6 +2193,15 @@ function pantallaJefe(){
     try{ MAT=materialDe(P); }catch(e){ MAT=null; }
     if(!MAT||!MAT.length){ avisito('No pude armar el material.'); return; }
     pantallaJefe();
+  };
+  var lib=document.getElementById('jefe-libre');
+  if(lib)lib.onclick=function(){
+    JEFE_LIBRE=true;
+    if(!MAT||!MAT.length){
+      if(P){ try{ MAT=materialDe(P); }catch(e){} }
+    }
+    mapa();
+    setTimeout(pintarBarraJefe,80);
   };
   var sal=document.getElementById('jefe-salir');
   if(sal)sal.onclick=function(){ router(); };

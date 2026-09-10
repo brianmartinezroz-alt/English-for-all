@@ -174,6 +174,17 @@
     color:var(--verde)}
   .apoyofila{display:flex;flex-wrap:wrap;gap:6px}
   .bubble-ia.pensando .ht{opacity:.55;font-style:italic}
+  .lqv{background:var(--papel);border:1px solid var(--linea);border-radius:13px;
+    padding:15px 16px;margin:12px 0}
+  .lqv-h{font-family:var(--display);font-size:17px;font-weight:600;margin-bottom:11px}
+  .lqv-b{margin-bottom:11px}
+  .lqv-t{font-family:var(--mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--verde);margin-bottom:4px}
+  .lqv-i{font-size:14px;line-height:1.5;padding:3px 0 3px 11px;border-left:2px solid var(--linea)}
+  .lqv-oir{width:100%;background:var(--crema);border:1px solid var(--linea);color:var(--tinta);
+    border-radius:9px;padding:9px;font-family:inherit;font-size:13.5px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:7px}
+
   .hilox{background:rgba(29,158,117,.07);border-left:3px solid var(--verde);
     border-radius:0 10px 10px 0;padding:11px 14px;margin:11px 0;font-size:14px;line-height:1.5}
   .hilox span{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.13em;
@@ -275,6 +286,9 @@
     border:1px solid var(--linea);border-radius:8px;padding:9px 11px;font-family:inherit;
     font-size:13.5px;color:var(--tinta);cursor:pointer;text-align:left}
   .jefe-num{font-family:var(--mono);font-size:11px;opacity:.5;min-width:16px}
+  .jefe-cuerpo{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+  .jefe-tipos{font-family:var(--mono);font-size:9.5px;opacity:.45;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
   .jefe-nom{flex:1}
   .jefe-cnt{font-family:var(--mono);font-size:11px;opacity:.5}
   .apoyow{background:rgba(29,158,117,.1);border:1px solid rgba(29,158,117,.28);
@@ -978,7 +992,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v91 · 9 sep · lecciones amarradas";
+var VERSION="v95 · 9 sep · lecciones de un clic";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -1057,9 +1071,12 @@ function aplicarVoz(id){
        ||VOCES.filter(function(v){return v.voiceURI===id;})[0]||VOZ_EN;
 }
 
-function say(t,lang,cb){
+// vel: 0.7 lento · nada = normal. Solo aplica a ESA frase, no a toda la app.
+function sayLento(t,lang,cb){ return say(t,lang,cb,0.7); }
+function say(t,lang,cb,vel){
   callarTodo();          // ← al primer clic se hace silencio, sin esperar la descarga
   marcarCargando(true);  // ← el botón avisa que viene en camino
+  VEL_PEDIDA=vel||null;
   var k=clave(t);
   var archivo=(typeof GRABABLES!=='undefined'&&GRABABLES[k])?GRABABLES[k]:k;
   // se intenta SIEMPRE el audio: si el archivo existe, suena la voz buena;
@@ -1228,7 +1245,8 @@ function sexoDeLaFrase(t){
 function vozDelServidor(texto,lang,cb,onFalla){
   if(!VOZ_ENDPOINT){onFalla&&onFalla();return;}
   var miTurno=TURNO;
-  var k=clave(texto)+'|'+(PAQUETE_ACTIVO||'audio-us')+'|'+sexoDeLaFrase(texto);
+  var vel=VEL_PEDIDA;   // se toma ya, porque la respuesta llega despues
+  var k=clave(texto)+'|'+(PAQUETE_ACTIVO||'audio-us')+'|'+sexoDeLaFrase(texto)+(vel?'|v'+vel:'');
 
   if(VOZ_CACHE[k]){
     if(miTurno!==TURNO)return;
@@ -1237,7 +1255,7 @@ function vozDelServidor(texto,lang,cb,onFalla){
   }
   fetch(VOZ_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify({texto:texto,idioma:(lang==='es-MX'?'es':'en'),
-      paquete:PAQUETE_ACTIVO||'audio-us',sexo:sexoDeLaFrase(texto)})})
+      paquete:PAQUETE_ACTIVO||'audio-us',sexo:sexoDeLaFrase(texto),vel:vel||undefined})})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){
       if(!d||!d.ok||!d.audio){delete VOZ_CACHE[k];onFalla&&onFalla();return;}
@@ -1254,6 +1272,7 @@ function vozDelServidor(texto,lang,cb,onFalla){
    apenas se tocaba el botón, y Apps Script tarda 1-3 segundos en responder.
    Ahora las frases de la pantalla se piden desde que la pantalla se dibuja,
    una por una y sin sonar. Cuando el alumno toca, ya están en memoria. */
+var VEL_PEDIDA=null;
 var PRECARGANDO=false;
 function precargarVoz(texto,lang,listo){
   if(!VOZ_ENDPOINT||!texto){listo&&listo();return;}
@@ -1410,6 +1429,7 @@ function diagnostico(){
 }
 function listen(lang,onDone,onErr){
   if(!SR){onErr&&onErr('sin-soporte');return null;}
+  try{ callarTodo(); }catch(e){}   // sin esto el micrófono oye a la app
   var r=new SR();
   r.lang=lang||'en-US';r.interimResults=false;r.maxAlternatives=1;
   r.onresult=function(e){onDone(e.results[0][0].transcript,e.results[0][0].confidence);};
@@ -2151,7 +2171,19 @@ function pantallaJefe(){
   if(tb)tb.style.display='';
   var c; try{ c=progreso(); }catch(e){ c={parada:1,puntos:0,gastados:0}; }
   var pts; try{ pts=puntosLibres(); }catch(e){ pts=0; }
-  var LEC=(MAT&&MAT.length)?MAT:[];      // sin perfil, MAT viene en null
+  // Antes había que armar un alumno a mano para ver las lecciones.
+  // Ahora se arma solo, para que la lista esté lista de un clic.
+  if(!MAT||!MAT.length){
+    if(!P){
+      P={nombre:'Prueba', sexo:'f', nivel:'Pre-A1', nivel_n:0,
+         trabajo_es:'operadora', trabajo_en:'an operator',
+         lugar_es:'en la fabrica', lugar_en:'in a factory',
+         acc:'reviso cajas', hor:'a las siete', gus:'la musica', met:'hablar con clientes'};
+      try{ var _d=load(); _d.perfil=P; _d.tutorVisto=true; save(_d); D=_d; }catch(e){}
+    }
+    try{ MAT=materialDe(P); }catch(e){ MAT=null; }
+  }
+  var LEC=(MAT&&MAT.length)?MAT:[];
   var nivAhora=(P&&P.nivel_n)||0;
   var h='<div class="card jefe">'+
     '<div class="jefe-tag">Modo jefe · solo tú ves esto</div>'+
@@ -2181,16 +2213,19 @@ function pantallaJefe(){
       (LEC.length
         ? '<div class="jefe-lista">'+
             LEC.map(function(S,i){
+              var tipos=(S.items||[]).map(function(y){return y.k;});
+              var v={},u=[];
+              tipos.forEach(function(z){if(!v[z]){v[z]=1;u.push(z);}});
               return '<button class="jefe-lec" data-lec="'+i+'">'+
                      '<span class="jefe-num">'+(i+1)+'</span>'+
-                     '<span class="jefe-nom">'+esc(S.t||'sin nombre')+'</span>'+
+                     '<span class="jefe-cuerpo">'+
+                       '<span class="jefe-nom">'+esc(S.t||'sin nombre')+'</span>'+
+                       '<span class="jefe-tipos">'+esc(u.join(' · '))+'</span>'+
+                     '</span>'+
                      '<span class="jefe-cnt">'+((S.items||[]).length)+'</span></button>';
             }).join('')+
           '</div>'
-        : '<div class="jefe-nota">Todavia no hay material. Los 20 tipos de abajo si '+
-          'funcionan sin perfil. Para ver las lecciones completas, arma primero un '+
-          'personaje o toca el boton de aqui abajo.</div>'+
-          '<button class="jefe-b" id="jefe-armar" style="margin-top:8px">Armar un alumno de prueba</button>')+
+        : '<div class="jefe-nota">No pude armar el material. Revisa el nivel de arriba.</div>')+
     '</div>'+
 
     '<div class="jefe-bloque"><div class="jefe-h">Los 20 tipos, uno por uno</div>'+
@@ -2244,7 +2279,8 @@ function pantallaJefe(){
   APP.querySelectorAll('[data-lec]').forEach(function(b){
     b.onclick=function(){
       sIdx=+b.dataset.lec; it=0; attempts=[]; vistos={}; t0=Date.now();
-      try{ correr(); }
+      JEFE_LIBRE=true;                 // con la barra puesta, para moverse libre
+      try{ correr(); setTimeout(pintarBarraJefe,120); }
       catch(err){
         APP.innerHTML='<div class="card"><h2>Esa lección truena</h2>'+
           '<p class="tiny">'+esc(String(err))+'</p></div>';
@@ -2560,6 +2596,9 @@ function grabandoDisponible(){
 }
 function empezarGrabacion(){
   if(!grabandoDisponible())return;
+  // Si la app está sonando, el micrófono la graba a ella y no al alumno.
+  // Se calla ANTES de abrir el micrófono, siempre.
+  callarTodo();
   navigator.mediaDevices.getUserMedia({audio:true}).then(function(st){
     GRAB_TROZOS=[];
     var tipo='';
@@ -5717,6 +5756,73 @@ function ultimoDato(){
   return {tipo:'ok',ses:r.s};
 }
 
+// Lee la lección y explica QUÉ va a ver el alumno: la regla de gramática,
+// las palabras nuevas, qué va a oír y qué va a decir. Antes solo decía el tema.
+function loQueViene(S){
+  var it=(S&&S.items)||[];
+  var gram=[], voc=[], oir=[], hab=[];
+
+  var NOMBRA={
+    idea:'entender de qué se trata sin traducir cada palabra',
+    detalle:'cazar un dato exacto: una hora, un número, un lugar',
+    dosc:'distinguir dos frases que suenan casi igual',
+    segm:'separar palabras en habla rápida',
+    dicto:'escribir lo que oigas',
+    acento:'la misma frase en cuatro países distintos',
+    recuento:'oír una historia y contarla con tus palabras'
+  };
+
+  it.forEach(function(x){
+    if(x.k==='regla'&&x.titulo)      gram.push(x.titulo);
+    else if(x.k==='cazar'&&x.buena)  gram.push('corregir "'+x.mala+'" → "'+x.buena+'"');
+    else if(x.k==='transf'&&x.pide)  gram.push(String(x.pide).replace(/\.$/,''));
+    else if(x.k==='hueco'&&x.bien)   gram.push('escoger la forma correcta del verbo');
+    else if(x.k==='ordenar')         gram.push('el orden de las palabras');
+    else if(x.k==='phrasal'&&x.en)   voc.push(x.en+' — '+(x.es||''));
+    else if(x.k==='idiom'&&x.en)     voc.push(x.en+' (expresión)');
+    else if(x.k==='palabra'&&x.en)   voc.push(x.en+' — '+(x.es||''));
+    else if(x.k==='pares')           voc.push('dos sonidos parecidos: '+(x.a||'')+' / '+(x.b||''));
+    else if(x.k==='deletreo'&&x.bien)voc.push('deletrear "'+x.bien+'"');
+    else if(NOMBRA[x.k])             oir.push(NOMBRA[x.k]);
+    else if(x.k==='roleplay')        hab.push('contestarle a '+(x.quien||'alguien')+', hablando');
+    else if(x.k==='model'&&x.en)     hab.push(x.en);
+  });
+
+  function unico(a){var v={},o=[];a.forEach(function(z){if(!v[z]){v[z]=1;o.push(z);}});return o;}
+  gram=unico(gram); voc=unico(voc); oir=unico(oir); hab=unico(hab);
+
+  if(!gram.length&&!voc.length&&!oir.length&&!hab.length)return '';
+
+  function bloque(tit,arr,corte){
+    if(!arr.length)return '';
+    return '<div class="lqv-b"><div class="lqv-t">'+tit+'</div>'+
+      arr.slice(0,corte).map(function(z){return '<div class="lqv-i">'+esc(z)+'</div>';}).join('')+
+      '</div>';
+  }
+  return '<div class="lqv"><div class="lqv-h">Lo que vas a ver hoy</div>'+
+    bloque('Gramática',gram,3)+
+    bloque('Palabras nuevas',voc,4)+
+    bloque('Vas a oír',oir,3)+
+    bloque('Vas a decir',hab,3)+
+    '<button class="lqv-oir" id="lqvoir">'+ico('bocina',15)+' Que me lo digan</button>'+
+  '</div>';
+}
+
+// lo mismo pero para decirlo en voz alta
+function loQueVieneHablado(S){
+  var it=(S&&S.items)||[];
+  var g=[],v=[];
+  it.forEach(function(x){
+    if(x.k==='regla'&&x.titulo)g.push(x.titulo);
+    if(x.k==='phrasal'&&x.en)v.push(x.en);
+    if(x.k==='idiom'&&x.en)v.push(x.en);
+  });
+  var t='';
+  if(g.length)t+='La regla de hoy es: '+g[0]+'. ';
+  if(v.length)t+='Vas a aprender '+v.slice(0,2).join(' y ')+'. ';
+  return t;
+}
+
 function portadaSesion(){
   if(!MAT||!MAT.length){ if(typeof mapa==='function')mapa(); return; }
   if(sIdx==null||sIdx<0||sIdx>=MAT.length)sIdx=0;
@@ -5736,6 +5842,7 @@ function portadaSesion(){
 
     '<div class="objx"><span>Al terminar vas a poder</span>'+esc(S.obj||'')+'</div>'+
     (S.hilo?'<div class="hilox"><span>Cómo se amarra todo hoy</span>'+esc(S.hilo)+'</div>':'')+
+    loQueViene(S)+
     planDeHoy(S)+
 
     '';
@@ -5771,11 +5878,21 @@ function portadaSesion(){
   APP.innerHTML=h;
   ligarAyuda('Aquí te digo qué vamos a hacer hoy y qué frases vas a oír. Cuando estés listo, toca Empezar.');
   ligarPlan(S);
+  (function(){
+    var b=document.getElementById('lqvoir');
+    if(!b)return;
+    b.onclick=function(e){
+      e.stopPropagation();
+      var t=loQueVieneHablado(S);
+      say(t||('Hoy '+(S.hoy||'practicamos')+'.'),'es-MX');
+    };
+  })();
   // el encuadre se dice, no solo se lee
   setTimeout(function(){
     var m=modoIdioma();
     say(m==='es'
-      ? 'Hoy '+(S.hoy||'practicamos')+'. '+(S.hilo||'')+' Primero escuchas, luego repites, y después contestas tú.'
+      ? 'Hoy '+(S.hoy||'practicamos')+'. '+(S.hilo||'')+' '+loQueVieneHablado(S)+
+        'Primero escuchas, luego repites, y después contestas tú.'
       : 'Today: first you listen, then you repeat, then you answer.',
       m==='es'?'es-MX':'en-US');
   },250);
@@ -5993,7 +6110,8 @@ function paso(){
   }else if(x.k==='idea'){
     h+='<div class="qlbl">Escucha · ¿de qué se trata?</div>'+
        '<div class="qsub">No tienes que entender cada palabra. Solo de qué habla.</div>'+
-       '<div class="oirfila"><button class="oirb" id="oir">'+ico('bocina',16)+' Escuchar</button></div>'+
+       '<div class="oirfila"><button class="oirb" id="oir">'+ico('bocina',16)+' Escuchar</button>'+
+         '<button class="oirb alt" id="oirlento">'+ico('bocina',16)+' Más lento</button></div>'+
        '<div class="conteo" id="conteo">Escúchalo las veces que quieras.</div>'+
        '<div class="opsfila col" id="ideaops">'+
          (x.ops||[]).map(function(o,i){return '<button class="opt" data-i="'+i+'">'+esc(o)+'</button>';}).join('')+
@@ -6001,7 +6119,8 @@ function paso(){
        '<div id="res"></div>';
   }else if(x.k==='detalle'){
     h+='<div class="qlbl">Escucha · el dato exacto</div>'+
-       '<div class="oirfila"><button class="oirb" id="oir">'+ico('bocina',16)+' Escuchar</button></div>'+
+       '<div class="oirfila"><button class="oirb" id="oir">'+ico('bocina',16)+' Escuchar</button>'+
+         '<button class="oirb alt" id="oirlento">'+ico('bocina',16)+' Más lento</button></div>'+
        '<div class="conteo" id="conteo">Fíjate bien en el dato.</div>'+
        '<div class="pidebox">'+esc(x.pide||'')+'</div>'+
        '<div class="opsfila" id="detops">'+
@@ -6011,7 +6130,8 @@ function paso(){
   }else if(x.k==='dosc'){
     h+='<div class="qlbl">¿Cuál oíste?</div>'+
        '<div class="qsub">Se parecen mucho. Escúchalo otra vez si hace falta.</div>'+
-       '<div class="oirfila"><button class="oirb" id="oir">'+ico('bocina',16)+' Escuchar</button></div>'+
+       '<div class="oirfila"><button class="oirb" id="oir">'+ico('bocina',16)+' Escuchar</button>'+
+         '<button class="oirb alt" id="oirlento">'+ico('bocina',16)+' Más lento</button></div>'+
        '<div class="opsfila col" id="doscops">'+
          '<button class="opt" data-i="0">'+esc(x.a||'')+'</button>'+
          '<button class="opt" data-i="1">'+esc(x.b||'')+'</button>'+
@@ -6020,7 +6140,8 @@ function paso(){
   }else if(x.k==='segm'){
     h+='<div class="qlbl">Habla rápida · ¿cuántas palabras?</div>'+
        '<div class="qsub">Suena pegado, pero son varias palabras. Escucha y arma.</div>'+
-       '<div class="oirfila"><button class="oirb" id="oir">'+ico('bocina',16)+' Escuchar</button></div>'+
+       '<div class="oirfila"><button class="oirb" id="oir">'+ico('bocina',16)+' Escuchar</button>'+
+         '<button class="oirb alt" id="oirlento">'+ico('bocina',16)+' Más lento</button></div>'+
        '<div class="armado" id="armado"><span class="armado-vacio">Toca las palabras en el orden que las oíste</span></div>'+
        '<div class="piezasfila" id="piezas">'+
          mezclar((x.piezas||[]).slice()).map(function(w){
@@ -6097,7 +6218,8 @@ function paso(){
   }else if(x.k==='recuento'){
     h+='<div class="qlbl">Cuéntalo con tus palabras</div>'+
        '<div class="qsub">Primero lo oyes. Luego lo cuentas tú, como te salga.</div>'+
-       '<div class="oirfila"><button class="oirb" id="oir">'+ico('bocina',16)+' Escuchar la historia</button></div>'+
+       '<div class="oirfila"><button class="oirb" id="oir">'+ico('bocina',16)+' Escuchar la historia</button>'+
+         '<button class="oirb alt" id="oirlento">'+ico('bocina',16)+' Más lento</button></div>'+
        '<div class="conteo" id="conteo">Escúchala las veces que quieras.</div>'+
        (x.apoyo?'<div class="aplista"><div class="hl">Palabras que te sirven</div>'+
          '<div class="apoyofila">'+(x.apoyo||[]).map(function(w){
@@ -6108,7 +6230,8 @@ function paso(){
   }else if(x.k==='pares'){
     h+='<div class="qlbl">Dos sonidos parecidos</div>'+
        '<div class="qsub">Cambian en un solo sonido. Escucha cuál dije.</div>'+
-       '<div class="oirfila"><button class="oirb" id="oir">'+ico('bocina',16)+' Escuchar</button></div>'+
+       '<div class="oirfila"><button class="oirb" id="oir">'+ico('bocina',16)+' Escuchar</button>'+
+         '<button class="oirb alt" id="oirlento">'+ico('bocina',16)+' Más lento</button></div>'+
        '<div class="opsfila" id="paresops">'+
          '<button class="opt gr" data-i="0">'+esc(x.a||'')+'</button>'+
          '<button class="opt gr" data-i="1">'+esc(x.b||'')+'</button>'+
@@ -6138,7 +6261,8 @@ function paso(){
   }else if(x.k==='dicto'){
     h+='<div class="qlbl">Escucha y escríbelo</div>'+
        '<div class="qsub">Escúchalo las veces que quieras. Escribe lo que alcances.</div>'+
-       '<div class="oirfila"><button class="oirb" id="oir">'+ico('bocina',16)+' Escuchar</button></div>'+
+       '<div class="oirfila"><button class="oirb" id="oir">'+ico('bocina',16)+' Escuchar</button>'+
+         '<button class="oirb alt" id="oirlento">'+ico('bocina',16)+' Más lento</button></div>'+
        '<textarea class="dictoin" id="dictoin" rows="3" placeholder="Escribe aquí lo que oíste..."></textarea>'+
        '<div id="res"></div>'+
        '<button class="btn" id="revisar" style="margin-top:10px">Revisar</button>';
@@ -6406,6 +6530,21 @@ function paso(){
     var _o=document.getElementById('oir');
     if(_o)_o.onclick=function(){say(x.k==='regla'?(x.bien||''):(x.origen||''),'en-US');};
   }
+  // el botón de "más lento" vale para todos los de oír
+  (function(){
+    var bl=document.getElementById('oirlento');
+    if(!bl)return;
+    var txt=x.audio||x.en||x.bien||x.q||'';
+    if(x.k==='pares')txt=(x.bien==='b')?(x.b||''):(x.a||'');
+    bl.onclick=function(e){
+      e.stopPropagation();
+      VECES_OIDO++;
+      var c=document.getElementById('conteo');
+      if(c)c.textContent='Así suena despacio. Ahora escúchalo a velocidad normal.';
+      sayLento(txt,'en-US');
+    };
+  })();
+
   if(x.k==='idea'||x.k==='detalle'||x.k==='dosc'||x.k==='segm'||x.k==='dicto'){
     var _oL=document.getElementById('oir');
     if(_oL)_oL.onclick=function(){
@@ -6551,10 +6690,13 @@ function paso(){
   var _mic=document.getElementById('mic');
   if(_mic)_mic.onclick=function(){
     var b=this;
+    callarTodo();                       // silencio antes de oír al alumno
     if(!HAY_MIC){grabarPaso(x,b);return;}
     b.classList.add('rec');b.innerHTML='<span class="ring2"></span> Grabando…';b.disabled=true;
     var _r0=document.getElementById('res');
-    if(_r0)_r0.innerHTML='<div class="grabando"><span class="punto"></span>Te estoy grabando. Habla ahora.</div>';
+    if(_r0)_r0.innerHTML='<div class="grabando"><span class="punto"></span>'+
+      'Te estoy grabando. Habla ahora.<br><small style="opacity:.75">'+
+      'El audio se apagó para que solo se oiga tu voz.</small></div>';
     MI_GRABACION=null;
     if(x.k==='model'||x.k==='drill')empezarGrabacion();
     listen('en-US',function(t){
@@ -6585,6 +6727,8 @@ function paso(){
 
 
 function grabarPaso(x,b){
+  callarTodo();   // que no se grabe la propia app
+
   var meta=(x.k==='model'||x.k==='drill')?x.en:'';
   if(!HAY_GRAB){escribir(x);return;}
   var r=document.getElementById('res');

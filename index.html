@@ -174,6 +174,38 @@
     color:var(--verde)}
   .apoyofila{display:flex;flex-wrap:wrap;gap:6px}
   .bubble-ia.pensando .ht{opacity:.55;font-style:italic}
+  /* ---- asomarse a una lección desde el mapa ---- */
+  .asom-velo{position:fixed;inset:0;z-index:950;background:rgba(42,39,36,.55);
+    backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:20px}
+  .asom-caja{background:var(--papel);border:1px solid var(--linea);border-radius:17px;
+    padding:20px 19px;max-width:380px;width:100%;max-height:85vh;overflow-y:auto;
+    box-shadow:0 16px 44px rgba(0,0,0,.25)}
+  .asom-tag{font-family:var(--mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--tenue);margin-bottom:6px}
+  .asom-t{font-family:var(--display);font-size:23px;font-weight:600;line-height:1.15}
+  .asom-o{font-size:13.5px;color:var(--tenue);margin-top:5px;line-height:1.5}
+  .asom-b{margin-top:13px}
+  .asom-h{font-family:var(--mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--verde);margin-bottom:3px}
+  .asom-i{font-size:14.5px;line-height:1.5;padding-left:10px;border-left:2px solid var(--linea)}
+  .asom-vela{margin-top:14px;padding:10px 12px;background:var(--crema);border-radius:9px;
+    font-size:12.5px;color:var(--tenue);line-height:1.5}
+
+  /* ---- el método ---- */
+  .met-t{font-family:var(--display);font-size:26px;font-weight:600;line-height:1.1;margin:4px 0 6px}
+  .met-s{font-size:14.5px;color:var(--tenue);line-height:1.55;margin-bottom:20px}
+  .met-b{display:flex;gap:13px;padding:15px 0;border-top:1px solid var(--linea)}
+  .met-n{flex:none;width:25px;height:25px;border-radius:50%;background:rgba(29,158,117,.12);
+    color:var(--verde);display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:11.5px;margin-top:2px}
+  .met-c{flex:1;min-width:0}
+  .met-h{font-family:var(--display);font-size:17px;font-weight:600;margin-bottom:4px;line-height:1.25}
+  .met-p{font-size:14.5px;line-height:1.6;color:var(--tinta)}
+  .met-f{margin-top:6px;font-family:var(--mono);font-size:10px;letter-spacing:.06em;
+    color:var(--tenue)}
+  .met-pie{margin-top:18px;padding-top:14px;border-top:1px solid var(--linea);
+    font-size:12.5px;color:var(--tenue);line-height:1.55}
+
   .lqv{background:var(--papel);border:1px solid var(--linea);border-radius:13px;
     padding:15px 16px;margin:12px 0}
   .lqv-h{font-family:var(--display);font-size:17px;font-weight:600;margin-bottom:11px}
@@ -992,7 +1024,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v95 · 9 sep · lecciones de un clic";
+var VERSION="v96 · 9 sep · el método y el mapa";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -3381,6 +3413,8 @@ function pintarCajon(){
     '<button class="cj-b" data-a="avatar">'+ico('persona')+' Mi avatar</button>'+
     '<button class="cj-b" data-a="personaje">'+ico('tijeras')+' Cambiar mi personaje</button>'+
     '<button class="cj-b" data-a="oirme">'+ico('audifonos')+' Óyete el primer día y hoy</button>'+
+    '<div class="cj-sec">Por qué funciona</div>'+
+    '<button class="cj-b" data-a="metodo">'+ico('libro')+' El método, explicado</button>'+
     '<div class="cj-sec">Ajustes</div>'+
     '<button class="cj-b" data-a="aspecto">'+ico('paleta')+' Colores de la app</button>'+
     '<button class="cj-b" data-a="voz">'+ico('globo')+' Acento y velocidad</button>'+
@@ -3402,10 +3436,103 @@ function pintarCajon(){
       else if(a==='oirme')perfilAlumno();
       else if(a==='aspecto')pantallaAspecto();
       else if(a==='voz')pantallaVoz();
+      else if(a==='metodo')pantallaMetodo();
       else if(a==='perfil')pantallaDatos();
     };
   });
 }
+// El botón del menú solo se enganchaba dentro de marca(), la pantalla de
+// bienvenida. El modo jefe se la salta, así que las tres rayitas quedaban muertas.
+// Ahora se engancha al arrancar, pase lo que pase.
+function ligarMenu(){
+  var mb=document.getElementById('menub'), vl=document.getElementById('velo');
+  if(mb&&!mb.onclick){
+    mb.onclick=function(e){ e.stopPropagation(); CAJON_ABIERTO?cerrarCajon():abrirCajon(); };
+  }
+  if(vl&&!vl.onclick)vl.onclick=cerrarCajon;
+}
+document.addEventListener('DOMContentLoaded',ligarMenu);
+setTimeout(ligarMenu,300);
+
+// Toda la pedagogía en un solo lugar: qué hacemos, cómo y por qué.
+// Sirve para el alumno que quiere entender, y para enseñarlo a un cliente.
+function pantallaMetodo(){
+  var SECC=[
+   {t:'La idea de fondo',
+    p:'Aprendes a hablar hablando, no memorizando listas. Cada sesión te hace producir '+
+      'lenguaje en voz alta desde el primer minuto, aunque salga imperfecto. '+
+      'El error no es un problema: es la materia prima de tu maestro.'},
+   {t:'Las cuatro cosas que necesita cualquier idioma',
+    p:'La investigación es clara: para aprender un idioma hacen falta cuatro cosas en '+
+      'equilibrio. Oír mucho, producir mucho, fijarse en la forma, y soltar la fluidez. '+
+      'La mayoría de las apps solo hacen la tercera y te dejan a medias. '+
+      'Aquí las cuatro tienen su lugar en cada lección.',
+    n:'Nation, cuatro hebras'},
+   {t:'Por qué cada lección tiene tres áreas',
+    p:'Oír, gramática y hablar. No es capricho: si solo oyes, entiendes pero no hablas. '+
+      'Si solo repites, hablas sin entender. Si solo ves reglas, sabes explicar el idioma '+
+      'pero no usarlo. Van juntas o no sirven.'},
+   {t:'Por qué los ejercicios cambian cada lección',
+    p:'Si haces siempre lo mismo, tu cerebro se acostumbra y deja de esforzarse. '+
+      'Por eso los tipos rotan: en una lección el oído es idea general, en la siguiente '+
+      'es un dato exacto, en la otra es dictado. La variedad está en el tiempo, no en el montón.'},
+   {t:'Por qué se oye antes de leer',
+    p:'Oír tiene dos motores. Uno descifra sonidos y separa palabras. El otro adivina por '+
+      'contexto lo que no alcanzaste a oír. Se entrenan por separado y luego juntos. '+
+      'Por eso hay ejercicios de habla rápida y otros de idea general: no son lo mismo.',
+    n:'Vandergrift · Field'},
+   {t:'Por qué hay poco español',
+    p:'El español es la red de seguridad, no el camino. Si todo pasa por traducir, te vuelves '+
+      'un traductor lento en vez de alguien que habla. Por eso el botón de "qué significa" '+
+      'está ahí cuando lo necesitas, pero no adelante de ti.'},
+   {t:'Por qué las frases son de tu trabajo',
+    p:'Las frases de libro se olvidan porque no las usas. Las frases de tu turno, tu área y '+
+      'tu máquina se quedan porque las vas a decir mañana. Por eso al empezar te preguntamos '+
+      'qué haces y con quién hablas inglés.'},
+   {t:'Por qué repites la misma frase tres veces',
+    p:'La primera vez la boca busca la forma. La segunda ya sale. La tercera sale sin pensar. '+
+      'Eso es fluidez, y no se consigue diciendo algo una sola vez. En la última lección de '+
+      'cada nivel cuentas lo mismo tres veces, cada vez más rápido.',
+    n:'técnica 4/3/2'},
+   {t:'Por qué lo que fallas regresa',
+    p:'Lo que se te atoró vuelve a salir días después, cuando ya casi lo olvidabas. Ese es el '+
+      'momento en que se fija de verdad. Si lo dominas, se espacia más. Si lo vuelves a fallar, '+
+      'regresa antes.',
+    n:'repaso espaciado'},
+   {t:'Por qué hay acentos distintos',
+    p:'En el trabajo real no todos hablan como en los cursos. Te vas a topar con gente de '+
+      'India, de Inglaterra, de Australia. Si solo entrenas con un acento, el primer día real '+
+      'no entiendes nada. Aquí los oyes desde el principio.'},
+   {t:'Lo que ninguna app tiene',
+    p:'Un maestro de verdad del otro lado. Tus grabaciones no se pierden: Brian las oye, '+
+      'escoge máximo tres cosas que corregir, y te las devuelve con su nombre. '+
+      'Un algoritmo te dice que te equivocaste. Un maestro te dice en qué y cómo arreglarlo.'}
+  ];
+
+  var h=atras()+'<div class="card">'+
+    '<div class="qlbl">El método</div>'+
+    '<h2 class="met-t">Por qué hacemos lo que hacemos</h2>'+
+    '<p class="met-s">Todo lo que hay en esta app está aquí por una razón. '+
+    'Estas son las razones, sin adornos.</p>'+
+    SECC.map(function(x,i){
+      return '<div class="met-b">'+
+        '<div class="met-n">'+(i+1)+'</div>'+
+        '<div class="met-c">'+
+          '<div class="met-h">'+esc(x.t)+'</div>'+
+          '<div class="met-p">'+esc(x.p)+'</div>'+
+          (x.n?'<div class="met-f">'+esc(x.n)+'</div>':'')+
+        '</div></div>';
+    }).join('')+
+    '<div class="met-pie">Diseñado por Brian Martínez Rodríguez · Maestría en Educación, '+
+    'University of Limerick. Más de seis años enseñando inglés en México.</div>'+
+    '<button class="btn" id="metvolver" style="margin-top:14px">Volver</button>'+
+  '</div>';
+  APP.innerHTML=h;
+  ligarAtras();
+  var b=document.getElementById('metvolver');
+  if(b)b.onclick=function(){ router(); };
+}
+
 function abrirCajon(){
   pintarCajon();
   document.getElementById('cajon').classList.add('on');
@@ -4085,6 +4212,67 @@ function pintarTutor(){
 }
 
 /* ═══════════ pantalla del mapa ═══════════ */
+// El jefe entra directo a la lección de esa casilla.
+function irALeccionDe(n){
+  if(!MAT||!MAT.length){ avisito('No hay material cargado.'); return; }
+  var idx=(contenidoDe(n)-1)%MAT.length;
+  if(idx<0)idx=0;
+  sIdx=idx; it=0; attempts=[]; vistos={}; t0=Date.now();
+  try{ correr(); setTimeout(pintarBarraJefe,120); }
+  catch(err){ avisito('Esa lección truena: '+String(err).slice(0,70)); }
+}
+
+// El alumno se ASOMA: ve el tema y una probadita de la gramática,
+// pero el detalle completo solo aparece cuando de verdad llega ahí.
+function asomarseALeccion(n,actual){
+  if(!MAT||!MAT.length)return;
+  var idx=(contenidoDe(n)-1)%MAT.length;
+  var S=MAT[idx]; if(!S)return;
+  var abierta=(n<=actual);
+
+  var items=S.items||[];
+  var regla=null, palabras=[];
+  items.forEach(function(x){
+    if(!regla&&x.k==='regla'&&x.titulo)regla=x.titulo;
+    if(x.k==='phrasal'&&x.en)palabras.push(x.en);
+    if(x.k==='idiom'&&x.en)palabras.push(x.en);
+  });
+
+  var h='<div class="asom-caja">'+
+    '<div class="asom-tag">Parada '+n+(abierta?'':' · todavía cerrada')+'</div>'+
+    '<div class="asom-t">'+esc(S.t||'')+'</div>'+
+    (S.obj?'<div class="asom-o">'+esc(S.obj)+'</div>':'')+
+    '<div class="asom-b"><div class="asom-h">De qué va</div>'+
+      '<div class="asom-i">'+esc(S.hoy||'practicar')+'</div></div>'+
+    (regla?'<div class="asom-b"><div class="asom-h">La gramática que toca</div>'+
+      '<div class="asom-i">'+esc(regla)+'</div></div>':'')+
+    (palabras.length?'<div class="asom-b"><div class="asom-h">Palabras nuevas</div>'+
+      '<div class="asom-i">'+esc(palabras.slice(0,3).join(' · '))+'</div></div>':'')+
+    '<div class="asom-vela">'+
+      (abierta
+        ? 'Lo demás lo vas viendo dentro, ejercicio por ejercicio.'
+        : 'El resto se abre cuando llegues aquí. Primero lo de antes.')+
+    '</div>'+
+    '<button class="btn'+(abierta?'':' ghost')+'" id="asomir">'+
+      (n===actual?'Empezar esta':(abierta?'Ya la pasaste':'Aún no llegas'))+'</button>'+
+    '<button class="btn ghost" id="asomcerrar" style="margin-top:8px">Cerrar</button>'+
+  '</div>';
+
+  var v=document.createElement('div');
+  v.className='asom-velo'; v.id='asomvelo'; v.innerHTML=h;
+  document.body.appendChild(v);
+  v.onclick=function(e){ if(e.target===v)v.remove(); };
+  var cerrar=document.getElementById('asomcerrar');
+  if(cerrar)cerrar.onclick=function(){v.remove();};
+  var ir=document.getElementById('asomir');
+  if(ir)ir.onclick=function(){
+    v.remove();
+    if(n===actual){ sIdx=idx; it=0; attempts=[]; t0=Date.now(); correr(); }
+    else if(abierta)avisito('Ya la pasaste. Lo que se te atoró vuelve solo en una parada de repaso.');
+    else avisito('Todavía no llegas aquí. Termina las de antes y se abre sola.');
+  };
+}
+
 function mapa(){
   var c=progreso();
   var tr=tramoDe(c.parada);
@@ -4128,11 +4316,10 @@ function mapa(){
   // No se regresa. Lo que se le atoró vuelve solo, en las casillas de repaso.
   APP.querySelectorAll('.lo').forEach(function(g){
     var n=+g.getAttribute('data-n');
-    g.style.cursor='default';
+    g.style.cursor='pointer';
     g.onclick=function(){
-      if(n<c.parada){
-        avisito('Ya no hace falta regresar. Lo que se te atoró te va a volver a salir en una parada de repaso.');
-      }
+      if(JEFE_LIBRE){ irALeccionDe(n); return; }   // el jefe entra a donde sea
+      asomarseALeccion(n,c.parada);
     };
   });
 

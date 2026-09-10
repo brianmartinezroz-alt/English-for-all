@@ -174,6 +174,31 @@
     color:var(--verde)}
   .apoyofila{display:flex;flex-wrap:wrap;gap:6px}
   .bubble-ia.pensando .ht{opacity:.55;font-style:italic}
+  /* ---- phrasal verbs y expresiones ---- */
+  .phrgrande{font-family:var(--display);font-size:29px;text-align:center;margin:14px 0 3px;
+    color:var(--verde);line-height:1.15}
+  .phrsig{text-align:center;font-size:14.5px;color:var(--tenue);margin-bottom:6px}
+
+  /* ---- preguntame lo que sea ---- */
+  .pgchips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+  .pgchip{background:var(--crema);border:1px solid var(--linea);color:var(--tinta);
+    border-radius:20px;padding:6px 12px;font-size:12.5px;font-family:inherit;cursor:pointer}
+  .pgchip.on{background:rgba(29,158,117,.14);border-color:var(--verde);color:var(--verde)}
+  .pgchip:active{transform:scale(.96)}
+  .pgidioma{display:flex;gap:5px;margin-bottom:9px}
+  .pgi{flex:1;background:var(--crema);border:1px solid var(--linea);color:var(--tenue);
+    border-radius:8px;padding:7px;font-size:12.5px;font-family:inherit;cursor:pointer}
+  .pgi.on{background:var(--papel);border-color:var(--verde);color:var(--verde);font-weight:500}
+  .pgfila{display:flex;gap:6px;align-items:stretch}
+  .pgfila .tx{flex:1;margin:0}
+  .pgmic{flex:none;width:46px;background:var(--crema);border:1px solid var(--linea);
+    border-radius:9px;color:var(--tinta);cursor:pointer;display:flex;align-items:center;
+    justify-content:center;position:relative}
+  .pgmic.oyendo{background:rgba(216,90,48,.14);border-color:var(--coral);color:var(--coral)}
+  .pgpunto{position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;
+    background:var(--coral);animation:latir 1s infinite}
+  .pgtxt{font-size:15px;line-height:1.6}
+
   /* ---- variantes con traduccion y duda ---- */
   .varfila{display:flex;align-items:stretch;gap:5px;margin-bottom:6px;flex-wrap:wrap}
   .varfila .varb{flex:1;margin-bottom:0;min-width:0}
@@ -936,7 +961,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v86 · 9 sep · variantes y dudas";
+var VERSION="v88 · 9 sep · phrasals y expresiones";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -1662,7 +1687,10 @@ function moldePreA1(p){
      {area:'hab',  k:'ask',   q:'Do you work every day?', es:'Trabajas todos los dias? Contesta: Yes, I do.',
       pista:'Yes, I do. I work every day.'},
      {area:'voc',  k:'pares', a:'work', b:'walk', bien:'a',
-      nota:'"Work" es trabajar. "Walk" es caminar. Cambia una sola vocal.'}
+      nota:'"Work" es trabajar. "Walk" es caminar. Cambia una sola vocal.'},
+     {area:'voc',  k:'phrasal', en:'wake up', es:'despertarse',
+      ojo:'Cuidado: "wake" solo no se usa asi. Siempre va con "up".',
+      frase:'I wake up at five.', frase_es:'Me despierto a las cinco.'}
    ]},
 
   // ---------- L3 ----------
@@ -1700,7 +1728,10 @@ function moldePreA1(p){
      {area:'hab',  k:'ask',   q:'What time do you start?', es:'A que hora empiezas?',
       pista:'I start at seven.'},
      {area:'voc',  k:'deletreo', bien:'box', es:'caja',
-      pide:'Escribe la palabra que te deletreo.'}
+      pide:'Escribe la palabra que te deletreo.'},
+     {area:'voc',  k:'phrasal', en:'clock in', es:'checar entrada',
+      ojo:'Para la salida se dice "clock out".',
+      frase:'I clock in at seven.', frase_es:'Checo entrada a las siete.'}
    ]},
 
   // ---------- L5 ----------
@@ -1741,7 +1772,10 @@ function moldePreA1(p){
       pista:'I check the boxes.'},
      {area:'voc',  k:'palabra', en:'check', es:'revisar',
       pide:'En cual frase va bien?',
-      ops:['I check the boxes.','I check to my house.','I check happy.'], bien:'I check the boxes.'}
+      ops:['I check the boxes.','I check to my house.','I check happy.'], bien:'I check the boxes.'},
+     {area:'voc',  k:'phrasal', en:'turn on', es:'encender / prender',
+      ojo:'Para apagar es "turn off". Se usan igual con maquinas y con luces.',
+      frase:'I turn on the machine.', frase_es:'Prendo la maquina.'}
    ]},
 
   // ---------- L7 ----------
@@ -1758,6 +1792,9 @@ function moldePreA1(p){
       pide:'Ponlo en pasado.', bien:'The machine stopped.'},
      {area:'hab',  k:'ask',   q:'Is there a problem today?', es:'Hay un problema hoy? Contesta con Yes o No.',
       pista:'Yes, there is a problem.'},
+     {area:'voc',  k:'phrasal', en:'break down', es:'descomponerse',
+      ojo:'Se usa para maquinas y para carros. No es que se rompa en pedazos: es que dejo de servir.',
+      frase:'The machine broke down.', frase_es:'La maquina se descompuso.'},
      {area:'hab',  k:'roleplay', quien:'Tu supervisor',
       ctx:'La maquina se paro y tu supervisor viene a preguntarte que paso.',
       q:'What happened with the machine?', es:'Que paso con la maquina?',
@@ -1783,6 +1820,11 @@ function moldePreA1(p){
      {area:'hab',  k:'ask',   q:'Last time. As fast as you can.',
       es:'Vez 3 de 3. Lo mas suelto que puedas.',
       pista:'My name is '+nom+'. I am '+ofiEN+'. I work '+lugEN+'.'},
+     {area:'voc',  k:'idiom', en:'Take it easy.',
+      pide:'Que crees que significa?',
+      ops:['Tomalo con calma','Tomalo facilmente','Llevatelo'],
+      bien:'Tomalo con calma',
+      cuando:'Se dice para despedirse o para calmar a alguien que anda apurado.'},
      {area:'hab',  k:'recuento',
       audio:'Ana works in a factory. She starts at seven. She checks the boxes every morning.',
       apoyo:['works','starts at seven','checks the boxes'],
@@ -2696,63 +2738,175 @@ function traducirVariante(en,caja,listo){
     });
 }
 
-// "¿Y si quiero decir otra cosa?" — el alumno pregunta en español lo que
-// se le ocurra en ese momento, y el cerebro le da la frase en inglés.
+// ── Pregúntame lo que sea ──
+// Un solo lugar para todo: cómo se dice algo, phrasal verbs, expresiones,
+// por qué se dice así, o cualquier duda suelta.
+// Se puede ESCRIBIR o DECIR, en español o en inglés.
+var PREG_IDIOMA='es';
+
 function abrirDudaFrase(x){
   var caja=document.getElementById('dudacaja');
   if(!caja)return;
   if(caja.innerHTML.trim()){ caja.innerHTML=''; return; }
+
+  var frase=(x&&x.en)||'';
   caja.innerHTML=
     '<div class="dudabox">'+
-      '<div class="hl">Dímelo en español y te lo paso a inglés</div>'+
-      '<p class="tiny" style="margin:4px 0 8px">Por ejemplo: "yo trabajo solo los lunes" '+
-      'o "trabajo cada dos días".</p>'+
-      '<input class="tx" id="dftx" placeholder="Escribe lo que quieres decir..." autocomplete="off">'+
-      '<button class="btn" id="dfok" style="margin-top:8px">Dímelo en inglés</button>'+
+      '<div class="hl">Pregúntame lo que sea</div>'+
+      '<p class="tiny" style="margin:4px 0 9px">Escríbelo o dilo. En español o en inglés, como te salga.</p>'+
+
+      '<div class="pgchips" id="pgchips">'+
+        '<button class="pgchip" data-p="decir">¿Cómo digo…?</button>'+
+        '<button class="pgchip" data-p="phrasal">Phrasal verbs</button>'+
+        '<button class="pgchip" data-p="idiom">Expresiones</button>'+
+        '<button class="pgchip" data-p="porque">¿Por qué se dice así?</button>'+
+        '<button class="pgchip" data-p="libre">Otra duda</button>'+
+      '</div>'+
+
+      '<div class="pgidioma">'+
+        '<button class="pgi on" data-i="es">Español</button>'+
+        '<button class="pgi" data-i="en">English</button>'+
+      '</div>'+
+
+      '<div class="pgfila">'+
+        '<input class="tx" id="dftx" placeholder="Escribe tu pregunta..." autocomplete="off">'+
+        '<button class="pgmic" id="dfmic" title="Decirlo">'+ico('boca',18)+'</button>'+
+      '</div>'+
+      '<button class="btn" id="dfok" style="margin-top:8px">Preguntar</button>'+
       '<div id="dfres"></div>'+
     '</div>';
+
   var inp=document.getElementById('dftx');
   if(inp)inp.focus();
+
+  // idioma en que pregunta
+  caja.querySelectorAll('.pgi').forEach(function(b){
+    b.onclick=function(e){
+      e.stopPropagation();
+      PREG_IDIOMA=b.dataset.i;
+      caja.querySelectorAll('.pgi').forEach(function(z){z.classList.remove('on');});
+      b.classList.add('on');
+      if(inp)inp.placeholder = PREG_IDIOMA==='es'
+        ? 'Escribe tu pregunta...' : 'Type your question...';
+    };
+  });
+
+  // atajos
+  var PLANTILLA={
+    decir:  {es:'¿Cómo digo "…"?',            en:'How do I say "…"?'},
+    phrasal:{es:'Dame phrasal verbs con esta frase', en:'Give me phrasal verbs for this'},
+    idiom:  {es:'Dame una expresión que signifique lo mismo', en:'Give me an idiom that means this'},
+    porque: {es:'¿Por qué se dice así?',      en:'Why is it said this way?'},
+    libre:  {es:'',                            en:''}
+  };
+  var MODO='libre';
+  caja.querySelectorAll('.pgchip').forEach(function(b){
+    b.onclick=function(e){
+      e.stopPropagation();
+      MODO=b.dataset.p;
+      caja.querySelectorAll('.pgchip').forEach(function(z){z.classList.remove('on');});
+      b.classList.add('on');
+      var t=PLANTILLA[MODO][PREG_IDIOMA]||'';
+      if(inp){
+        inp.value=t;
+        inp.focus();
+        var pos=t.indexOf('…');
+        if(pos>=0){ try{ inp.setSelectionRange(pos,pos+1); }catch(err){} }
+      }
+      if(MODO==='phrasal'||MODO==='idiom'){ mandar(); }
+    };
+  });
+
+  // decirlo en vez de escribirlo
+  var mic=document.getElementById('dfmic');
+  if(mic)mic.onclick=function(e){
+    e.stopPropagation();
+    var d=diagnostico();
+    if(!d.ok){ avisito(d.largo); return; }
+    mic.classList.add('oyendo');
+    mic.innerHTML=ico('boca',18)+'<span class="pgpunto"></span>';
+    listen(PREG_IDIOMA==='es'?'es-MX':'en-US',
+      function(txt){
+        mic.classList.remove('oyendo'); mic.innerHTML=ico('boca',18);
+        if(inp){ inp.value=txt; }
+        mandar();
+      },
+      function(err){
+        mic.classList.remove('oyendo'); mic.innerHTML=ico('boca',18);
+        avisito(err==='no-speech'?'No te oí. Acércate y toca otra vez.'
+                                 :'No pude abrir el micrófono. Escríbelo mejor.');
+      });
+  };
+
+  function instruccion(q){
+    var niv=(P&&P.nivel)||'A1';
+    var base='Alumno mexicano de nivel '+niv+' aprendiendo inglés de trabajo. ';
+    if(frase)base+='Está practicando la frase: "'+frase+'". ';
+    if(MODO==='phrasal'){
+      return base+'Dale DOS phrasal verbs útiles relacionados con esa frase o con su trabajo. '+
+        'Formato exacto, sin nada más:\nphrasal — significado en español — ejemplo corto en inglés\n'+
+        'Uno por línea. Nivel '+niv+', nada rebuscado.';
+    }
+    if(MODO==='idiom'){
+      return base+'Dale UNA expresión idiomática en inglés que sirva en su trabajo y se '+
+        'relacione con la frase. Formato exacto, sin nada más:\n'+
+        'expresión — qué significa en español — cuándo se usa (una línea)';
+    }
+    if(MODO==='porque'){
+      return base+'Explícale en español, en máximo tres líneas y sin tecnicismos, por qué esa '+
+        'frase se dice así en inglés. Si hay una regla, dísela con palabras sencillas.';
+    }
+    if(MODO==='decir'){
+      return base+'Quiere decir: "'+q+'". Dale la frase en inglés, corta y natural, en la PRIMERA '+
+        'línea y sola. Luego, en UNA línea, explícale en español qué cambió respecto a la frase '+
+        'que practica. Nada más.';
+    }
+    return base+'Su pregunta es: "'+q+'". Contéstale en español, claro y corto, máximo cuatro '+
+      'líneas. Si la respuesta incluye una frase en inglés, ponla en la PRIMERA línea, sola.';
+  }
+
   function mandar(){
     var q=(inp&&inp.value||'').trim();
-    if(!q){avisito('Escribe lo que quieres decir.');return;}
+    if(!q&&MODO!=='phrasal'&&MODO!=='idiom'&&MODO!=='porque'){
+      avisito(PREG_IDIOMA==='es'?'Escribe o di tu pregunta.':'Type or say your question.');
+      return;
+    }
     var r=document.getElementById('dfres');
     if(!hayIA()){
       if(r)r.innerHTML='<div class="heard"><span class="ok2">Anotada. Brian te la contesta al revisar tu sesión.</span></div>';
       try{ DUDAS.push(q); }catch(e){}
-      attempts.push({tipo:'duda-frase',meta:x.en||'',oido:q,pct:null});
+      attempts.push({tipo:'pregunta',meta:frase,oido:q,pct:null});
       return;
     }
     if(r)r.innerHTML='<div class="heard"><span class="hl">pensando…</span></div>';
-    pedirIA('duda',{
-        pregunta:'Un alumno de nivel '+((P&&P.nivel)||'A1')+' está practicando la frase "'+
-                 (x.en||'')+'". Ahora quiere decir: "'+q+'". '+
-                 'Dale la frase en inglés, corta y natural. Después, en UNA línea, '+
-                 'explícale en español qué cambió respecto a la frase original. '+
-                 'Nada más. Sin saludos ni relleno.',
-        nivel:(P&&P.nivel)||'', trabajo:(P&&P.trabajo_es)||''},
+    pedirIA('duda',{pregunta:instruccion(q),nivel:(P&&P.nivel)||'',trabajo:(P&&P.trabajo_es)||''},
       function(res){
         if(!res||!res.respuesta){
           if(r)r.innerHTML='<div class="heard"><span class="ok2">Anotada. Brian te la contesta.</span></div>';
           return;
         }
         var t=String(res.respuesta).trim();
-        var eng=(t.split('\n')[0]||'').replace(/^["']|["']$/g,'').trim();
+        var prim=(t.split('\n')[0]||'').replace(/^["']|["']$/g,'').trim();
+        // ¿la primera línea es una frase en inglés que se pueda practicar?
+        var esIngles=/^[A-Za-z0-9 ,.'!?-]+$/.test(prim)&&prim.split(' ').length>1&&prim.length<90;
         if(r)r.innerHTML=
-          '<div class="heard"><div class="hl">así se dice</div>'+
-          '<div style="font-size:16px;line-height:1.5;margin-bottom:6px">'+esc(t)+'</div>'+
-          '<button class="oirb" id="dfoir">'+ico('bocina',16)+' Oírla</button> '+
-          '<button class="oirb alt" id="dfusar">Practicar esta</button></div>';
-        say(eng||t,'en-US');
-        attempts.push({tipo:'duda-frase',meta:q,oido:t,pct:null});
-        try{ DUDAS.push(q+'  →  '+t); }catch(e){}
+          '<div class="heard"><div class="hl">'+(MODO==='phrasal'?'phrasal verbs':
+             MODO==='idiom'?'expresión':MODO==='porque'?'por qué':'respuesta')+'</div>'+
+          '<div class="pgtxt">'+esc(t).replace(/\n/g,'<br>')+'</div>'+
+          '<div class="oirfila" style="margin-top:8px">'+
+            '<button class="oirb" id="dfoir">'+ico('bocina',16)+' Oírla</button>'+
+            (esIngles?'<button class="oirb alt" id="dfusar">Practicar esta</button>':'')+
+          '</div></div>';
+        if(esIngles)say(prim,'en-US'); else say(t,'es-MX');
+        attempts.push({tipo:'pregunta-'+MODO,meta:q||frase,oido:t,pct:null});
+        try{ DUDAS.push((q||MODO)+'  →  '+t); }catch(e){}
         var o=document.getElementById('dfoir');
-        if(o)o.onclick=function(ev){ev.stopPropagation();say(eng||t,'en-US');};
+        if(o)o.onclick=function(ev){ev.stopPropagation();
+          if(esIngles)say(prim,'en-US'); else say(t,'es-MX');};
         var u=document.getElementById('dfusar');
         if(u)u.onclick=function(ev){
           ev.stopPropagation();
-          if(!eng){avisito('No entendí bien la frase. Inténtalo otra vez.');return;}
-          x.en=eng; x.es=q;
+          x.en=prim; x.es=q||'';
           paso();
           avisito('Ahora practicas la tuya.');
         };
@@ -2761,6 +2915,7 @@ function abrirDudaFrase(x){
         if(r)r.innerHTML='<div class="heard"><span class="ok2">No pude traerla. Brian te la contesta al revisar.</span></div>';
       });
   }
+
   var ok=document.getElementById('dfok');
   if(ok)ok.onclick=function(e){e.stopPropagation();mandar();};
   if(inp)inp.addEventListener('keydown',function(e){if(e.key==='Enter')mandar();});
@@ -5608,7 +5763,9 @@ function paso(){
     recuento:'Oyes una historia corta y luego la cuentas tu, con tus palabras. No tiene que ser igual.',
     pares:'Dos palabras que cambian en un solo sonido. Escucha con cuidado cual dije.',
     palabra:'Una palabra de tu trabajo. Escoge en cual frase va bien.',
-    deletreo:'Te deletreo la palabra letra por letra en ingles. Escribela.'
+    deletreo:'Te deletreo la palabra letra por letra en ingles. Escribela.',
+    phrasal:'Un verbo con preposicion. Se aprende de a uno porque cambia de significado. Oyelo y usalo en la frase.',
+    idiom:'Una expresion hecha. Palabra por palabra no tiene sentido. Adivina que significa.'
   };
   var quedan=S.items.length-it-1;
   var h=atras()+marcaReloj()+ayuda(ayudas[x.k]||'Sigue las instrucciones de la tarjeta.',(quedan>0?'quedan '+quedan+' ejercicios':'el cierre de la sesión'))+'<div class="prog">'+S.items.map(function(_,i){return '<i class="'+(i<=it?'on':'')+'"></i>';}).join('')+'</div>'+navPaso(it>0, it<S.items.length-1)+'<div class="qcard">';
@@ -5645,7 +5802,7 @@ function paso(){
        '<p class="tiny">Habla claro y sin prisa. Si el micrófono falla, hay un botón para seguir.</p>'+
        '<button class="btn ghost" id="skip" style="margin-top:10px">Ya la dije · siguiente</button>'+
        '<button class="btn ghost dudab" id="dudafrase" style="margin-top:8px">'+
-         '¿Y si quiero decir otra cosa?</button>'+
+         'Pregúntame lo que sea</button>'+
        '<div id="dudacaja"></div>';
   }else if(x.k==='num'){
     h+='<div class="qlbl">Números · el que más se confunde</div>'+
@@ -5792,6 +5949,40 @@ function paso(){
        '</div>'+
        '<div id="res"></div>'+
        '<div class="oirfila" style="margin-top:8px"><button class="oirb alt" id="borrar">Borrar</button></div>';
+  }else if(x.k==='phrasal'){
+    h+='<div class="qlbl">Verbo con preposición</div>'+
+       '<div class="qsub">En inglés muchas cosas se dicen con dos palabras juntas. '+
+       'Cambian de significado, por eso se aprenden de a uno.</div>'+
+       '<div class="phrgrande">'+esc(x.en||'')+'</div>'+
+       '<div class="phrsig">'+esc(x.es||'')+'</div>'+
+       (x.ojo?'<div class="pidebox">'+esc(x.ojo)+'</div>':'')+
+       '<div class="oirfila">'+
+         '<button class="oirb" id="oir">'+ico('bocina',16)+' Oírlo</button>'+
+         '<button class="oirb alt" id="oires">🇲🇽 Qué significa</button>'+
+       '</div>'+
+       '<div class="qlbl" style="margin-top:12px">Ahora úsalo</div>'+
+       '<div class="qtxt">'+esc(x.frase||'')+'</div>'+
+       (x.frase_es?'<div class="qsub">'+esc(x.frase_es)+'</div>':'')+
+       '<div id="res"></div>'+
+       '<button class="mic-big" id="mic"><span class="ring2"></span> Tocar y decirlo</button>'+
+       '<button class="btn ghost" id="skip" style="margin-top:10px">Ya lo dije · siguiente</button>'+
+       '<button class="btn ghost dudab" id="dudafrase" style="margin-top:8px">Pregúntame lo que sea</button>'+
+       '<div id="dudacaja"></div>';
+  }else if(x.k==='idiom'){
+    h+='<div class="qlbl">Así lo dicen ellos</div>'+
+       '<div class="qsub">Palabra por palabra no tiene sentido. Es una expresión hecha.</div>'+
+       '<div class="phrgrande">'+esc(x.en||'')+'</div>'+
+       '<div class="oirfila">'+
+         '<button class="oirb" id="oir">'+ico('bocina',16)+' Oírla</button>'+
+       '</div>'+
+       '<div class="pidebox">'+esc(x.pide||'¿Qué crees que significa?')+'</div>'+
+       '<div class="opsfila col" id="idops">'+
+         (x.ops||[]).map(function(o,i){return '<button class="opt" data-i="'+i+'">'+esc(o)+'</button>';}).join('')+
+       '</div>'+
+       '<div id="res"></div>'+
+       (x.cuando?'<div class="qsub" id="idcuando" style="display:none">'+esc(x.cuando)+'</div>':'')+
+       '<button class="btn ghost dudab" id="dudafrase" style="margin-top:12px">Pregúntame lo que sea</button>'+
+       '<div id="dudacaja"></div>';
   }else if(x.k==='acento'){
     h+='<div class="qlbl">Mismo inglés · otra boca</div>'+
        '<div class="qsub">La misma frase, dicha por gente de otro país. Así suena en el mundo real.</div>'+
@@ -5984,6 +6175,38 @@ function paso(){
     else{decirSeguido([[guias[x.k],'es-MX'],[x.k==='model'?x.en:x.q,'en-US']]);}
   }else if(x.k!=='free'){
     setTimeout(function(){say(x.k==='model'?x.en:x.q,'en-US');},300);
+  }
+
+  if(x.k==='phrasal'){
+    var _op=document.getElementById('oir');
+    if(_op)_op.onclick=function(){say(x.en||'','en-US');};
+    var _oe=document.getElementById('oires');
+    if(_oe)_oe.onclick=function(){say(x.es||'','es-MX');};
+    setTimeout(function(){say(x.en||'','en-US');},400);
+    var _dp=document.getElementById('dudafrase');
+    if(_dp)_dp.onclick=function(e){e.stopPropagation();abrirDudaFrase({en:x.frase||x.en,es:x.frase_es||x.es});};
+  }
+  if(x.k==='idiom'){
+    var _oi=document.getElementById('oir');
+    if(_oi)_oi.onclick=function(){say(x.en||'','en-US');};
+    setTimeout(function(){say(x.en||'','en-US');},400);
+    APP.querySelectorAll('#idops .opt').forEach(function(b){
+      b.onclick=function(){
+        var o=(x.ops||[])[+b.dataset.i], bien=normal(o)===normal(x.bien);
+        b.classList.add(bien?'ok':'no');
+        attempts.push({tipo:'idiom',meta:x.en+' = '+x.bien,oido:o,pct:bien?100:0});
+        registrarEnMemoria(x.en||'',bien?100:0);
+        var r=document.getElementById('res');
+        if(r)r.innerHTML=bien?'<div class="fb ok">Esa es.</div>'
+                             :'<div class="fb no">Significa: <b>'+esc(x.bien)+'</b></div>';
+        var cu=document.getElementById('idcuando');
+        if(cu)cu.style.display='';
+        APP.querySelectorAll('#idops .opt').forEach(function(z){z.disabled=true;});
+        setTimeout(function(){it++;paso();},3000);
+      };
+    });
+    var _di=document.getElementById('dudafrase');
+    if(_di)_di.onclick=function(e){e.stopPropagation();abrirDudaFrase({en:x.en,es:x.bien});};
   }
 
   // ---- los 6 ultimos: acentos, roleplay, recuento, pares, palabra, deletreo ----

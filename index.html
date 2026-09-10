@@ -919,7 +919,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v84 · 9 sep · pantalla fija";
+var VERSION="v85 · 9 sep · jefe ve el mapa";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -2197,10 +2197,13 @@ function pantallaJefe(){
   var lib=document.getElementById('jefe-libre');
   if(lib)lib.onclick=function(){
     JEFE_LIBRE=true;
-    if(!MAT||!MAT.length){
-      if(P){ try{ MAT=materialDe(P); }catch(e){} }
+    try{ var d=load(); d.tutorVisto=true; save(d); D=d; }catch(e){}   // sin tutor encima
+    if((!MAT||!MAT.length)&&P){ try{ MAT=materialDe(P); }catch(e){} }
+    try{ mapa(); }
+    catch(err){
+      APP.innerHTML='<div class="card"><h2>El mapa no pintó</h2>'+
+        '<p class="tiny">'+esc(String(err))+'</p></div>';
     }
-    mapa();
     setTimeout(pintarBarraJefe,80);
   };
   var sal=document.getElementById('jefe-salir');
@@ -3738,7 +3741,7 @@ function mapa(){
 
   // si acaba de avanzar, el muñeco brinca a su nueva loseta
   // la primera vez que ve el tablero, se le explica con el dedo encima
-  if(!D.tutorVisto&&!TUTOR_VIVO&&document.body&&document.body.appendChild){
+  if(!JEFE_LIBRE&&!D.tutorVisto&&!TUTOR_VIVO&&document.body&&document.body.appendChild){
     setTimeout(arrancarTutor,420);
   }else if(!yaPersonalizo()){
     say('Este es tu camino. Toca el botón para armar tu personaje y tus frases.','es-MX');

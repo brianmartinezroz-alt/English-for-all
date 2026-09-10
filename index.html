@@ -145,6 +145,31 @@
     color:var(--verde)}
   .apoyofila{display:flex;flex-wrap:wrap;gap:6px}
   .bubble-ia.pensando .ht{opacity:.55;font-style:italic}
+  /* ---- modo jefe ---- */
+  .jefe-tag{display:inline-block;background:rgba(216,90,48,.12);border:1px solid rgba(216,90,48,.35);
+    color:var(--coral);border-radius:6px;padding:4px 9px;font-family:var(--mono);font-size:9px;
+    letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px}
+  .jefe-t{font-family:var(--display);font-size:23px;margin-bottom:3px}
+  .jefe-s{font-size:13.5px;opacity:.7;margin-bottom:16px}
+  .jefe-bloque{border-top:1px solid var(--linea);padding-top:13px;margin-top:13px}
+  .jefe-h{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
+    opacity:.6;margin-bottom:8px}
+  .jefe-fila{display:flex;gap:6px;flex-wrap:wrap}
+  .jefe-fila.wrap{gap:5px}
+  .jefe-b{background:var(--papel);border:1px solid var(--linea);color:var(--tinta);border-radius:8px;
+    padding:9px 12px;font-size:13.5px;font-family:inherit;cursor:pointer}
+  .jefe-b.chico{padding:7px 10px;font-size:12px;font-family:var(--mono)}
+  .jefe-b.on{background:rgba(29,158,117,.14);border-color:var(--verde)}
+  .jefe-b.peligro{border-color:rgba(216,90,48,.4);color:var(--coral)}
+  .jefe-b:active{transform:scale(.97)}
+  .jefe-nota{font-size:11.5px;opacity:.6;margin-top:7px;line-height:1.45}
+  .jefe-lista{display:flex;flex-direction:column;gap:5px;max-height:270px;overflow-y:auto}
+  .jefe-lec{display:flex;align-items:center;gap:10px;background:var(--papel);
+    border:1px solid var(--linea);border-radius:8px;padding:9px 11px;font-family:inherit;
+    font-size:13.5px;color:var(--tinta);cursor:pointer;text-align:left}
+  .jefe-num{font-family:var(--mono);font-size:11px;opacity:.5;min-width:16px}
+  .jefe-nom{flex:1}
+  .jefe-cnt{font-family:var(--mono);font-size:11px;opacity:.5}
   .apoyow{background:rgba(29,158,117,.1);border:1px solid rgba(29,158,117,.28);
     border-radius:20px;padding:5px 11px;font-size:13px}
   .aprendi .apr{background:rgba(29,158,117,.08);border-left:2px solid var(--verde);
@@ -846,7 +871,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v81 · 8 sep · roleplay IA";
+var VERSION="v82 · 9 sep · modo jefe";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -1840,6 +1865,196 @@ function aplicarPreferencias(){
     VOZ_EN=guardada||VOZ_EN||en[0];
   }
 }
+/* ══════════════════════════════════════════════════════════════
+   MODO JEFE — solo para Brian.
+   Se abre de dos formas:
+     · agregando  ?jefe  al final de la dirección
+     · tocando 5 veces seguidas el renglón de la versión
+   Sirve para saltar a cualquier nivel, lección o tipo de ejercicio
+   sin tener que jugar como alumno. El alumno nunca lo ve.
+   ══════════════════════════════════════════════════════════════ */
+var MODO_JEFE = false;
+try{ MODO_JEFE = /[?&#]jefe/i.test(location.search+location.hash); }catch(e){}
+
+var NIVELES_JEFE=[
+  {n:0,cod:'Pre-A1',t:'Desde cero'},
+  {n:1,cod:'A1',t:'Muy básico'},
+  {n:2,cod:'A2',t:'Básico'},
+  {n:3,cod:'B1',t:'Intermedio'},
+  {n:4,cod:'B2',t:'Intermedio alto'}
+];
+
+// una muestra de cada tipo, para verlos sin buscarlos en las lecciones
+function muestrasJefe(){
+  return [
+   {k:'model', en:'I work in a factory.', es:'Trabajo en una fábrica.'},
+   {k:'ask',   q:'Where do you work?', es:'¿Dónde trabajas?', pista:'I work in a factory.'},
+   {k:'free',  q:'Tell me about your day.', es:'Cuéntame tu día.'},
+   {k:'regla', titulo:'La "s" de él / ella', regla:'Con he y she, el verbo lleva s.',
+    bien:'She checks the boxes.', mal:'She check the boxes.',
+    porque:'Con I, you, we no lleva s.'},
+   {k:'cazar', frase:'She work in quality.', mala:'work', buena:'works', es:'Ella trabaja en calidad.'},
+   {k:'hueco', antes:'I ', despues:' every day.', ops:['work','works','working'], bien:'work',
+    es:'Trabajo todos los días.'},
+   {k:'ordenar', piezas:['I','start','at','seven'], es:'Empiezo a las siete.'},
+   {k:'transf', origen:'You work here.', pide:'Ponlo en pregunta. Empieza con "Do".',
+    bien:'Do you work here?'},
+   {k:'idea', audio:'Hello. My name is Ana. I work in a factory.', pide:'¿De qué habla?',
+    ops:['Se presenta','Pide comida','Habla del clima'], bien:'Se presenta'},
+   {k:'detalle', audio:'I work in a factory. I start at seven.', pide:'¿A qué hora empieza?',
+    ops:['At six','At seven','At eight'], bien:'At seven'},
+   {k:'dosc', a:'I work at six.', b:'I walk at six.', bien:'a', audio:'I work at six.'},
+   {k:'segm', audio:'What do you do?', piezas:['What','do','you','do'], es:'¿A qué te dedicas?'},
+   {k:'dicto', audio:'I check the boxes every morning.', bien:'I check the boxes every morning.',
+    es:'Reviso las cajas cada mañana.'},
+   {k:'acento', en:'Do you work here?', es:'¿Trabajas aquí?', acentos:['us','uk','au','in'],
+    pide:'¿Cuál se te hizo más difícil?'},
+   {k:'roleplay', quien:'Una visita de AVON',
+    ctx:'Llega una visita a tu área y no te conoce.',
+    q:'Hi. What do you do here?', es:'Hola. ¿Qué haces aquí?', pista:'I am an operator.'},
+   {k:'recuento', audio:'Ana works in a factory. She starts at seven.',
+    apoyo:['works','starts at seven'], es:'Cuéntame lo que oíste.'},
+   {k:'pares', a:'work', b:'walk', bien:'a', nota:'Cambia una sola vocal.'},
+   {k:'palabra', en:'check', es:'revisar', pide:'¿En cuál frase va bien?',
+    ops:['I check the boxes.','I check to my house.','I check happy.'], bien:'I check the boxes.'},
+   {k:'deletreo', bien:'box', es:'caja', pide:'Escribe la palabra.'},
+   {k:'num', en:'seven', es:'siete'}
+  ];
+}
+
+function pantallaJefe(){
+  callarTodo();
+  var c=progreso();
+  var nivAhora=(P&&P.nivel_n)||0;
+  var h='<div class="card jefe">'+
+    '<div class="jefe-tag">Modo jefe · solo tú ves esto</div>'+
+    '<h2 class="jefe-t">Revisar sin jugar</h2>'+
+    '<p class="jefe-s">Salta a donde quieras. Nada de esto le aparece al alumno.</p>'+
+
+    '<div class="jefe-bloque"><div class="jefe-h">Probar el audio</div>'+
+      '<div class="jefe-fila">'+
+        '<button class="jefe-b" data-oir="en">Oír en inglés</button>'+
+        '<button class="jefe-b" data-oir="es">Oír en español</button>'+
+      '</div>'+
+      '<div id="jefe-audio" class="jefe-nota">Si no suena, falta la llave en el servidor de voz.</div>'+
+    '</div>'+
+
+    '<div class="jefe-bloque"><div class="jefe-h">Nivel</div>'+
+      '<div class="jefe-fila">'+
+        NIVELES_JEFE.map(function(n){
+          return '<button class="jefe-b'+(n.n===nivAhora?' on':'')+'" data-niv="'+n.n+'">'+
+                 esc(n.cod)+'</button>';
+        }).join('')+
+      '</div>'+
+      '<div class="jefe-nota">Ahora: '+esc(NIVELES_JEFE[nivAhora]?NIVELES_JEFE[nivAhora].t:'—')+
+      ' · cambiarlo vuelve a armar el material.</div>'+
+    '</div>'+
+
+    '<div class="jefe-bloque"><div class="jefe-h">Lecciones ('+MAT.length+')</div>'+
+      '<div class="jefe-lista">'+
+        MAT.map(function(S,i){
+          return '<button class="jefe-lec" data-lec="'+i+'">'+
+                 '<span class="jefe-num">'+(i+1)+'</span>'+
+                 '<span class="jefe-nom">'+esc(S.t||'sin nombre')+'</span>'+
+                 '<span class="jefe-cnt">'+((S.items||[]).length)+'</span></button>';
+        }).join('')+
+      '</div>'+
+    '</div>'+
+
+    '<div class="jefe-bloque"><div class="jefe-h">Los 20 tipos, uno por uno</div>'+
+      '<div class="jefe-nota" style="margin-bottom:8px">Cada botón te lleva directo a ese ejercicio.</div>'+
+      '<div class="jefe-fila wrap">'+
+        muestrasJefe().map(function(m,i){
+          return '<button class="jefe-b chico" data-tipo="'+i+'">'+esc(m.k)+'</button>';
+        }).join('')+
+      '</div>'+
+    '</div>'+
+
+    '<div class="jefe-bloque"><div class="jefe-h">Avance</div>'+
+      '<div class="jefe-fila">'+
+        '<button class="jefe-b" data-par="1">Ir a parada 1</button>'+
+        '<button class="jefe-b" data-par="'+Math.min(PARADAS,c.parada+5)+'">Avanzar 5</button>'+
+        '<button class="jefe-b peligro" id="jefe-borrar">Borrar todo y empezar de cero</button>'+
+      '</div>'+
+      '<div class="jefe-nota">Parada '+c.parada+' de '+PARADAS+' · '+puntosLibres()+' puntos</div>'+
+    '</div>'+
+
+    '<button class="btn ghost" id="jefe-salir" style="margin-top:14px">Salir del modo jefe</button>'+
+    '</div>';
+  APP.innerHTML=h;
+
+  APP.querySelectorAll('[data-oir]').forEach(function(b){
+    b.onclick=function(){
+      var es=b.dataset.oir==='es';
+      var n=document.getElementById('jefe-audio');
+      if(n)n.textContent='Pidiendo el audio…';
+      say(es?'Esta es la voz en español. Si la oyes, el servidor está bien.'
+            :'This is the English voice. If you hear this, the server works.',
+          es?'es-MX':'en-US',
+          function(){ var m=document.getElementById('jefe-audio');
+                      if(m)m.textContent='Terminó de sonar. Si no oíste nada, revisa el servidor.'; });
+    };
+  });
+
+  APP.querySelectorAll('[data-niv]').forEach(function(b){
+    b.onclick=function(){
+      var n=+b.dataset.niv;
+      if(!P){avisito('Primero arma tu personaje, si no no hay material.');return;}
+      P.nivel_n=n;
+      P.nivel=(NIVELES_JEFE[n]||{}).cod||'A1';
+      var d=load(); d.perfil=P; save(d); D=d;
+      try{ MAT=materialDe(P); }catch(e){ avisito('No pude armar el material de ese nivel.'); }
+      pantallaJefe();
+    };
+  });
+
+  APP.querySelectorAll('[data-lec]').forEach(function(b){
+    b.onclick=function(){
+      sIdx=+b.dataset.lec; it=0; attempts=[]; t0=Date.now();
+      correr();
+    };
+  });
+
+  APP.querySelectorAll('[data-tipo]').forEach(function(b){
+    b.onclick=function(){
+      var m=muestrasJefe()[+b.dataset.tipo];
+      MAT=[{t:'Muestra · '+m.k, hoy:'ver este tipo', obj:'Revisión', items:[m]}].concat(MAT);
+      sIdx=0; it=0; attempts=[]; t0=Date.now();
+      correr();
+    };
+  });
+
+  APP.querySelectorAll('[data-par]').forEach(function(b){
+    b.onclick=function(){
+      var n=Math.max(1,Math.min(PARADAS,+b.dataset.par));
+      var cc=progreso(); cc.parada=n; if(cc.maxima<n)cc.maxima=n;
+      guardarProgreso(cc); mapa();
+    };
+  });
+
+  var bo=document.getElementById('jefe-borrar');
+  if(bo)bo.onclick=function(){
+    if(!confirm('¿Seguro? Se borra el avance, el perfil y el avatar de este teléfono.'))return;
+    try{ localStorage.clear(); }catch(e){}
+    location.reload();
+  };
+  var sal=document.getElementById('jefe-salir');
+  if(sal)sal.onclick=function(){ router(); };
+}
+
+// entrar tocando 5 veces el renglón de la versión
+(function(){
+  var n=0,t0j=0;
+  document.addEventListener('click',function(e){
+    var k=e.target&&e.target.closest&&e.target.closest('#kick, .cj-pie');
+    if(!k)return;
+    var ahora=Date.now();
+    if(ahora-t0j>1200)n=0;
+    t0j=ahora; n++;
+    if(n>=5){ n=0; MODO_JEFE=true; pantallaJefe(); }
+  },true);
+})();
+
 function router(){
   callarTodo();
   var tb=document.querySelector('.topbar');
@@ -1852,6 +2067,7 @@ function router(){
     if(f==='sonido'){pruebaSonido();return;}
     if(f==='voz'){vozPicker();return;}
   }
+  if(MODO_JEFE){ MODO_JEFE=false; pantallaJefe(); return; }
   if(!vioMarca){marca();return;}
   if(!vioSaludo){portada();return;}
 

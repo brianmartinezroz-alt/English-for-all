@@ -267,18 +267,20 @@
   body:has(.lienzo3d) .shell{padding-bottom:0}
 
   /* ---- hojas de hola y adiós ---- */
+  /* FLOTANTE en medio de la pantalla, con el mapa visible alrededor.
+     Antes subia desde abajo pegada al borde y tapaba todo. */
   .hoja-velo{position:fixed;inset:0;z-index:880;background:rgba(42,39,36,0);
-    display:flex;align-items:flex-end;justify-content:center;
-    transition:background .3s ease;pointer-events:auto}
-  .hoja-velo.abierta{background:rgba(42,39,36,.42)}
-  .hoja{width:100%;max-width:470px;background:var(--papel);
-    border-radius:22px 22px 0 0;padding:10px 22px calc(26px + env(safe-area-inset-bottom));
-    box-shadow:0 -10px 40px rgba(0,0,0,.28);
-    transform:translateY(102%);transition:transform .34s cubic-bezier(.22,.9,.3,1);
-    max-height:66vh;overflow-y:auto}
-  .hoja-velo.abierta .hoja{transform:translateY(0)}
-  .hoja-asa{width:38px;height:4px;border-radius:3px;background:var(--linea);
-    margin:0 auto 16px}
+    display:flex;align-items:center;justify-content:center;padding:20px;
+    transition:background .3s ease;pointer-events:auto;backdrop-filter:blur(0px)}
+  .hoja-velo.abierta{background:rgba(42,39,36,.34);backdrop-filter:blur(2.5px)}
+  .hoja{width:100%;max-width:360px;background:var(--papel);
+    border-radius:20px;padding:20px 22px 22px;
+    box-shadow:0 22px 58px rgba(0,0,0,.3);
+    transform:translateY(24px) scale(.94);opacity:0;
+    transition:transform .3s cubic-bezier(.22,.9,.3,1), opacity .24s ease;
+    max-height:74vh;overflow-y:auto}
+  .hoja-velo.abierta .hoja{transform:translateY(0) scale(1);opacity:1}
+  .hoja-asa{display:none}
   .hoja-cab{display:flex;align-items:center;gap:13px;margin-bottom:14px}
   .hoja-foto{width:54px;height:54px;border-radius:50%;object-fit:cover;flex:none;
     border:2px solid var(--verde)}
@@ -295,6 +297,8 @@
   .hoja-lec{font-family:var(--display);font-size:20px;font-weight:600;margin-bottom:3px}
   .hoja-sub{font-size:13.5px;color:var(--tenue);line-height:1.5}
   .hoja-btn{width:100%}
+  .adios-frase{font-family:var(--display);font-size:15px;line-height:1.45;
+    text-align:center;color:var(--verde);margin:13px 4px 15px;font-style:italic}
   .hoja-mas{width:100%;margin-top:9px;background:none;border:0;font-family:inherit;
     font-size:13.5px;color:var(--tenue);cursor:pointer;padding:9px}
   @media (prefers-reduced-motion:reduce){
@@ -347,13 +351,30 @@
   .corr-c{font-size:15px;line-height:1.5}
   .corr-k{margin-top:9px;padding-top:8px;border-top:1px solid rgba(0,0,0,.07);font-size:13.5px}
 
+  .fb-t{font-family:var(--mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;
+    opacity:.7;margin-bottom:4px}
+  .fb-p{font-size:14.5px;line-height:1.55}
+
+  /* ---- opciones con su traduccion ---- */
+  .optfila{display:flex;gap:5px;align-items:stretch;flex-wrap:wrap;margin-bottom:7px}
+  .optfila .opt{flex:1;margin:0;min-width:0}
+  .optmx{flex:none;background:var(--papel);border:1px solid var(--linea);
+    border-radius:9px;padding:0 11px;font-size:14px;cursor:pointer;color:var(--tinta)}
+  .optmx:active{transform:scale(.94)}
+  .opttrad{flex-basis:100%;font-size:13px;color:var(--tenue);padding:4px 4px 2px 10px;
+    border-left:2px solid rgba(29,158,117,.3);margin-left:3px}
+  .opttrad.pensando{opacity:.55;font-style:italic}
+
   /* ---- video de gente real ---- */
-  .vidmarco{position:relative;width:100%;aspect-ratio:16/9;background:#1a1a1a;
-    border-radius:12px;overflow:hidden;margin:12px 0;border:1px solid var(--linea)}
-  .vidmarco iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-  .vidcargando{position:absolute;inset:0;display:flex;align-items:center;
-    justify-content:center;color:#cfcabf;font-size:13.5px;text-align:center;padding:20px;
-    line-height:1.5}
+  .vidmarco{width:100%;margin:12px 0}
+  .vidcaja{background:var(--papel);border:1px solid var(--linea);border-radius:13px;
+    padding:16px 17px;text-align:center}
+  .vidfrase{font-family:var(--display);font-size:20px;margin-bottom:7px;line-height:1.25}
+  .vidnota{font-size:13px;color:var(--tenue);line-height:1.5;margin-bottom:13px}
+  .vidbtn{display:inline-block;background:#CC0000;color:#fff;border-radius:11px;
+    padding:12px 22px;font-size:14.5px;font-weight:600;text-decoration:none}
+  .vidbtn:active{transform:scale(.97)}
+  .vidcargando{padding:18px;text-align:center;color:var(--tenue);font-size:13.5px}
 
   /* ---- phrasal verbs y expresiones ---- */
   .phrgrande{font-family:var(--display);font-size:29px;text-align:center;margin:14px 0 3px;
@@ -1160,7 +1181,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v112 · 11 sep · ya se puede entrar";
+var VERSION="v118 · 11 sep · aviso por ejercicios";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -4037,6 +4058,66 @@ function abrirDuda(){
   };
 }
 
+/* ═══════════ respuestas explicadas ═══════════ */
+// Antes solo se marcaba bien o mal y se pasaba a la siguiente. Eso no ensena:
+// el alumno ve el color pero no sabe por que. Ahora se le explica y, si fallo,
+// se le deja intentar otra vez en vez de arrastrarlo al siguiente ejercicio.
+function explicarRespuesta(op){
+  // op: {caja, bien, elegida, correcta, porque, alSeguir, contexto}
+  var r=document.getElementById('res');
+  if(!r)return;
+  var h='<div class="fb '+(op.bien?'ok':'no')+'">'+
+    '<div class="fb-t">'+(op.bien?'Correcto':'Todavia no')+'</div>'+
+    '<div class="fb-p" id="fbporque">'+esc(op.porque||'')+'</div>'+
+    '</div>';
+  if(!op.bien){
+    h+='<button class="btn ghost" id="reint" style="margin-top:8px">Intentar otra vez</button>'+
+       '<button class="btn ghost" id="verresp" style="margin-top:8px">Ensename la respuesta</button>';
+  }else{
+    h+='<button class="btn" id="seguir" style="margin-top:10px">Siguiente</button>';
+  }
+  r.innerHTML=h;
+
+  // si no hay explicacion escrita, se la pedimos al cerebro
+  if(!op.porque && hayIA()){
+    var cj=document.getElementById('fbporque');
+    if(cj)cj.innerHTML='<span style="opacity:.6;font-style:italic">pensando por que…</span>';
+    pedirIA('duda',{
+      pregunta:'Alumno de nivel '+((P&&P.nivel)||'A1')+'. '+(op.contexto||'')+
+        ' Eligio: "'+op.elegida+'". La correcta es: "'+op.correcta+'". '+
+        'Explicale en ESPANOL, en maximo dos lineas, por que la correcta es correcta '+
+        'y que tiene de malo la que eligio. Sin saludos, sin relleno.',
+      nivel:(P&&P.nivel)||''},
+      function(res){
+        var c2=document.getElementById('fbporque');
+        if(c2)c2.textContent=(res&&res.respuesta)?String(res.respuesta).trim()
+          :(op.bien?'Asi es.':'Era: '+op.correcta);
+      },
+      function(){
+        var c3=document.getElementById('fbporque');
+        if(c3)c3.textContent=op.bien?'Asi es.':'Era: '+op.correcta;
+      });
+  }
+
+  var re=document.getElementById('reint');
+  if(re)re.onclick=function(){
+    r.innerHTML='';
+    if(op.caja)APP.querySelectorAll(op.caja+' .opt').forEach(function(z){
+      z.disabled=false; z.classList.remove('ok','no');
+    });
+  };
+  var vr=document.getElementById('verresp');
+  if(vr)vr.onclick=function(){
+    r.innerHTML='<div class="fb ok"><div class="fb-t">La respuesta</div>'+
+      '<div class="fb-p">'+esc(op.correcta)+'</div></div>'+
+      '<button class="btn" id="seguir2" style="margin-top:10px">Siguiente</button>';
+    var s2=document.getElementById('seguir2');
+    if(s2)s2.onclick=function(){ op.alSeguir&&op.alSeguir(); };
+  };
+  var sg=document.getElementById('seguir');
+  if(sg)sg.onclick=function(){ op.alSeguir&&op.alSeguir(); };
+}
+
 /* ═══════════ corrección al momento ═══════════ */
 // Antes solo se marcaba en rojo lo que falló. Eso no enseña: el alumno ve
 // que se equivocó pero no sabe en qué ni cómo arreglarlo. Ahora se le dice.
@@ -4059,13 +4140,27 @@ function pedirCorreccion(x,meta,dicho,pct,estuvoBien){
           '<div class="corr-q">'+esc(res.que)+'</div>'+
           (res.como?'<div class="corr-h" style="margin-top:9px">Cómo arreglarlo</div>'+
                     '<div class="corr-c">'+esc(res.como)+'</div>':'')+
+          (res.boca?'<div class="corr-h" style="margin-top:9px">La boca</div>'+
+                    '<div class="corr-c">'+esc(res.boca)+'</div>':'')+
+          (res.tono?'<div class="corr-h" style="margin-top:9px">El tono</div>'+
+                    '<div class="corr-c">'+esc(res.tono)+'</div>':'')+
           (res.clave?'<div class="corr-k">Fíjate en: <b>'+esc(res.clave)+'</b></div>':'')+
-          '<button class="oirb alt" id="corroir" style="margin-top:9px">'+ico('bocina',15)+' Vuélvemelo a decir</button>'+
+          '<div class="oirfila" style="margin-top:10px">'+
+            '<button class="oirb" id="corroir">'+ico('bocina',15)+' Oírla bien</button>'+
+            '<button class="oirb alt" id="corrlento">'+ico('bocina',15)+' Muy lento</button>'+
+          '</div>'+
+          (res.bien?'':'<button class="btn" id="corrotra" style="margin-top:9px">'+
+                       'Intentarlo otra vez</button>')+
         '</div>';
       var dilo=res.que+(res.como?'. '+res.como:'');
       say(dilo,'es-MX');
       var b=document.getElementById('corroir');
-      if(b)b.onclick=function(e){e.stopPropagation();say(dilo,'es-MX');};
+      if(b)b.onclick=function(e){e.stopPropagation();say(meta,'en-US');};
+      var bl=document.getElementById('corrlento');
+      if(bl)bl.onclick=function(e){e.stopPropagation();sayLento(meta,'en-US');};
+      // fallar y volver a intentar ES el ejercicio: se repinta el mismo paso
+      var ot=document.getElementById('corrotra');
+      if(ot)ot.onclick=function(e){ e.stopPropagation(); paso(); };
       attempts.push({tipo:'correccion',meta:meta,oido:res.que+' | '+res.como,pct:null});
     },
     function(){
@@ -4638,7 +4733,7 @@ function pintarCajon(){
     '</div>'+
     '<div class="cj-pts"><b>'+puntosLibres()+'</b> puntos · <b>'+diasSeguidos(pr.dias)+'</b> días seguidos</div>'+
     (yaPersonalizo()?'':'<button class="cj-b cj-urge" data-a="personalizar">'+
-       ico('estrella')+' Arma tu personaje y tu material</button>')+
+       ico('estrella')+' Empezar: tus datos</button>')+
     (function(){
       var pend=tareasPendientes();
       return '<div class="cj-sec">De tu maestro</div>'+
@@ -4924,7 +5019,7 @@ function hojaHola(){
   if(mas)mas.onclick=cerrar;
 }
 
-function hojaAdios(){
+function hojaAdios(porTiempo){
   if(document.getElementById('hojaadios'))return;
   var c; try{ c=progreso(); }catch(e){ c={parada:1,racha:0}; }
   var f=null; try{ f=localStorage.getItem('efa_foto'); }catch(e){}
@@ -4934,18 +5029,26 @@ function hojaAdios(){
     '<div class="hoja-asa"></div>'+
     '<div class="hoja-cab">'+
       (f?'<img class="hoja-foto" src="'+f+'" alt="">':'<div class="hoja-foto vacia">\u{1F44B}</div>')+
-      '<div><div class="hoja-hola">Nos vemos</div>'+
+      '<div><div class="hoja-hola">'+(porTiempo?'Ya casi acabas':'Nos vemos')+'</div>'+
       '<div class="hoja-nom">'+esc((P&&P.nombre)||'')+'</div></div>'+
     '</div>'+
+    (porTiempo
+      ? '<div class="hoja-racha">Te faltan <b>dos</b> ejercicios. '+
+        'Acábalos y cierras bien la sesión de hoy.</div>'
+      : '')+
     '<div class="hoja-hoy">'+
-      '<div class="hoja-et">Antes de irte</div>'+
+      '<div class="hoja-et">'+(porTiempo?'Para cerrar bien':'Antes de irte')+'</div>'+
       '<div class="hoja-sub" style="font-size:14.5px;line-height:1.55">'+
       'Lo que practicaste hoy ya va en camino a tu maestro. '+
       'Si algo se te atoró, te va a volver a salir en unos días, '+
       'justo cuando ya casi lo olvidabas. Así se queda.</div>'+
     '</div>'+
-    '<button class="btn hoja-btn" id="adiosok">Cerrar</button>'+
-    '<button class="hoja-mas" id="adiosseguir">Mejor sigo un rato</button>'+
+    '<div class="adios-frase">Nos vemos mañana. Diez minutos al día pesan más '+
+      'que tres horas el domingo.</div>'+
+    '<button class="btn hoja-btn" id="adiosok">'+
+      (porTiempo?'Voy a acabarlos':'Cerrar')+'</button>'+
+    '<button class="hoja-mas" id="adiosseguir">'+
+      (porTiempo?'Ya, cierro por hoy':'Mejor sigo un rato')+'</button>'+
   '</div>';
   document.body.appendChild(v);
   requestAnimationFrame(function(){ v.classList.add('abierta'); });
@@ -4957,7 +5060,26 @@ function hojaAdios(){
   if(g)g.onclick=cerrar;
 }
 
-// la despedida sale cuando el alumno intenta irse
+/* La despedida no se mide en minutos sino en EJERCICIOS: sale cuando
+   faltan dos para terminar la leccion. Asi siempre cae donde debe, sin
+   importar si ese dia el alumno fue rapido o lento. */
+var YA_AVISE_FINAL=false;
+
+function avisarSiYaCasi(){
+  try{
+    if(YA_AVISE_FINAL||!P)return;
+    if(document.getElementById('hojaadios'))return;
+    var S=MAT&&MAT[sIdx];
+    if(!S||!S.items||!S.items.length)return;
+    var faltan=S.items.length-it;
+    if(faltan===2){
+      YA_AVISE_FINAL=true;
+      setTimeout(function(){ hojaAdios(true); },500);
+    }
+  }catch(e){}
+}
+
+// la despedida tambien sale cuando el alumno intenta irse
 (function(){
   var yaSalio=false;
   document.addEventListener('visibilitychange',function(){
@@ -5632,9 +5754,9 @@ function personalizar(){
 // El orden: cómo se llama → su personaje → prueba de sonido → acento →
 // las preguntas → la prueba de nivel. Cada quien retoma donde se quedó.
 function seguirPersonalizacion(){
-  var a=(progreso().avatar)||{};
+  // La pantalla del personaje se quito: ya no hay monito. Iba aqui y
+  // bloqueaba el alta entera porque nunca se llenaba a.sexo.
   if(!D.experiencia&&D.experiencia===undefined){preguntaExperiencia();return;}
-  if(!a.sexo){ pantallaPersonaje(function(){ seguirPersonalizacion(); }); return; }
   if(!D.probado){pruebaSonido();return;}
   if(D.paquete===undefined){vozPicker();return;}
   if(!P){entrevista();return;}
@@ -5916,6 +6038,8 @@ function mapa3DoViejo(){
   if(tb)tb.style.display='none';
   // Por ahora solo pre-A1 y C2 tienen contenido. Los demás se ven pero no entran.
   var LISTOS={'Pre-A1':1,'C2':1};
+  var SOY_JEFE=(typeof JEFE_LIBRE!=='undefined'&&JEFE_LIBRE)||
+               (typeof MODO_JEFE!=='undefined'&&MODO_JEFE);
   var nivAhora=(P&&P.nivel)||'Pre-A1';
   APP.innerHTML='<div id="lienzo3d" class="lienzo3d"></div>'+
     '<div class="cab3d">'+
@@ -5925,7 +6049,7 @@ function mapa3DoViejo(){
       '</div>'+
       '<div class="niveles">'+
         ['Pre-A1','A1','A2','B1','B2','C1','C2'].map(function(nv){
-          var cerrado=!LISTOS[nv];
+          var cerrado=!LISTOS[nv] && !SOY_JEFE;   // al jefe no se le cierra nada
           return '<button class="nivb'+(nv===nivAhora?' on':'')+(cerrado?' cerrado':'')+
                  '" data-niv="'+nv+'">'+esc(nv)+'</button>';
         }).join('')+
@@ -5962,7 +6086,8 @@ function mapa3DoViejo(){
   APP.querySelectorAll('.nivb').forEach(function(bt){
     bt.onclick=function(){
       var nv=bt.dataset.niv;
-      if(!LISTOS[nv]){
+      // El jefe entra a TODOS los niveles, aunque no tengan contenido propio.
+      if(!LISTOS[nv] && !JEFE_LIBRE && !MODO_JEFE){
         avisito(nv+' todavía no está listo. Por ahora solo pre-A1 y C2.');
         return;
       }
@@ -6416,7 +6541,11 @@ function cuantasDominadas(){
 /* ═══════════ cuánto español según el nivel ═══════════ */
 // Pre-A1: todo en español. A1: inglés con el español debajo, más chico.
 // A2: inglés, y el español solo si lo pide. B1: inglés solo.
+// En C2 TODO va en inglés. A ese nivel el español estorba.
+function esC2(){ return !!(P && (P.nivel==='C2' || P.nivel_n>=6)); }
+
 function modoIdioma(){
+  if(esC2())return 'en';
   var n=(P&&P.nivel_n);
   if(n===undefined||n===null)n=0;
   if(n<=0)return 'es';      // todo español
@@ -7718,6 +7847,7 @@ function loQueVieneHablado(S){
 }
 
 function portadaSesion(){
+  YA_AVISE_FINAL=false;      // cada leccion avisa una vez
   if(!MAT||!MAT.length){ if(typeof mapa==='function')mapa(); return; }
   if(sIdx==null||sIdx<0||sIdx>=MAT.length)sIdx=0;
   var S=MAT[sIdx];
@@ -7830,6 +7960,7 @@ function paso(){
   if(!S||!S.items||!S.items.length){ if(typeof mapa==='function')mapa(); return; }
   if(it<0)it=0;
   if(it>=S.items.length){cierre();return;}
+  avisarSiYaCasi();
   var x=S.items[it];
   var INS={
     model:{en:'Listen and say it out loud.',            es:'Escucha y dilo en voz alta.'},
@@ -8170,7 +8301,12 @@ function paso(){
        '</div>'+
        '<div class="pidebox">'+esc(x.pide||'¿En cuál de estas frases va bien?')+'</div>'+
        '<div class="opsfila col" id="palops">'+
-         (x.ops||[]).map(function(o,i){return '<button class="opt" data-i="'+i+'">'+esc(o)+'</button>';}).join('')+
+         (x.ops||[]).map(function(o,i){
+           return '<div class="optfila">'+
+             '<button class="opt" data-i="'+i+'">'+esc(o)+'</button>'+
+             '<button class="optmx" data-omx="'+i+'" title="Qué significa">\u{1F1F2}\u{1F1FD}</button>'+
+           '</div>';
+         }).join('')+
        '</div>'+
        '<div id="res"></div>';
   }else if(x.k==='deletreo'){
@@ -8350,21 +8486,19 @@ function paso(){
       if(!marco)return;
       var frase=(x.en||'').replace(/[."'!?]/g,'').trim();
       if(!frase){ marco.innerHTML='<div class="vidcargando">Sin frase que buscar.</div>'; return; }
+      // YouTube quitó la búsqueda incrustada (listType=search), así que el
+      // reproductor dentro de la app ya no trae resultados. En su lugar se
+      // abre la búsqueda real en otra pestaña: funciona siempre y es gratis.
       var q=encodeURIComponent('"'+frase+'"');
-      var src='https://www.youtube-nocookie.com/embed?listType=search&list='+q+
-              '&rel=0&modestbranding=1&playsinline=1';
-      var ifr=document.createElement('iframe');
-      ifr.src=src; ifr.loading='lazy'; ifr.allowFullscreen=true;
-      ifr.setAttribute('allow','accelerometer; encrypted-media; picture-in-picture');
-      ifr.title='Gente diciendo: '+frase;
-      var muerto=setTimeout(function(){
-        if(!ifr.dataset.ok){
-          marco.innerHTML='<div class="vidcargando">No pude traer el video. '+
-            'Úsalo con el botón de oír y sigue.</div>';
-        }
-      },7000);
-      ifr.onload=function(){ ifr.dataset.ok='1'; clearTimeout(muerto); };
-      marco.innerHTML=''; marco.appendChild(ifr);
+      var url='https://www.youtube.com/results?search_query='+q;
+      marco.innerHTML=
+        '<div class="vidcaja">'+
+          '<div class="vidfrase">'+esc(frase)+'</div>'+
+          '<p class="vidnota">Ábrelo en YouTube y oye a gente de verdad diciéndolo. '+
+          'Regresa aquí cuando lo hayas oído dos o tres veces.</p>'+
+          '<a class="vidbtn" href="'+url+'" target="_blank" rel="noopener">'+
+            'Oírlo en YouTube</a>'+
+        '</div>';
     })();
 
     var _ov=document.getElementById('oir');
@@ -8451,18 +8585,31 @@ function paso(){
     var _oe=document.getElementById('oires');
     if(_oe)_oe.onclick=function(){say(x.es||'','es-MX');};
     setTimeout(function(){say(x.en||'','en-US');},400);
+    // el boton de bandera de cada opcion: la traduce sin escogerla
+    APP.querySelectorAll('#palops .optmx').forEach(function(b2){
+      b2.onclick=function(e){
+        e.stopPropagation();
+        var o=(x.ops||[])[+b2.dataset.omx];
+        var caja=b2.closest('.optfila');
+        var ya=caja&&caja.querySelector('.opttrad');
+        if(ya){ ya.remove(); return; }
+        traducirVariante(o,caja);
+      };
+    });
     APP.querySelectorAll('#palops .opt').forEach(function(b){
       b.onclick=function(){
         var o=(x.ops||[])[+b.dataset.i], bien=normal(o)===normal(x.bien);
         b.classList.add(bien?'ok':'no');
         attempts.push({tipo:'palabra',meta:x.en+' = '+x.bien,oido:o,pct:bien?100:0});
         registrarEnMemoria(x.en||'',bien?100:0);
-        var r=document.getElementById('res');
-        if(r)r.innerHTML=bien?'<div class="fb ok">Asi es.</div>'
-                             :'<div class="fb no">Va en: <b>'+esc(x.bien)+'</b></div>';
         APP.querySelectorAll('#palops .opt').forEach(function(z){z.disabled=true;});
-        say(x.bien||'','en-US');
-        setTimeout(function(){it++;paso();},2600);
+        if(bien)say(x.bien||'','en-US');
+        explicarRespuesta({
+          caja:'#palops', bien:bien, elegida:o, correcta:x.bien,
+          porque:x.porque||'',
+          contexto:'La palabra es "'+(x.en||'')+'" ('+(x.es||'')+') y se pregunta en cual frase va bien.',
+          alSeguir:function(){ it++; paso(); }
+        });
       };
     });
   }
@@ -8556,12 +8703,13 @@ function paso(){
         b.classList.add(bien?'ok':'no');
         attempts.push({tipo:'hueco',meta:x.bien,oido:o,pct:bien?100:0});
         registrarEnMemoria((x.antes||'')+x.bien+(x.despues||''),bien?100:0);
-        var r=document.getElementById('res');
-        if(r)r.innerHTML = bien ? '<div class="fb ok">Correcto.</div>'
-                                : '<div class="fb no">Era <b>'+esc(x.bien)+'</b></div>';
         APP.querySelectorAll('#huecops .opt').forEach(function(z){z.disabled=true;});
-        say((x.antes||'')+' '+x.bien+' '+(x.despues||''),'en-US');
-        setTimeout(function(){it++;paso();},2400);
+        if(bien)say((x.antes||'')+' '+x.bien+' '+(x.despues||''),'en-US');
+        explicarRespuesta({
+          caja:'#huecops', bien:bien, elegida:o, correcta:x.bien,
+          contexto:'La frase es: '+(x.antes||'')+'___'+(x.despues||'')+' ('+(x.es||'')+').',
+          alSeguir:function(){ it++; paso(); }
+        });
       };
     });
   }

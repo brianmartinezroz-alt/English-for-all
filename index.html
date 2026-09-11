@@ -1119,7 +1119,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v100 · 11 sep · MAPA 3D";
+var VERSION="v101 · 11 sep · mapa 3D reintenta";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -2317,6 +2317,19 @@ function pantallaJefe(){
     '<h2 class="jefe-t">Revisar sin jugar</h2>'+
     '<p class="jefe-s">Salta a donde quieras. Nada de esto le aparece al alumno.</p>'+
 
+    '<div class="jefe-bloque"><div class="jefe-h">Mapa 3D</div>'+
+      '<div class="jefe-nota">'+
+        (window.EFA_MAPA3D
+          ? (window.EFA_MAPA3D.listo ? 'LISTO · el mapa 3D está cargado'
+             : (window.EFA_MAPA3D.error ? 'FALLÓ: '+esc(String(window.EFA_MAPA3D.error))
+                : 'cargando…'))
+          : 'no se cargó el bloque')+
+        (EFA_MOTIVO?'<br>último motivo: '+esc(EFA_MOTIVO):'')+
+      '</div>'+
+      '<div class="jefe-fila" style="margin-top:8px">'+
+        '<button class="jefe-b" id="jefe-remapa">Reintentar el mapa 3D</button>'+
+      '</div>'+
+    '</div>'+
     '<div class="jefe-bloque"><div class="jefe-h">Probar el audio</div>'+
       '<div class="jefe-fila">'+
         '<button class="jefe-b" data-oir="en">Oír en inglés</button>'+
@@ -2449,6 +2462,12 @@ function pantallaJefe(){
     try{ MAT=materialDe(P); }catch(e){ MAT=null; }
     if(!MAT||!MAT.length){ avisito('No pude armar el material.'); return; }
     pantallaJefe();
+  };
+  var rm=document.getElementById('jefe-remapa');
+  if(rm)rm.onclick=function(){
+    MAPA3D_APAGADO=false;
+    if(window.EFA_MAPA3D&&window.EFA_MAPA3D.listo){ mapa(); }
+    else avisito('Todavía no carga: '+(EFA_MOTIVO||'…'));
   };
   var lib=document.getElementById('jefe-libre');
   if(lib)lib.onclick=function(){
@@ -4641,7 +4660,7 @@ function asomarseALeccion(n,actual){
    Si no carga (navegador viejo, tarjeta gráfica floja), la app se
    queda con el tablero de antes y nadie se entera.
    ══════════════════════════════════════════════════════════════ */
-var MAPA3D=null, MAPA3D_APAGADO=false;
+var MAPA3D=null, MAPA3D_APAGADO=false, EFA_MOTIVO='';
 
 // Los cuatro bloques del pre-A1. Cada uno cubre 7 paradas.
 var ZONAS_NIVEL={
@@ -4659,6 +4678,18 @@ var ZONAS_NIVEL={
             {name:'Presentar en público',color:'#3E3E62'},{name:'Diferencias culturales',color:'#5A4A6E'}],
   'C2':    [{name:'Registro y formalidad',color:'#5E6670'},{name:'Humor e ironía',color:'#6B7078'},
             {name:'Debatir',color:'#525A66'},{name:'Sonar nativo',color:'#66707A'}]
+};
+
+// El 3D tarda un momento en descomprimirse. Si la pantalla del mapa se pintó
+// antes, se quedaba con el tablero viejo para siempre. Ahora, en cuanto el 3D
+// está listo, se repinta solo.
+window.EFA_alMontar=function(){
+  try{
+    if(MAPA3D_APAGADO)return;
+    var enMapa = APP && (APP.querySelector('.mapcab') || APP.querySelector('#tablero') ||
+                         APP.querySelector('.lienzo3d'));
+    if(enMapa) mapa();
+  }catch(e){}
 };
 
 function zonasDelNivel(){
@@ -4693,7 +4724,10 @@ function montarMapa3D(host,c){
 function mapa3DoViejo(){
   var c; try{ c=progreso(); }catch(e){ c={parada:1}; }
   var M=window.EFA_MAPA3D;
-  if(MAPA3D_APAGADO||!M||!M.listo){ return false; }
+  if(MAPA3D_APAGADO)return false;
+  if(!M){ EFA_MOTIVO='no se cargó el bloque del mapa'; return false; }
+  if(M.error){ EFA_MOTIVO=M.error; return false; }
+  if(!M.listo){ EFA_MOTIVO='todavía descomprimiendo'; return false; }
 
   var tb=document.querySelector('.topbar');
   if(tb)tb.style.display='';

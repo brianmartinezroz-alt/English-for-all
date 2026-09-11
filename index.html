@@ -1124,7 +1124,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v103 · 11 sep · three completo";
+var VERSION="v104 · 11 sep · ruta arreglada";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -7784,9 +7784,22 @@ window.EFA_MAPA3D = { listo:false, api:null, error:null };
   Promise.all([desempacar('efa-core'), desempacar('efa-three'), desempacar('efa-levelmap')])
     .then(function(txt){
       var uCore=URL.createObjectURL(new Blob([txt[0]],{type:'text/javascript'}));
-      var envoltorio=txt[1].replace(/(['"])\.\/three\.core\.js\1/g, "'"+uCore+"'");
+      // Sin expresiones regulares a proposito: escapar barras aqui ya fallo una vez
+      // y dejo \\. en vez de \., que en JavaScript busca otra cosa.
+      // Se parte el texto por la ruta y se vuelve a unir con la URL del nucleo.
+      var envoltorio=txt[1];
+      ["'./three.core.js'", '"./three.core.js"',
+       "'three.core.js'",   '"three.core.js"'].forEach(function(ruta){
+        envoltorio = envoltorio.split(ruta).join("'"+uCore+"'");
+      });
+      if(envoltorio.indexOf('three.core.js')>=0){
+        window.EFA_MAPA3D.error='no pude reescribir la ruta del nucleo';
+      }
       var uThree=URL.createObjectURL(new Blob([envoltorio],{type:'text/javascript'}));
-      var lm=txt[2].replace(/from ['"]three['"]/g, "from '"+uThree+"'");
+      var lm=txt[2];
+      ["from 'three'", 'from "three"'].forEach(function(imp){
+        lm = lm.split(imp).join("from '"+uThree+"'");
+      });
       var uMapa=URL.createObjectURL(new Blob([lm],{type:'text/javascript'}));
       return import(uMapa);
     })

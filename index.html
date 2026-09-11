@@ -238,31 +238,32 @@
   /* El mapa 3D pone su propio ancho, alto y scroll. Aquí solo se le da
      un hueco a pantalla completa y se le deja hacer lo suyo. */
   /* Centrado y con ancho de celular, aunque se abra en computadora. */
-  .lienzo3d{position:fixed;left:50%;transform:translateX(-50%);
+  .lienzo3d{position:fixed;left:0;right:0;margin:0 auto;
     width:min(430px,100vw);top:0;
-    bottom:calc(70px + env(safe-area-inset-bottom));z-index:1;
+    bottom:calc(72px + env(safe-area-inset-bottom));z-index:1;
     overflow-y:auto;overflow-x:hidden;background:var(--crema);
-    scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
-    box-shadow:0 0 0 1px var(--linea)}
+    scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+  .lienzo3d::-webkit-scrollbar{display:none}
   .lienzo3d::-webkit-scrollbar{display:none}
   .lienzo3d canvas{display:block}
-  .cab3d{position:fixed;left:50%;transform:translateX(-50%);
-    width:min(430px,100vw);top:0;z-index:5;padding:14px 20px 10px;
+  .cab3d{position:fixed;left:0;right:0;margin:0 auto;
+    width:min(430px,100vw);top:0;z-index:5;padding:14px 18px 10px;
     pointer-events:none;background:linear-gradient(180deg,var(--crema),transparent);
     display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
   .cab3d .niveles{pointer-events:auto;display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
   .nivb{background:var(--papel);border:1px solid var(--linea);color:var(--tinta);
-    border-radius:7px;padding:5px 9px;font-family:var(--mono);font-size:10px;cursor:pointer}
+    border-radius:6px;padding:4px 7px;font-family:var(--mono);font-size:9px;
+    cursor:pointer;line-height:1.1}
   .nivb.on{background:var(--verde);border-color:var(--verde);color:#fff}
   .nivb.cerrado{opacity:.38;cursor:not-allowed}
   .cab3d-niv{font-family:var(--display);font-size:19px;font-weight:600}
   .cab3d-par{font-size:12.5px;color:var(--tenue);margin-top:1px}
-  .btn3d{position:fixed;left:50%;transform:translateX(-50%);
-    bottom:calc(88px + env(safe-area-inset-bottom));z-index:6;
+  .btn3d{position:fixed;left:0;right:0;margin:0 auto;width:max-content;
+    bottom:calc(92px + env(safe-area-inset-bottom));z-index:6;
     background:var(--verde);color:#fff;border:0;border-radius:13px;
     padding:14px 28px;font-family:inherit;font-size:15.5px;font-weight:600;
     cursor:pointer;box-shadow:0 6px 20px rgba(29,158,117,.4);white-space:nowrap}
-  .btn3d:active{transform:translateX(-50%) scale(.97)}
+  .btn3d:active{transform:scale(.97)}
   body:has(.lienzo3d) .shell{padding-bottom:0}
 
   /* ---- hojas de hola y adiós ---- */
@@ -933,7 +934,11 @@
 </style>
 <style>
   /* ── botón de menú ── */
-  .menub{flex:0 0 auto;width:38px;height:38px;background:none;border:0;cursor:pointer;
+  /* Las tres lineas ya no se usan: todo esta en la barra de abajo.
+     Va aqui y con !important porque esta regla se escribio DESPUES
+     que el display:none de arriba y lo estaba pisando. */
+  .menub{display:none!important}
+  .menub-viejo{flex:0 0 auto;width:38px;height:38px;background:none;border:0;cursor:pointer;
     display:flex;flex-direction:column;justify-content:center;gap:5px;padding:0 8px 0 0}
   .menub span{display:block;height:2px;background:var(--tinta-2);border-radius:2px;transition:.2s}
   .menub:hover span{background:var(--verde-hondo)}
@@ -1155,7 +1160,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v110 · 11 sep · video de gente real";
+var VERSION="v112 · 11 sep · ya se puede entrar";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -5640,8 +5645,9 @@ function seguirPersonalizacion(){
 
 // ¿ya está listo para practicar?
 function yaPersonalizo(){
-  var a=(progreso().avatar)||{};
-  return !!(P&&a.sexo&&D.probado);
+  // Antes pedia el sexo del avatar. Como el avatar se quito, esa condicion
+  // nunca se cumplia y el alumno no podia entrar a ninguna leccion.
+  return !!(P && P.nombre);
 }
 
 
@@ -5812,7 +5818,7 @@ function asomarseALeccion(n,actual){
   var ir=document.getElementById('asomir');
   if(ir)ir.onclick=function(){
     v.remove();
-    if(n===actual){ sIdx=idx; it=0; attempts=[]; t0=Date.now(); correr(); }
+    if(n===actual){ sIdx=idx; it=0; attempts=[]; vistos={}; t0=Date.now(); correr(); }
     else if(abierta)avisito('Ya la pasaste. Lo que se te atoró vuelve solo en una parada de repaso.');
     else avisito('Todavía no llegas aquí. Termina las de antes y se abre sola.');
   };
@@ -5904,8 +5910,10 @@ function mapa3DoViejo(){
   if(M.error){ EFA_MOTIVO=M.error; return false; }
   if(!M.listo){ EFA_MOTIVO='todavía descomprimiendo'; return false; }
 
+  // En el mapa 3D la cabecera va dentro del lienzo, no arriba: si se muestran
+  // las dos, se encabalgan y se ve el titulo encima del nivel.
   var tb=document.querySelector('.topbar');
-  if(tb)tb.style.display='';
+  if(tb)tb.style.display='none';
   // Por ahora solo pre-A1 y C2 tienen contenido. Los demás se ven pero no entran.
   var LISTOS={'Pre-A1':1,'C2':1};
   var nivAhora=(P&&P.nivel)||'Pre-A1';
@@ -5937,7 +5945,19 @@ function mapa3DoViejo(){
   });
 
   var b=document.getElementById('ir3d');
-  if(b)b.onclick=function(){ try{correr();}catch(e){} };
+  if(b){
+    if(!P){
+      b.textContent='Empezar: arma tu personaje';
+      b.onclick=function(){ try{personalizar();}catch(e){ avisito('No pude abrir el alta.'); } };
+    }else{
+      b.onclick=function(){
+        try{
+          if(!MAT||!MAT.length)MAT=materialDe(P);
+          correr();
+        }catch(e){ avisito('No pude abrir la lección: '+String(e).slice(0,60)); }
+      };
+    }
+  }
 
   APP.querySelectorAll('.nivb').forEach(function(bt){
     bt.onclick=function(){
@@ -7788,6 +7808,12 @@ function portadaSesion(){
 }
 
 function correr(){
+  if(!P){ try{personalizar();}catch(e){} return; }
+  if(!MAT||!MAT.length){
+    try{ MAT=materialDe(P); }catch(e){}
+    if(!MAT||!MAT.length){ avisito('No hay material para este nivel.'); return; }
+  }
+  if(sIdx==null||sIdx<0||sIdx>=MAT.length)sIdx=0;
   if(it===0&&!attempts.length){portadaSesion();return;}
   paso();
 }

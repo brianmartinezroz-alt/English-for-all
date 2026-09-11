@@ -223,9 +223,14 @@
     text-transform:uppercase;opacity:.6;margin-bottom:3px}
 
   /* ---- mapa 3D ---- */
-  .lienzo3d{position:fixed;left:0;right:0;top:0;bottom:0;z-index:1;
-    background:var(--crema)}
-  .lienzo3d canvas{display:block;width:100%!important;height:100%!important}
+  /* El mapa 3D pone su propio ancho, alto y scroll. Aquí solo se le da
+     un hueco a pantalla completa y se le deja hacer lo suyo. */
+  .lienzo3d{position:fixed;left:0;right:0;top:0;
+    bottom:calc(70px + env(safe-area-inset-bottom));z-index:1;
+    overflow-y:auto;overflow-x:hidden;background:var(--crema);
+    scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+  .lienzo3d::-webkit-scrollbar{display:none}
+  .lienzo3d canvas{display:block}
   .cab3d{position:fixed;left:0;right:0;top:0;z-index:5;padding:14px 20px 10px;
     pointer-events:none;background:linear-gradient(180deg,var(--crema),transparent)}
   .cab3d-niv{font-family:var(--display);font-size:19px;font-weight:600}
@@ -1119,7 +1124,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v101 · 11 sep · mapa 3D reintenta";
+var VERSION="v102 · 11 sep · mapa 3D medidas";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -4703,16 +4708,26 @@ function montarMapa3D(host,c){
   if(!M||!M.listo||!M.crear)return false;
   try{
     if(MAPA3D&&MAPA3D.dispose)MAPA3D.dispose();
+    // El mapa fija su propio tamaño y maneja su propio scroll. Hay que
+    // pasarle las medidas reales de la pantalla, no dejarlo en 390x844.
+    var an=Math.max(280, host.clientWidth  || window.innerWidth  || 390);
+    var al=Math.max(360, host.clientHeight || window.innerHeight || 844);
     MAPA3D=M.crear(host,{
       totalStops:PARADAS,
       currentStop:Math.max(0,(c.parada||1)-1),
       zones:zonasDelNivel(),
+      width:Math.round(an),
+      height:Math.round(al),
+      reviewEvery:7,
+      examEvery:14,
+      background:getComputedStyle(document.body).getPropertyValue('--crema').trim()||'#F5F1E8',
       onSelect:function(i,info){
         var n=i+1;
         if(JEFE_LIBRE){ irALeccionDe(n); return; }
         asomarseALeccion(n,c.parada);
       }
     });
+    if(!MAPA3D)return false;
     return true;
   }catch(e){
     console.warn('no pude montar el mapa 3D:',e);
@@ -4739,7 +4754,15 @@ function mapa3DoViejo(){
     '<button class="btn3d" id="ir3d">Empezar la parada '+c.parada+'</button>';
 
   var host=document.getElementById('lienzo3d');
-  if(!montarMapa3D(host,c))return false;
+  if(!host)return false;
+  // se espera un cuadro para que el navegador ya le haya dado medidas
+  requestAnimationFrame(function(){
+    if(!montarMapa3D(host,c)){
+      EFA_MOTIVO=EFA_MOTIVO||'createLevelMap falló';
+      MAPA3D_APAGADO=true;
+      mapaViejo();
+    }
+  });
 
   var b=document.getElementById('ir3d');
   if(b)b.onclick=function(){ try{correr();}catch(e){} };

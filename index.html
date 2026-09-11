@@ -1103,7 +1103,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v98 · 11 sep · hola y adiós";
+var VERSION="v99 · 11 sep · saludo arreglado";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -3678,7 +3678,10 @@ function pantallaMaestro(){
    Ahora sube desde abajo a media pantalla, con el mapa detrás. Y al salir,
    una despedida con la misma forma. */
 
-function saludoDelDia(){
+// OJO: la app ya tiene una saludoDelDia(vuelve) que devuelve un saludo completo.
+// Esta es otra cosa y por eso lleva otro nombre; antes se llamaban igual y la mía
+// pisaba a la suya, dejando "undefined" en la portada.
+function horaDelDia(){
   var h=new Date().getHours();
   if(h<12) return 'Buenos días';
   if(h<19) return 'Buenas tardes';
@@ -3698,7 +3701,7 @@ function hojaHola(){
     '<div class="hoja-asa"></div>'+
     '<div class="hoja-cab">'+
       (f?'<img class="hoja-foto" src="'+f+'" alt="">':'<div class="hoja-foto vacia">\u{1F464}</div>')+
-      '<div><div class="hoja-hola">'+saludoDelDia()+'</div>'+
+      '<div><div class="hoja-hola">'+horaDelDia()+'</div>'+
       '<div class="hoja-nom">'+esc(nom||'qué gusto verte')+'</div></div>'+
     '</div>'+
     (racha>0?'<div class="hoja-racha"><b>'+racha+'</b> días seguidos. No la rompas hoy.</div>':'')+
@@ -5780,6 +5783,8 @@ function portada(){
 
   var historial=[];
   function pinta(s){
+    if(!s||!s.en)s=SALUDOS[0];          // nunca pintar undefined
+    if(s.reg==null)s.reg=0;
     var vistos=(D.saludosVistos||[]).length;
     APP.innerHTML='<div class="splash" id="sp">'+
       '<div class="sp-mark">'+

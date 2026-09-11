@@ -222,17 +222,39 @@
   .hilox span{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.13em;
     text-transform:uppercase;opacity:.6;margin-bottom:3px}
 
+  /* ---- pantalla Más ---- */
+  .maslista{display:flex;flex-direction:column;gap:7px;margin-top:14px}
+  .masb{display:flex;align-items:center;gap:12px;background:var(--papel);
+    border:1px solid var(--linea);border-radius:12px;padding:13px 14px;
+    font-family:inherit;cursor:pointer;text-align:left;color:var(--tinta);width:100%}
+  .masb:active{transform:scale(.985)}
+  .mas-ic{font-size:21px;flex:none;width:26px;text-align:center}
+  .mas-tx{flex:1;min-width:0}
+  .mas-tx b{display:block;font-size:15px;font-weight:600;margin-bottom:1px}
+  .mas-tx small{font-size:12px;color:var(--tenue);line-height:1.35}
+  .mas-fl{font-size:19px;color:var(--tenue);flex:none}
+
   /* ---- mapa 3D ---- */
   /* El mapa 3D pone su propio ancho, alto y scroll. Aquí solo se le da
      un hueco a pantalla completa y se le deja hacer lo suyo. */
-  .lienzo3d{position:fixed;left:0;right:0;top:0;
+  /* Centrado y con ancho de celular, aunque se abra en computadora. */
+  .lienzo3d{position:fixed;left:50%;transform:translateX(-50%);
+    width:min(430px,100vw);top:0;
     bottom:calc(70px + env(safe-area-inset-bottom));z-index:1;
     overflow-y:auto;overflow-x:hidden;background:var(--crema);
-    scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+    scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+    box-shadow:0 0 0 1px var(--linea)}
   .lienzo3d::-webkit-scrollbar{display:none}
   .lienzo3d canvas{display:block}
-  .cab3d{position:fixed;left:0;right:0;top:0;z-index:5;padding:14px 20px 10px;
-    pointer-events:none;background:linear-gradient(180deg,var(--crema),transparent)}
+  .cab3d{position:fixed;left:50%;transform:translateX(-50%);
+    width:min(430px,100vw);top:0;z-index:5;padding:14px 20px 10px;
+    pointer-events:none;background:linear-gradient(180deg,var(--crema),transparent);
+    display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .cab3d .niveles{pointer-events:auto;display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+  .nivb{background:var(--papel);border:1px solid var(--linea);color:var(--tinta);
+    border-radius:7px;padding:5px 9px;font-family:var(--mono);font-size:10px;cursor:pointer}
+  .nivb.on{background:var(--verde);border-color:var(--verde);color:#fff}
+  .nivb.cerrado{opacity:.38;cursor:not-allowed}
   .cab3d-niv{font-family:var(--display);font-size:19px;font-weight:600}
   .cab3d-par{font-size:12.5px;color:var(--tenue);margin-top:1px}
   .btn3d{position:fixed;left:50%;transform:translateX(-50%);
@@ -323,6 +345,14 @@
   .corr-q{font-size:15px;line-height:1.5}
   .corr-c{font-size:15px;line-height:1.5}
   .corr-k{margin-top:9px;padding-top:8px;border-top:1px solid rgba(0,0,0,.07);font-size:13.5px}
+
+  /* ---- video de gente real ---- */
+  .vidmarco{position:relative;width:100%;aspect-ratio:16/9;background:#1a1a1a;
+    border-radius:12px;overflow:hidden;margin:12px 0;border:1px solid var(--linea)}
+  .vidmarco iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .vidcargando{position:absolute;inset:0;display:flex;align-items:center;
+    justify-content:center;color:#cfcabf;font-size:13.5px;text-align:center;padding:20px;
+    line-height:1.5}
 
   /* ---- phrasal verbs y expresiones ---- */
   .phrgrande{font-family:var(--display);font-size:29px;text-align:center;margin:14px 0 3px;
@@ -1115,6 +1145,7 @@
     <button class="tabb maestro" data-t="maestro">
       <span class="fotomaestro" id="fotomaestro">&#128100;</span>Maestro</button>
     <button class="tabb" data-t="perfil"><span class="ic" id="icperfil">&#128100;</span>Perfil</button>
+    <button class="tabb" data-t="mas"><span class="ic">&#9776;</span>Más</button>
   </nav>
 </div>
 
@@ -1124,7 +1155,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v104 · 11 sep · ruta arreglada";
+var VERSION="v110 · 11 sep · video de gente real";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -1805,25 +1836,27 @@ var METAS=[
 // Los tipos ROTAN de leccion a leccion. La sesion 1 es el alta del alumno.
 // ============================================================
 function moldePreA1(p){
-  var nom  = p.nombre || 'amiga';
+  var nom = p.nombre || 'amiga';
   // quita el prefijo si el dato ya lo trae, para no repetir ("I work in I work in sales")
   function _sinPre(t,pre){
     t=String(t||'').trim().replace(/\.$/,'');
     var r=new RegExp('^'+pre.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s*','i');
     return t.replace(r,'').trim();
   }
-  var ofi  = _sinPre(limpiarOficio(p.trabajo_es||'')||'operadora','Soy') || 'operadora';
-  var ofiEN= _sinPre(p.trabajo_en||'an operator','I am') || 'an operator';
-  var lug  = _sinPre(p.lugar_es||'en la fabrica','Trabajo') || 'en la fabrica';
-  var lugEN= _sinPre(p.lugar_en||'in a factory','I work') || 'in a factory';
+  var ofi   = _sinPre(limpiarOficio(p.trabajo_es||'')||'operadora','Soy') || 'operadora';
+  var ofiEN = _sinPre(p.trabajo_en||'an operator','I am') || 'an operator';
+  var lug   = _sinPre(p.lugar_es||'en la fabrica','Trabajo') || 'en la fabrica';
+  var lugEN = _sinPre(p.lugar_en||'in a factory','I work') || 'in a factory';
 
   return [
-  // ---------- L1 ----------
+
+  /* ═══════════════ BLOQUE 1 · QUIÉN ERES ═══════════════ */
+
   {t:'Quien eres', hoy:'decir tu nombre y tu trabajo',
-   hilo:'Todo lo de hoy gira alrededor de una sola frase: quien eres y a que te dedicas.',
    obj:'Decir tu nombre y a que te dedicas, sin leer.',
    tip:'Busca un lugar sin ruido. Si tienes audifonos, mejor.',
-   enc:'Hoy son tres cosas: vas a OIR ingles, vas a ver una regla chiquita, y vas a HABLAR. Empezamos.',
+   hilo:'Todo lo de hoy gira alrededor de una sola frase: quien eres y a que te dedicas.',
+   enc:'Hoy son tres cosas: vas a OIR ingles, vas a ver una regla chiquita, y vas a HABLAR.',
    items:[
      {area:'oir',  k:'idea', audio:'Hello. My name is Ana. I work in a factory.',
       pide:'De que habla?', ops:['Se presenta y dice donde trabaja','Pide comida','Habla del clima'],
@@ -1837,21 +1870,128 @@ function moldePreA1(p){
      {area:'hab',  k:'ask',   q:'What is your name?', es:'Como te llamas?', pista:'My name is '+nom+'.'},
      {area:'voc',  k:'palabra', en:'work', es:'trabajo / trabajar',
       pide:'En cual frase va bien?',
-      ops:['I work every day.','I work a apple.','I work blue.'], bien:'I work every day.'}
+      ops:['I work every day.','I work a apple.','I work blue.'], bien:'I work every day.'},
+     {area:'oir',  k:'video', en:'Nice to meet you.', es:'Mucho gusto.',
+      pide:'Se oye igual que cuando yo la digo?'}
    ]},
 
-  // ---------- L2 ----------
+  {t:'Mucho gusto', hoy:'saludar y despedirte',
+   obj:'Saludar, presentarte y despedirte sin trabarte.',
+   tip:'Estas frases son las primeras que vas a usar de verdad.',
+   hilo:'Hoy todo es el primer minuto de una conversacion: el saludo, tu nombre, y el adios.',
+   enc:'Vas a oir lo mismo dicho de dos maneras. Una formal y una de confianza.',
+   items:[
+     {area:'oir',  k:'dosc', a:'Nice to meet you.', b:'Nice to meet her.', bien:'a',
+      audio:'Nice to meet you.'},
+     {area:'gram', k:'regla', titulo:'You, para hablarle a alguien',
+      regla:'"You" es tu, usted y ustedes. En ingles no cambia.',
+      bien:'Nice to meet you.', mal:'Nice to meet your.',
+      porque:'"Your" es de alguien, no una persona. Suenan casi igual pero no son lo mismo.'},
+     {area:'hab',  k:'model', en:'Nice to meet you.', es:'Mucho gusto.'},
+     {area:'hab',  k:'model', en:'See you tomorrow.', es:'Nos vemos manana.'},
+     {area:'hab',  k:'ask',   q:'Someone says: Nice to meet you.', es:'Alguien te dice "mucho gusto". Contesta igual.',
+      pista:'Nice to meet you too.'},
+     {area:'voc',  k:'idiom', en:'Take it easy.',
+      pide:'Que crees que significa?',
+      ops:['Tomalo con calma','Tomalo facilmente','Llevatelo'],
+      bien:'Tomalo con calma',
+      cuando:'Se dice para despedirse o para calmar a alguien que anda apurado.'}
+   ]},
+
+  {t:'De donde eres', hoy:'decir de donde vienes',
+   obj:'Decir de donde eres y donde vives.',
+   tip:'Si te preguntan de donde eres, no tienes que contar tu vida. Una frase basta.',
+   hilo:'Hoy todo es el verbo "am": soy, estoy, vengo de.',
+   enc:'Hoy cazas un error. Es de los ejercicios que mas ensenan.',
+   items:[
+     {area:'oir',  k:'detalle', audio:'I am from Mexico. I live in Naucalpan.',
+      pide:'Donde vive?', ops:['In Mexico City','In Naucalpan','In Puebla'], bien:'In Naucalpan'},
+     {area:'gram', k:'cazar', frase:'I am from Mexico and I live in there.', mala:'in', buena:'(nada)',
+      es:'Con "there" no se pone "in". Se dice "I live there".'},
+     {area:'hab',  k:'model', en:'I am from Mexico.', es:'Soy de Mexico.'},
+     {area:'hab',  k:'ask',   q:'Where are you from?', es:'De donde eres?', pista:'I am from Mexico.'},
+     {area:'voc',  k:'pares', a:'live', b:'leave', bien:'a',
+      nota:'"Live" es vivir. "Leave" es irse. Cambia la vocal y cambia todo.'},
+     {area:'hab',  k:'ask',   q:'Do you live near your work?', es:'Vives cerca de tu trabajo?',
+      pista:'Yes, I do.'}
+   ]},
+
+  {t:'Tu familia', hoy:'hablar de los tuyos',
+   obj:'Decir con quien vives y cuantos son.',
+   tip:'Aqui entran los numeros. Los vas a usar mucho mas adelante.',
+   hilo:'Hoy todo es "have": tengo. Y de paso aparecen los primeros numeros.',
+   enc:'Hoy ves por que "she" cambia el verbo. Es la regla que mas se le atora a todos.',
+   items:[
+     {area:'oir',  k:'idea', audio:'I have two children. My son is six and my daughter is nine.',
+      pide:'De que habla?', ops:['De sus hijos','De su trabajo','De su casa'], bien:'De sus hijos'},
+     {area:'gram', k:'regla', titulo:'I have / She has',
+      regla:'Con yo, tu y nosotros es "have". Con el y ella es "has".',
+      bien:'She has two children.', mal:'She have two children.',
+      porque:'Es la misma "s" de siempre, pero aqui la palabra cambia entera: have se vuelve has.'},
+     {area:'hab',  k:'model', en:'I have two children.', es:'Tengo dos hijos.'},
+     {area:'gram', k:'hueco', antes:'She ', despues:' a sister.',
+      ops:['have','has','having'], bien:'has', es:'Ella tiene una hermana.'},
+     {area:'hab',  k:'ask',   q:'Do you have children?', es:'Tienes hijos? Contesta si o no.',
+      pista:'Yes, I do. I have two.'},
+     {area:'voc',  k:'deletreo', bien:'family', es:'familia',
+      pide:'Escribe la palabra que te deletreo.'}
+   ]},
+
+  {t:'Como estas hoy', hoy:'decir como te sientes',
+   obj:'Contestar "how are you" sin decir siempre "fine".',
+   tip:'"Fine" esta bien, pero hay otras y suenan mas naturales.',
+   hilo:'Hoy todo es el estado de animo: como estas, como te sientes, como te fue.',
+   enc:'Hoy la misma frase la vas a oir en cuatro paises distintos.',
+   items:[
+     {area:'oir',  k:'acento', en:'How are you today?', es:'Como estas hoy?',
+      acentos:['us','uk','au','in'], pide:'Cual se te hizo mas dificil de entender?'},
+     {area:'gram', k:'transf', origen:'You are tired.',
+      pide:'Ponlo en pregunta. Empieza con "Are".', bien:'Are you tired?'},
+     {area:'hab',  k:'model', en:'I am fine, thank you.', es:'Estoy bien, gracias.'},
+     {area:'hab',  k:'model', en:'A little tired.', es:'Un poco cansada.'},
+     {area:'hab',  k:'ask',   q:'How are you today?', es:'Como estas hoy? Contesta de verdad.',
+      pista:'I am fine, thank you. And you?'},
+     {area:'voc',  k:'phrasal', en:'wake up', es:'despertarse',
+      ojo:'Cuidado: "wake" solo no se usa asi. Siempre va con "up".',
+      frase:'I wake up at five.', frase_es:'Me despierto a las cinco.'}
+   ]},
+
+  {t:'Todo sobre ti', hoy:'juntar lo del bloque',
+   obj:'Decir cinco cosas de ti, seguidas y sin parar tanto.',
+   tip:'Esta es de fluidez. Repites lo mismo tres veces, cada vez mas rapido.',
+   hilo:'Hoy no hay tema nuevo: todo lo de las cinco lecciones sale otra vez, junto.',
+   enc:'Ultima del bloque. Hoy no aprendes cosa nueva: la sacas mas suelta.',
+   items:[
+     {area:'oir',  k:'dicto', audio:'My name is Ana and I am an operator.',
+      bien:'My name is Ana and I am an operator.', es:'Me llamo Ana y soy operadora.'},
+     {area:'gram', k:'ordenar', piezas:['I','am','from','Mexico'], es:'Soy de Mexico.'},
+     {area:'hab',  k:'ask',   q:'Who are you? Name, job, place.',
+      es:'Vez 1 de 3. Di tres cosas: tu nombre, tu trabajo y de donde eres. Sin prisa.',
+      pista:'My name is '+nom+'. I am '+ofiEN+'. I am from Mexico.'},
+     {area:'hab',  k:'ask',   q:'Again. A little faster.',
+      es:'Vez 2 de 3. Las mismas tres cosas, un poco mas rapido.',
+      pista:'My name is '+nom+'. I am '+ofiEN+'. I am from Mexico.'},
+     {area:'hab',  k:'ask',   q:'Last time. As fast as you can.',
+      es:'Vez 3 de 3. Lo mas suelto que puedas.',
+      pista:'My name is '+nom+'. I am '+ofiEN+'. I am from Mexico.'},
+     {area:'hab',  k:'recuento',
+      audio:'Ana is from Mexico. She has two children. She works in a factory.',
+      apoyo:['is from','has two children','works'],
+      es:'Cuentame lo que oiste de Ana, con tus palabras.'}
+   ]},
+
+  /* ═══════════════ BLOQUE 2 · TU DÍA ═══════════════ */
+
   {t:'Lo que haces cada dia', hoy:'contar tu rutina',
-   hilo:'Hoy todo gira sobre el verbo work en tu rutina: lo oyes, lo escribes, lo dices y lo estiras con wake up.',
    obj:'Decir que haces y a que hora empiezas.',
    tip:'Si no te sale a la primera, dilo otra vez. Nadie te califica el intento.',
+   hilo:'Hoy todo gira sobre el verbo work en tu rutina: lo oyes, lo escribes, lo dices y lo estiras con wake up.',
    enc:'Hoy oyes dos frases muy parecidas, ves como cambia el verbo, y cuentas tu dia.',
    items:[
      {area:'oir',  k:'dosc', a:'I work at six.', b:'I walk at six.', bien:'a',
       audio:'I work at six.'},
      {area:'gram', k:'hueco', antes:'I ', despues:' every day.',
-      ops:['work','works','working'], bien:'work',
-      es:'Trabajo todos los dias.'},
+      ops:['work','works','working'], bien:'work', es:'Trabajo todos los dias.'},
      {area:'hab',  k:'model', en:'I work every day.', es:'Trabajo todos los dias.'},
      {area:'hab',  k:'ask',   q:'What do you do every day?', es:'Que haces todos los dias?',
       pista:'I work every day.'},
@@ -1859,16 +1999,138 @@ function moldePreA1(p){
       pista:'Yes, I do. I work every day.'},
      {area:'voc',  k:'pares', a:'work', b:'walk', bien:'a',
       nota:'"Work" es trabajar. "Walk" es caminar. Cambia una sola vocal.'},
-     {area:'voc',  k:'phrasal', en:'wake up', es:'despertarse',
-      ojo:'Cuidado: "wake" solo no se usa asi. Siempre va con "up".',
-      frase:'I wake up at five.', frase_es:'Me despierto a las cinco.'}
+     {area:'oir',  k:'video', en:'What do you do?', es:'A que te dedicas?',
+      pide:'Lo dicen igual de despacio?'}
    ]},
 
-  // ---------- L3 ----------
+  {t:'Antes del trabajo', hoy:'lo que haces en la manana',
+   obj:'Contar tu manana en orden.',
+   tip:'Primero, luego, despues. Con esas tres palabras cuentas cualquier rutina.',
+   hilo:'Hoy todo es la manana, en orden: despertar, desayunar, salir.',
+   enc:'Hoy aprendes tres palabras que ordenan todo lo que cuentes.',
+   items:[
+     {area:'oir',  k:'segm', audio:'What time do you wake up?',
+      piezas:['What','time','do','you','wake','up'], es:'A que hora te despiertas?'},
+     {area:'gram', k:'regla', titulo:'Primero, luego, despues',
+      regla:'First, then, after that. Con esas tres ordenas cualquier historia.',
+      bien:'First I wake up. Then I have breakfast.', mal:'I wake up. I have breakfast.',
+      porque:'Sin esas palabras se oye como lista. Con ellas se oye como que cuentas algo.'},
+     {area:'hab',  k:'model', en:'First I wake up. Then I have breakfast.',
+      es:'Primero me despierto. Luego desayuno.'},
+     {area:'hab',  k:'ask',   q:'What do you do first in the morning?',
+      es:'Que haces primero en la manana?', pista:'First I wake up.'},
+     {area:'voc',  k:'phrasal', en:'get up', es:'levantarse de la cama',
+      ojo:'"Wake up" es abrir los ojos. "Get up" es ya pararte. No son lo mismo.',
+      frase:'I get up at five thirty.', frase_es:'Me levanto a las cinco y media.'},
+     {area:'hab',  k:'ask',   q:'What time do you get up?', es:'A que hora te levantas?',
+      pista:'I get up at five.'}
+   ]},
+
+  {t:'Como llegas', hoy:'el camino al trabajo',
+   obj:'Decir como te vas al trabajo y cuanto tardas.',
+   tip:'Aqui entran las preposiciones, que son las que mas confunden. Ve despacio.',
+   hilo:'Hoy todo es el traslado: en que te vas, cuanto haces, a que hora sales.',
+   enc:'Hoy llenas huecos. Fijate en la palabrita antes del transporte.',
+   items:[
+     {area:'oir',  k:'detalle', audio:'I take the bus. It takes forty minutes.',
+      pide:'Cuanto tarda?', ops:['Fourteen minutes','Forty minutes','Four minutes'],
+      bien:'Forty minutes'},
+     {area:'gram', k:'hueco', antes:'I go to work ', despues:' bus.',
+      ops:['by','in','with'], bien:'by', es:'Voy al trabajo en camion.'},
+     {area:'hab',  k:'model', en:'I go to work by bus.', es:'Voy al trabajo en camion.'},
+     {area:'hab',  k:'ask',   q:'How do you go to work?', es:'Como te vas al trabajo?',
+      pista:'I go to work by bus.'},
+     {area:'voc',  k:'pares', a:'forty', b:'fourteen', bien:'a',
+      nota:'Cuarenta y catorce. Estos dos se confunden mucho y cambian una cita entera.'},
+     {area:'voc',  k:'palabra', en:'take', es:'tomar / tardar',
+      pide:'En cual frase va bien?',
+      ops:['I take the bus.','I take happy.','I take in the morning red.'],
+      bien:'I take the bus.'}
+   ]},
+
+  {t:'Despues del trabajo', hoy:'lo que haces al salir',
+   obj:'Contar que haces cuando sales de trabajar.',
+   tip:'Esta es la parte del dia que mas se te va a parecer a una platica de verdad.',
+   hilo:'Hoy todo es la tarde: salir, llegar, descansar.',
+   enc:'Hoy transformas una frase. La misma idea, dicha al reves.',
+   items:[
+     {area:'oir',  k:'idea', audio:'I finish at three. Then I go home and rest.',
+      pide:'De que habla?', ops:['De su tarde','De su desayuno','De su jefe'], bien:'De su tarde'},
+     {area:'gram', k:'transf', origen:'I finish at three.',
+      pide:'Ponlo en pregunta. Empieza con "Do".', bien:'Do you finish at three?'},
+     {area:'hab',  k:'model', en:'I finish at three.', es:'Salgo a las tres.'},
+     {area:'hab',  k:'model', en:'Then I go home.', es:'Luego me voy a casa.'},
+     {area:'hab',  k:'ask',   q:'What time do you finish?', es:'A que hora sales?',
+      pista:'I finish at three.'},
+     {area:'voc',  k:'phrasal', en:'get home', es:'llegar a casa',
+      ojo:'Con "home" no se dice "to". Es "get home", no "get to home".',
+      frase:'I get home at four.', frase_es:'Llego a casa a las cuatro.'}
+   ]},
+
+  {t:'El fin de semana', hoy:'lo que haces en tus dias libres',
+   obj:'Decir que haces cuando no trabajas.',
+   tip:'Aqui puedes hablar de lo que te gusta. Es la parte facil.',
+   hilo:'Hoy todo es el tiempo libre, y aparece "like": me gusta.',
+   enc:'Hoy escribes lo que oyes. Se llama dictado y es de los que mas sirven.',
+   items:[
+     {area:'oir',  k:'dicto', audio:'On Sunday I rest and I see my family.',
+      bien:'On Sunday I rest and I see my family.', es:'El domingo descanso y veo a mi familia.'},
+     {area:'gram', k:'regla', titulo:'I like + cosa',
+      regla:'Despues de "like" va la cosa directa, sin nada en medio.',
+      bien:'I like music.', mal:'I like the music.',
+      porque:'En espanol decimos "me gusta LA musica". En ingles se quita el "la" cuando hablas en general.'},
+     {area:'hab',  k:'model', en:'I like music.', es:'Me gusta la musica.'},
+     {area:'hab',  k:'ask',   q:'What do you do on Sunday?', es:'Que haces el domingo?',
+      pista:'On Sunday I rest.'},
+     {area:'voc',  k:'deletreo', bien:'Sunday', es:'domingo',
+      pide:'Escribe el dia que te deletreo.'},
+     {area:'hab',  k:'ask',   q:'Do you like your job?', es:'Te gusta tu trabajo? Contesta con Yes o No.',
+      pista:'Yes, I like it.'}
+   ]},
+
+  {t:'Tu dia entero', hoy:'juntar el bloque del dia',
+   obj:'Contar tu dia completo, de la manana a la noche.',
+   tip:'Ya tienes todas las piezas. Hoy solo las juntas.',
+   hilo:'Hoy no hay tema nuevo: es tu dia entero, contado de corrido.',
+   enc:'Ultima del bloque. Vas a contar tu dia tres veces, cada vez mas suelta.',
+   items:[
+     {area:'oir',  k:'recuento',
+      audio:'Ana wakes up at five. She takes the bus. She finishes at three and goes home.',
+      apoyo:['wakes up','takes the bus','finishes at three'],
+      es:'Cuentame el dia de Ana, con tus palabras.'},
+     {area:'gram', k:'cazar', frase:'She wake up at five.', mala:'wake', buena:'wakes',
+      es:'Ella se despierta a las cinco.'},
+     {area:'hab',  k:'ask',   q:'Tell me your day. Morning, work, afternoon.',
+      es:'Vez 1 de 3. Cuenta tu dia: manana, trabajo, tarde. Sin prisa.',
+      pista:'I wake up at five. I work. I finish at three.'},
+     {area:'hab',  k:'ask',   q:'Again. A little faster.',
+      es:'Vez 2 de 3. El mismo dia, un poco mas rapido.',
+      pista:'I wake up at five. I work. I finish at three.'},
+     {area:'hab',  k:'ask',   q:'Last time. As fast as you can.',
+      es:'Vez 3 de 3. Lo mas suelto que puedas.',
+      pista:'I wake up at five. I work. I finish at three.'},
+     {area:'voc',  k:'idiom', en:'See you later.',
+      pide:'Que crees que significa?',
+      ops:['Nos vemos al rato','Te veo tarde','Mirame despues'],
+      bien:'Nos vemos al rato',
+      cuando:'Es la despedida mas comun entre companeros. No promete una hora.'}
+   ]}
+
+  ].concat(moldePreA1_parte2(p, nom, ofi, ofiEN, lug, lugEN));
+}
+
+
+/* Los bloques 3 y 4 del pre-A1. Van aparte solo para que cada trozo
+   se lea sin tener que bajar media pantalla. */
+function moldePreA1_parte2(p, nom, ofi, ofiEN, lug, lugEN){
+  return [
+
+  /* ═══════════════ BLOQUE 3 · TU TRABAJO ═══════════════ */
+
   {t:'Tu lugar de trabajo', hoy:'decir donde trabajas',
-   hilo:'Hoy todo es el LUGAR: donde trabajas. Hasta el error que vas a cazar es de una frase de lugar.',
    obj:'Decir donde trabajas y con quien.',
    tip:'Escucha primero sin adivinar. La segunda vez ya buscas el dato.',
+   hilo:'Hoy todo es el LUGAR: donde trabajas. Hasta el error que vas a cazar es de una frase de lugar.',
    enc:'Hoy cazamos un error. Es de los ejercicios que mas ensenan.',
    items:[
      {area:'oir',  k:'detalle', audio:'I am Ana. I work in a factory, in quality.',
@@ -1887,54 +2149,10 @@ function moldePreA1(p){
       pista:'I am '+ofiEN+'. I work '+lugEN+'.'}
    ]},
 
-  // ---------- L4 ----------
-  {t:'Numeros y horas', hoy:'los numeros que mas se usan',
-   hilo:'Hoy todo es la HORA: la oyes pegada, la ordenas, la dices, la deletreas y la checas al entrar.',
-   obj:'Oir y decir numeros sin dudar.',
-   tip:'Los numeros se confunden mucho. Por eso los practicamos aparte.',
-   enc:'Hoy la parte de oir es la mas dificil: habla rapida. Va pegado pero son varias palabras.',
-   items:[
-     {area:'oir',  k:'segm', audio:'What time do you start?',
-      piezas:['What','time','do','you','start'], es:'A que hora empiezas?'},
-     {area:'gram', k:'ordenar', piezas:['I','start','at','seven'],
-      es:'Empiezo a las siete.'},
-     {area:'hab',  k:'model', en:'I start at seven.', es:'Empiezo a las siete.'},
-     {area:'hab',  k:'ask',   q:'What time do you start?', es:'A que hora empiezas?',
-      pista:'I start at seven.'},
-     {area:'voc',  k:'deletreo', bien:'seven', es:'siete',
-      pide:'Escribe el numero que te deletreo.'},
-     {area:'voc',  k:'phrasal', en:'clock in', es:'checar entrada',
-      ojo:'Para la salida se dice "clock out".',
-      frase:'I clock in at seven.', frase_es:'Checo entrada a las siete.'}
-   ]},
-
-  // ---------- L5 ----------
-  {t:'Preguntar y contestar', hoy:'hacer preguntas tu tambien',
-   hilo:'Hoy una sola frase se transforma en pregunta y la sigues por cuatro acentos distintos.',
-   obj:'No solo contestar: tambien preguntar.',
-   tip:'Preguntar cuesta mas que contestar. Es normal.',
-   enc:'Hoy cambias una frase de lugar. De afirmacion a pregunta.',
-   items:[
-     {area:'oir',  k:'idea', audio:'Do you work here? Yes, I do. I work in the line.',
-      pide:'Que pasa aqui?', ops:['Alguien pregunta y el otro contesta','Alguien se despide','Hablan de comida'],
-      bien:'Alguien pregunta y el otro contesta'},
-     {area:'gram', k:'transf', origen:'You work here.',
-      pide:'Ponlo en pregunta. Empieza con "Do".', bien:'Do you work here?'},
-     {area:'hab',  k:'model', en:'Do you work here?', es:'Trabajas aqui?'},
-     {area:'hab',  k:'ask',   q:'Ask me: where do I work?', es:'Preguntame donde trabajo. Di: Where do you work?',
-      pista:'Where do you work?'},
-     {area:'hab',  k:'ask',   q:'Now ask me the time.', es:'Ahora preguntame la hora. Di: What time is it?',
-      pista:'What time is it?'},
-     {area:'oir',  k:'acento', en:'Do you work here?', es:'Trabajas aqui?',
-      acentos:['us','uk','au','in'],
-      pide:'Cual se te hizo mas dificil de entender?'}
-   ]},
-
-  // ---------- L6 ----------
   {t:'En la linea', hoy:'palabras de tu trabajo',
-   hilo:'Hoy todo sale de check the boxes: lo escribes, ves por que ella lleva s, lo dices y aprendes turn on.',
    obj:'Usar las palabras de tu area en ingles.',
    tip:'Escribe lo que alcances. No tiene que estar perfecto.',
+   hilo:'Hoy todo sale de check the boxes: lo escribes, ves por que ella lleva s, lo dices y aprendes turn on.',
    enc:'Hoy escribes lo que oyes. Se llama dictado y es de los que mas sirven.',
    items:[
      {area:'oir',  k:'dicto', audio:'I check the boxes every morning.',
@@ -1951,14 +2169,35 @@ function moldePreA1(p){
       ops:['I check the boxes.','I check to my house.','I check happy.'], bien:'I check the boxes.'},
      {area:'voc',  k:'phrasal', en:'turn on', es:'encender / prender',
       ojo:'Para apagar es "turn off". Se usan igual con maquinas y con luces.',
-      frase:'I turn on the machine.', frase_es:'Prendo la maquina.'}
+      frase:'I turn on the machine.', frase_es:'Prendo la maquina.'},
+     {area:'oir',  k:'video', en:'Can you help me?', es:'Me puedes ayudar?',
+      pide:'Como suena cuando lo dice gente de verdad?'}
    ]},
 
-  // ---------- L7 ----------
+  {t:'Con quien trabajas', hoy:'hablar de tus companeros',
+   obj:'Decir con quien trabajas y quien es tu jefe.',
+   tip:'Aqui vuelve la "s" de el y ella. Es la que mas cuesta.',
+   hilo:'Hoy todo es la gente del trabajo, y por eso todo el rato aparece esa "s".',
+   enc:'Hoy ordenas palabras. Fijate donde cae el verbo.',
+   items:[
+     {area:'oir',  k:'idea', audio:'My supervisor is Carlos. He checks the reports.',
+      pide:'De que habla?', ops:['De su supervisor','De su hermano','De su maquina'],
+      bien:'De su supervisor'},
+     {area:'gram', k:'ordenar', piezas:['My','supervisor','checks','the','reports'],
+      es:'Mi supervisor revisa los reportes.'},
+     {area:'hab',  k:'model', en:'I work with five people.', es:'Trabajo con cinco personas.'},
+     {area:'hab',  k:'ask',   q:'Who is your supervisor?', es:'Quien es tu supervisor?',
+      pista:'My supervisor is Carlos.'},
+     {area:'gram', k:'cazar', frase:'He check the reports.', mala:'check', buena:'checks',
+      es:'El revisa los reportes.'},
+     {area:'voc',  k:'deletreo', bien:'team', es:'equipo',
+      pide:'Escribe la palabra que te deletreo.'}
+   ]},
+
   {t:'Cuando algo sale mal', hoy:'avisar de un problema',
-   hilo:'Hoy todo es la maquina descompuesta: la oyes, cazas el error, la pasas a pasado y se lo cuentas a tu supervisor.',
    obj:'Decir que algo esta mal, con calma.',
    tip:'Estas frases son las que mas vas a usar de verdad.',
+   hilo:'Hoy todo es la maquina descompuesta: la oyes, cazas el error, la pasas a pasado y se lo cuentas a tu supervisor.',
    enc:'Hoy cazas otro error y cambias una frase al pasado.',
    items:[
      {area:'oir',  k:'detalle', audio:'There is a problem with the machine. It stopped at ten.',
@@ -1967,52 +2206,919 @@ function moldePreA1(p){
       es:'La maquina no funciona hoy.'},
      {area:'gram', k:'transf', origen:'The machine stops.',
       pide:'Ponlo en pasado.', bien:'The machine stopped.'},
-     {area:'hab',  k:'ask',   q:'Is there a problem today?', es:'Hay un problema hoy? Contesta con Yes o No.',
-      pista:'Yes, there is a problem.'},
      {area:'voc',  k:'phrasal', en:'break down', es:'descomponerse',
       ojo:'Se usa para maquinas y para carros. No es que se rompa en pedazos: es que dejo de servir.',
       frase:'The machine broke down.', frase_es:'La maquina se descompuso.'},
      {area:'hab',  k:'roleplay', quien:'Tu supervisor',
       ctx:'La maquina se paro y tu supervisor viene a preguntarte que paso.',
       q:'What happened with the machine?', es:'Que paso con la maquina?',
-      pista:'The machine stopped at ten.'}
+      pista:'The machine stopped at ten.'},
+     {area:'hab',  k:'ask',   q:'Is there a problem today?', es:'Hay un problema hoy? Contesta con Yes o No.',
+      pista:'Yes, there is a problem.'}
    ]},
 
-  // ---------- L8 ----------
-  {t:'Todo junto', hoy:'juntamos lo de las siete lecciones',
-   hilo:'Hoy no hay tema nuevo: todo lo de las siete lecciones sale otra vez, junto y mas suelto.',
+  {t:'Pedir ayuda', hoy:'pedir algo sin pena',
+   obj:'Pedir ayuda y dar las gracias.',
+   tip:'Pedir en ingles es facil: una palabra al principio y ya suena bien.',
+   hilo:'Hoy todo es pedir: "can you", "could you", "please". La misma idea en tres tonos.',
+   enc:'Hoy aprendes la palabra que vuelve amable cualquier frase.',
+   items:[
+     {area:'oir',  k:'dosc', a:'Can you help me?', b:'Can you help him?', bien:'a',
+      audio:'Can you help me?'},
+     {area:'gram', k:'regla', titulo:'Can you...?',
+      regla:'Con "Can you" al principio, cualquier frase se vuelve una peticion.',
+      bien:'Can you help me, please?', mal:'You help me.',
+      porque:'Sin "can" suena a orden. Con "can" suena a favor.'},
+     {area:'hab',  k:'model', en:'Can you help me, please?', es:'Me puedes ayudar, por favor?'},
+     {area:'hab',  k:'model', en:'Thank you very much.', es:'Muchas gracias.'},
+     {area:'hab',  k:'ask',   q:'Ask me for help.', es:'Pideme ayuda. Di: Can you help me?',
+      pista:'Can you help me, please?'},
+     {area:'voc',  k:'phrasal', en:'look for', es:'buscar',
+      ojo:'"Look" solo es mirar. Con "for" es buscar. La preposicion cambia todo.',
+      frase:'I am looking for the supervisor.', frase_es:'Estoy buscando al supervisor.'}
+   ]},
+
+  {t:'Tu trabajo completo', hoy:'juntar el bloque del trabajo',
+   obj:'Explicar tu trabajo entero a alguien que no lo conoce.',
+   tip:'Imagina que le explicas a alguien de fuera. Eso es exactamente lo que vas a hacer.',
+   hilo:'Hoy no hay tema nuevo: es tu trabajo explicado completo, a alguien que no sabe nada.',
+   enc:'Ultima del bloque. Hoy le explicas tu trabajo a una visita.',
+   items:[
+     {area:'oir',  k:'segm', audio:'What do you do at work?',
+      piezas:['What','do','you','do','at','work'], es:'Que haces en el trabajo?'},
+     {area:'gram', k:'ordenar', piezas:['I','check','the','boxes','every','morning'],
+      es:'Reviso las cajas cada manana.'},
+     {area:'hab',  k:'roleplay', quien:'Un cliente de REVLON',
+      ctx:'Un cliente visita la planta y quiere entender que se hace en tu area.',
+      q:'Can you explain your job to me?', es:'Me puedes explicar tu trabajo?',
+      pista:'I check the boxes. I work with five people.'},
+     {area:'hab',  k:'ask',   q:'Tell me your job. Place, what you do, with who.',
+      es:'Vez 1 de 3. Di tres cosas: donde, que haces y con quien. Sin prisa.',
+      pista:'I work '+lugEN+'. I check the boxes. I work with five people.'},
+     {area:'hab',  k:'ask',   q:'Again. A little faster.',
+      es:'Vez 2 de 3. Lo mismo, un poco mas rapido.',
+      pista:'I work '+lugEN+'. I check the boxes. I work with five people.'},
+     {area:'hab',  k:'ask',   q:'Last time. As fast as you can.',
+      es:'Vez 3 de 3. Lo mas suelto que puedas.',
+      pista:'I work '+lugEN+'. I check the boxes. I work with five people.'}
+   ]},
+
+  /* ═══════════════ BLOQUE 4 · NÚMEROS Y HORAS ═══════════════ */
+
+  {t:'Numeros y horas', hoy:'los numeros que mas se usan',
+   obj:'Oir y decir numeros sin dudar.',
+   tip:'Los numeros se confunden mucho. Por eso los practicamos aparte.',
+   hilo:'Hoy todo es la HORA: la oyes pegada, la ordenas, la dices, la deletreas y la checas al entrar.',
+   enc:'Hoy la parte de oir es la mas dificil: habla rapida. Va pegado pero son varias palabras.',
+   items:[
+     {area:'oir',  k:'segm', audio:'What time do you start?',
+      piezas:['What','time','do','you','start'], es:'A que hora empiezas?'},
+     {area:'gram', k:'ordenar', piezas:['I','start','at','seven'], es:'Empiezo a las siete.'},
+     {area:'hab',  k:'model', en:'I start at seven.', es:'Empiezo a las siete.'},
+     {area:'hab',  k:'ask',   q:'What time do you start?', es:'A que hora empiezas?',
+      pista:'I start at seven.'},
+     {area:'voc',  k:'deletreo', bien:'seven', es:'siete',
+      pide:'Escribe el numero que te deletreo.'},
+     {area:'voc',  k:'phrasal', en:'clock in', es:'checar entrada',
+      ojo:'Para la salida se dice "clock out".',
+      frase:'I clock in at seven.', frase_es:'Checo entrada a las siete.'},
+     {area:'oir',  k:'video', en:'What time is it?', es:'Que hora es?',
+      pide:'Cuantas veces tuviste que oirlo?'}
+   ]},
+
+  {t:'Cantidades', hoy:'cuantas cosas, cuantas piezas',
+   obj:'Decir cuantas cosas hay, sin trabarte con los numeros grandes.',
+   tip:'En tu trabajo los numeros son lo que mas se dice. Vale la pena.',
+   hilo:'Hoy todo son cantidades: cuantas piezas, cuantas cajas, cuantas personas.',
+   enc:'Hoy oyes numeros que se parecen mucho. Ahi esta el chiste.',
+   items:[
+     {area:'oir',  k:'detalle', audio:'We have fifty boxes today, not fifteen.',
+      pide:'Cuantas cajas hay?', ops:['Fifteen','Fifty','Five'], bien:'Fifty'},
+     {area:'voc',  k:'pares', a:'fifty', b:'fifteen', bien:'a',
+      nota:'Cincuenta y quince. La diferencia esta en donde cae la fuerza de la voz.'},
+     {area:'gram', k:'hueco', antes:'There ', despues:' fifty boxes.',
+      ops:['is','are','be'], bien:'are', es:'Hay cincuenta cajas.'},
+     {area:'hab',  k:'model', en:'There are fifty boxes.', es:'Hay cincuenta cajas.'},
+     {area:'hab',  k:'ask',   q:'How many boxes do you check?', es:'Cuantas cajas revisas?',
+      pista:'I check fifty boxes.'},
+     {area:'voc',  k:'deletreo', bien:'thirty', es:'treinta',
+      pide:'Escribe el numero que te deletreo.'}
+   ]},
+
+  {t:'Dias y semanas', hoy:'los dias y cada cuando',
+   obj:'Decir que dias trabajas y cada cuando pasa algo.',
+   tip:'Los dias en ingles van con mayuscula. En espanol no.',
+   hilo:'Hoy todo son los dias: cuales trabajas, cuales descansas, cada cuando.',
+   enc:'Hoy aprendes la palabrita que va antes de cada dia.',
+   items:[
+     {area:'oir',  k:'idea', audio:'I work from Monday to Friday. On Saturday I rest.',
+      pide:'De que habla?', ops:['De sus dias de trabajo','De su sueldo','De su jefe'],
+      bien:'De sus dias de trabajo'},
+     {area:'gram', k:'regla', titulo:'On + dia',
+      regla:'Antes de un dia va "on". No "in" ni "at".',
+      bien:'On Monday I work.', mal:'In Monday I work.',
+      porque:'"In" es para meses y anos. "At" es para horas. "On" es para dias.'},
+     {area:'hab',  k:'model', en:'I work from Monday to Friday.', es:'Trabajo de lunes a viernes.'},
+     {area:'gram', k:'hueco', antes:'I rest ', despues:' Sunday.',
+      ops:['in','on','at'], bien:'on', es:'Descanso el domingo.'},
+     {area:'hab',  k:'ask',   q:'What days do you work?', es:'Que dias trabajas?',
+      pista:'I work from Monday to Friday.'},
+     {area:'voc',  k:'palabra', en:'every', es:'cada / todos los',
+      pide:'En cual frase va bien?',
+      ops:['I work every day.','I work every.','Every I work.'], bien:'I work every day.'}
+   ]},
+
+  {t:'Turnos y horarios', hoy:'hablar de tu turno',
+   obj:'Decir en que turno estas y a que hora entra cada uno.',
+   tip:'Si trabajas por turnos, esto es lo que mas te van a preguntar.',
+   hilo:'Hoy todo es el turno: cual te toca, a que hora entra, cuando cambias.',
+   enc:'Hoy la frase la vas a oir en cuatro acentos. En el trabajo real no todos hablan igual.',
+   items:[
+     {area:'oir',  k:'acento', en:'What shift do you work?', es:'En que turno trabajas?',
+      acentos:['us','uk','au','in'], pide:'Cual se te hizo mas dificil de entender?'},
+     {area:'gram', k:'transf', origen:'You work the morning shift.',
+      pide:'Ponlo en pregunta. Empieza con "Do".', bien:'Do you work the morning shift?'},
+     {area:'hab',  k:'model', en:'I work the morning shift.', es:'Trabajo el turno de la manana.'},
+     {area:'hab',  k:'ask',   q:'What shift do you work?', es:'En que turno trabajas?',
+      pista:'I work the morning shift.'},
+     {area:'voc',  k:'phrasal', en:'clock out', es:'checar salida',
+      ojo:'Es el par de "clock in". Uno al entrar y otro al salir.',
+      frase:'I clock out at three.', frase_es:'Checo salida a las tres.'},
+     {area:'hab',  k:'roleplay', quien:'Alguien de recursos humanos',
+      ctx:'Te preguntan por tu horario para llenar un papel.',
+      q:'What time do you start and finish?', es:'A que hora entras y sales?',
+      pista:'I start at seven and finish at three.'}
+   ]},
+
+  {t:'Fechas', hoy:'decir fechas y meses',
+   obj:'Decir una fecha sin batallar.',
+   tip:'Las fechas en ingles se dicen al reves de como las pensamos. Ve despacio.',
+   hilo:'Hoy todo son fechas: el mes, el dia, cuando empezaste.',
+   enc:'Hoy escribes lo que oyes. Fijate en el orden.',
+   items:[
+     {area:'oir',  k:'dicto', audio:'I started in March.',
+      bien:'I started in March.', es:'Empece en marzo.'},
+     {area:'gram', k:'regla', titulo:'In + mes',
+      regla:'Antes de un mes va "in". Antes de un dia va "on".',
+      bien:'I started in March.', mal:'I started on March.',
+      porque:'Un mes es grande, un dia es chico. Mientras mas grande, mas "in".'},
+     {area:'hab',  k:'model', en:'I started in March.', es:'Empece en marzo.'},
+     {area:'hab',  k:'ask',   q:'When did you start working here?', es:'Cuando empezaste a trabajar aqui?',
+      pista:'I started in March.'},
+     {area:'voc',  k:'deletreo', bien:'August', es:'agosto',
+      pide:'Escribe el mes que te deletreo.'},
+     {area:'gram', k:'cazar', frase:'I started on January.', mala:'on', buena:'in',
+      es:'Empece en enero.'}
+   ]},
+
+  {t:'Todo junto', hoy:'juntamos todo el nivel',
    obj:'Hablar de ti seguido, sin parar tanto.',
    tip:'Esta es de fluidez. Repites lo mismo tres veces, cada vez mas rapido.',
-   enc:'Ultima del nivel. Hoy no aprendes cosa nueva: la sacas mas suelta.',
+   hilo:'Ultima del nivel. Hoy no aprendes cosa nueva: sale todo junto y mas suelto.',
+   enc:'Ultima parada. Hoy juntas las cuatro partes: quien eres, tu dia, tu trabajo y tus horas.',
    items:[
      {area:'oir',  k:'dosc', a:'She works in quality.', b:'She walks in quality.', bien:'a',
       audio:'She works in quality.'},
-     {area:'gram', k:'ordenar', piezas:['I','work','in','a','factory'],
-      es:'Trabajo en una fabrica.'},
-     {area:'hab',  k:'ask',   q:'Who are you? Name, job, place.',
-      es:'Vez 1 de 3. Di tres cosas: tu nombre, tu trabajo y donde. Sin prisa.',
-      pista:'My name is '+nom+'. I am '+ofiEN+'. I work '+lugEN+'.'},
+     {area:'gram', k:'ordenar', piezas:['I','work','in','a','factory'], es:'Trabajo en una fabrica.'},
+     {area:'voc',  k:'idiom', en:'All day long.',
+      pide:'Que crees que significa?',
+      ops:['Todo el santo dia','Un dia largo','Todos los dias'],
+      bien:'Todo el santo dia',
+      cuando:'Se usa para quejarse un poco: "I check boxes all day long".'},
+     {area:'hab',  k:'ask',   q:'Tell me everything. Name, job, day, hours.',
+      es:'Vez 1 de 3. Di cuatro cosas: tu nombre, tu trabajo, tu dia y tu horario. Sin prisa.',
+      pista:'My name is '+nom+'. I am '+ofiEN+'. I start at seven and finish at three.'},
      {area:'hab',  k:'ask',   q:'Again. A little faster.',
-      es:'Vez 2 de 3. Las mismas tres cosas, un poco mas rapido.',
-      pista:'My name is '+nom+'. I am '+ofiEN+'. I work '+lugEN+'.'},
+      es:'Vez 2 de 3. Lo mismo, un poco mas rapido.',
+      pista:'My name is '+nom+'. I am '+ofiEN+'. I start at seven and finish at three.'},
      {area:'hab',  k:'ask',   q:'Last time. As fast as you can.',
       es:'Vez 3 de 3. Lo mas suelto que puedas.',
-      pista:'My name is '+nom+'. I am '+ofiEN+'. I work '+lugEN+'.'},
-     {area:'voc',  k:'idiom', en:'Take it easy.',
-      pide:'Que crees que significa?',
-      ops:['Tomalo con calma','Tomalo facilmente','Llevatelo'],
-      bien:'Tomalo con calma',
-      cuando:'Se dice para despedirse o para calmar a alguien que anda apurado.'},
-     {area:'hab',  k:'recuento',
-      audio:'Ana works in a factory. She starts at seven. She checks the boxes every morning.',
-      apoyo:['works','starts at seven','checks the boxes'],
-      es:'Cuentame lo que oiste de Ana, con tus palabras.'}
+      pista:'My name is '+nom+'. I am '+ofiEN+'. I start at seven and finish at three.'}
    ]}
+
+  ];
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MOLDE C2 · 24 lecciones · para quien ya habla casi nativo.
+   Aquí no se enseña gramática básica: se afina el idioma.
+   El español casi desaparece; las explicaciones van en inglés.
+   ══════════════════════════════════════════════════════════════ */
+function moldeC2(p){
+  var nom = p.nombre || '';
+  var ofi = p.trabajo_es || 'tu puesto';
+
+  return [
+
+  /* ═══════════ BLOQUE 1 · REGISTRO Y FORMALIDAD ═══════════ */
+
+  {t:'Reading the room', hoy:'ajustar el tono a quien tienes enfrente',
+   obj:'Decir lo mismo en tres registros sin sonar falso en ninguno.',
+   tip:'A este nivel el error ya no es gramatical. Es de tono.',
+   hilo:'Hoy todo es una sola idea dicha de tres formas: a un amigo, a un colega y a un consejo directivo.',
+   enc:'Today we work on register. Same message, three rooms.',
+   items:[
+     {area:'oir',  k:'dosc', a:"I'm afraid that won't be possible.", b:"I'm afraid that wasn't possible.",
+      bien:'a', audio:"I'm afraid that won't be possible."},
+     {area:'gram', k:'regla', titulo:'Hedging: saying no without saying no',
+      regla:'En registro alto, la negativa se envuelve. "I\'m afraid", "that may be difficult", "I\'d rather not".',
+      bien:"I'm afraid that won't work for us.", mal:"No, that doesn't work.",
+      porque:'La segunda no es incorrecta: es brusca. A este nivel te juzgan por eso, no por la gramática.'},
+     {area:'hab',  k:'model', en:"I'm afraid that won't be possible.", es:'Me temo que no va a ser posible.'},
+     {area:'hab',  k:'transf', origen:"No, I can't do that.",
+      pide:'Say it again, but formally. Use "I\'m afraid".',
+      bien:"I'm afraid I won't be able to do that."},
+     {area:'voc',  k:'idiom', en:'Read the room.',
+      pide:'What does it mean?',
+      ops:['Sense the mood and adjust','Read aloud in the meeting','Study the audience report'],
+      bien:'Sense the mood and adjust',
+      cuando:'Se dice de quien no ajusta su tono: "he did not read the room".'},
+     {area:'oir',  k:'video', en:"I'm afraid that won't be possible.",
+      es:'Me temo que no va a ser posible.',
+      pide:'Fijate en el tono: es amable o es firme?'},
+     {area:'hab',  k:'roleplay', quien:'A board member',
+      ctx:'You must decline a request from someone far above you, without damaging the relationship.',
+      q:'We need this delivered by Friday. Can you commit to that?',
+      es:'Necesitamos esto para el viernes. Te comprometes?',
+      pista:"I'm afraid Friday would be tight. Could we look at Monday?"}
+   ]},
+
+  {t:'Softening and sharpening', hoy:'suavizar o endurecer a voluntad',
+   obj:'Controlar cuánto pesa lo que dices, a propósito.',
+   tip:'La misma frase puede caer como pluma o como piedra. Tú decides.',
+   hilo:'Hoy todo es el peso de la frase: los modales, los adverbios, la distancia.',
+   enc:'Today: how to make the same sentence land softly or hard.',
+   items:[
+     {area:'oir',  k:'detalle', audio:"I'd say the results are somewhat below what we expected.",
+      pide:'How bad are the results?', ops:['Slightly bad','Catastrophic','Excellent'],
+      bien:'Slightly bad'},
+     {area:'gram', k:'regla', titulo:'Distancing with past forms',
+      regla:'El pasado no siempre habla del pasado. "I wondered", "I was hoping" ponen distancia y suavizan.',
+      bien:'I was hoping we could revisit the budget.', mal:'I hope we can revisit the budget.',
+      porque:'El pasado te aleja de la petición y la vuelve menos frontal. Es cortesía gramatical.'},
+     {area:'hab',  k:'model', en:'I was wondering whether we might reconsider.',
+      es:'Me preguntaba si podríamos reconsiderarlo.'},
+     {area:'gram', k:'cazar', frase:'I want you to redo this by tomorrow.', mala:'want', buena:"would like",
+      es:'"Want" a un igual suena a orden. "Would like" pone distancia.'},
+     {area:'voc',  k:'palabra', en:'somewhat', es:'un tanto / algo',
+      pide:'Which sentence uses it naturally?',
+      ops:['The figures are somewhat disappointing.','I somewhat go home.','It is somewhat.'],
+      bien:'The figures are somewhat disappointing.'},
+     {area:'hab',  k:'ask',   q:'Deliver bad news softly: the project is late.',
+      es:'Da la mala noticia con suavidad: el proyecto va tarde.',
+      pista:"I'm afraid we're running somewhat behind schedule."}
+   ]},
+
+  {t:'Written vs spoken', hoy:'lo que se escribe no se dice',
+   obj:'Notar cuándo una frase suena a correo leído en voz alta.',
+   tip:'Mucha gente de nivel alto habla como escribe. Se nota y se oye raro.',
+   hilo:'Hoy todo es la diferencia entre el inglés que se escribe y el que se habla.',
+   enc:'Today: sounding like a person, not like an email.',
+   items:[
+     {area:'oir',  k:'dosc', a:"We'll get back to you shortly.", b:"We shall revert in due course.",
+      bien:'a', audio:"We'll get back to you shortly."},
+     {area:'gram', k:'regla', titulo:'Contractions are not sloppy',
+      regla:'En inglés hablado, no contraer suena rígido o enfático. "I am not" marca énfasis, no educación.',
+      bien:"I don't think that's right.", mal:'I do not think that is right.',
+      porque:'La segunda, dicha normal, suena a robot o a molestia contenida.'},
+     {area:'hab',  k:'model', en:"We'll get back to you shortly.", es:'Te contestamos en breve.'},
+     {area:'gram', k:'transf', origen:'We shall revert in due course.',
+      pide:'Say it the way a person actually speaks.',
+      bien:"We'll get back to you soon."},
+     {area:'voc',  k:'phrasal', en:'get back to', es:'contestar / regresar con alguien',
+      ojo:'En hablado gana a "respond" o "revert". "Revert" en ese sentido es de correo, y a muchos les chirría.',
+      frase:"I'll get back to you by Thursday.", frase_es:'Te contesto el jueves.'},
+     {area:'hab',  k:'recuento',
+      audio:"We reviewed the proposal. We have concerns about the timeline, but the approach is sound.",
+      apoyo:['reviewed','concerns about the timeline','approach is sound'],
+      es:'Dilo otra vez, como se lo dirías a un colega en el pasillo.'}
+   ]},
+
+  {t:'Pushing back', hoy:'discrepar sin romper',
+   obj:'Contradecir a alguien con más poder que tú, y salir bien.',
+   tip:'Esta es la habilidad que más separa a un C1 de un C2.',
+   hilo:'Hoy todo es el desacuerdo: reconocer, girar, proponer.',
+   enc:'Today: disagreeing upward without burning the bridge.',
+   items:[
+     {area:'oir',  k:'idea', audio:"I take your point, though I'd frame it slightly differently.",
+      pide:'Does the speaker agree?', ops:['Partly, and is about to disagree','Completely','Not at all'],
+      bien:'Partly, and is about to disagree'},
+     {area:'gram', k:'regla', titulo:'Concede, then pivot',
+      regla:'El desacuerdo alto va en dos tiempos: primero das la razón en algo, luego giras.',
+      bien:"That's fair, though I'd add one thing.", mal:"No, you're wrong about that.",
+      porque:'La concesión compra permiso para discrepar. Sin ella, el otro se cierra.'},
+     {area:'hab',  k:'model', en:"I take your point, though I'd frame it differently.",
+      es:'Entiendo tu punto, aunque yo lo plantearía distinto.'},
+     {area:'voc',  k:'idiom', en:"Let's agree to disagree.",
+      pide:'When do you use it?',
+      ops:['To close a disagreement politely','To start an argument','To agree fully'],
+      bien:'To close a disagreement politely',
+      cuando:'Sirve para cerrar sin ceder, pero úsalo poco: puede sonar a que te rindes.'},
+     {area:'hab',  k:'roleplay', quien:'Your director',
+      ctx:'Your director proposes a plan you believe is flawed. You have to say so.',
+      q:"I think we should cut the pilot and go straight to full rollout. Thoughts?",
+      es:'Creo que deberíamos saltarnos el piloto. Qué opinas?',
+      pista:"I see the appeal, though I'd worry about what we'd miss."},
+     {area:'hab',  k:'ask',   q:'Disagree with me, politely: "Training is a waste of money."',
+      es:'Discrepa conmigo, con elegancia.',
+      pista:"I'd push back on that a little."}
+   ]},
+
+  {t:'Precision', hoy:'decir exactamente lo que quieres decir',
+   obj:'Escoger la palabra exacta entre tres que casi significan lo mismo.',
+   tip:'A este nivel el problema ya no es encontrar una palabra: es escoger entre cuatro.',
+   hilo:'Hoy todo son parejas de palabras que parecen iguales y no lo son.',
+   enc:'Today: the difference between almost-right and right.',
+   items:[
+     {area:'oir',  k:'detalle', audio:'The decision was deliberate, not deliberated.',
+      pide:'What is being contrasted?', ops:['Intentional vs discussed','Slow vs fast','Good vs bad'],
+      bien:'Intentional vs discussed'},
+     {area:'voc',  k:'palabra', en:'ensure', es:'asegurarse de que algo pase',
+      pide:'Which one is correct?',
+      ops:['Ensure the line is clean before you start.','Ensure your car for the year.','I ensure you it is fine.'],
+      bien:'Ensure the line is clean before you start.'},
+     {area:'gram', k:'cazar', frase:'This will effect the whole production line.', mala:'effect', buena:'affect',
+      es:'"Affect" es el verbo, "effect" es el sustantivo. Es el error escrito más común en inglés alto.'},
+     {area:'voc',  k:'pares', a:'principle', b:'principal', bien:'a',
+      nota:'"Principle" es un principio o norma. "Principal" es el principal o el director. Suenan idéntico.'},
+     {area:'hab',  k:'model', en:'That was a deliberate decision, not an oversight.',
+      es:'Fue una decisión deliberada, no un descuido.'},
+     {area:'hab',  k:'ask',   q:'Explain the difference between "affect" and "effect".',
+      es:'Explícame la diferencia, en inglés.',
+      pista:'"Affect" is the verb, "effect" is the noun.'}
+   ]},
+
+  {t:'Register mastery', hoy:'juntar el bloque del registro',
+   obj:'Cambiar de registro tres veces seguidas, sin titubear.',
+   tip:'Hoy es de fluidez: el mismo mensaje, tres veces, tres tonos.',
+   hilo:'Hoy no hay tema nuevo: es el mismo mensaje en tres registros distintos, de corrido.',
+   enc:'Last of the block. Same message, three registers, no pausing.',
+   items:[
+     {area:'oir',  k:'acento', en:"I'd rather we didn't commit to that just yet.",
+      es:'Preferiría que no nos comprometiéramos todavía.',
+      acentos:['us','uk','au','in'], pide:'Which one was hardest to follow?'},
+     {area:'gram', k:'ordenar', piezas:['I','would','rather','we','waited'],
+      es:'Preferiría que esperáramos.'},
+     {area:'hab',  k:'ask',   q:'Tell a colleague the deadline slipped. Casual.',
+      es:'Vez 1 de 3. A un compañero, en confianza.',
+      pista:"Hey, heads up: we're gonna miss Friday."},
+     {area:'hab',  k:'ask',   q:'Now tell your manager. Neutral.',
+      es:'Vez 2 de 3. A tu jefe, neutro.',
+      pista:"I wanted to flag that we're running behind on Friday's deadline."},
+     {area:'hab',  k:'ask',   q:'Now tell the client. Formal.',
+      es:'Vez 3 de 3. Al cliente, formal.',
+      pista:"I'm afraid we've encountered a delay affecting the Friday delivery."},
+     {area:'voc',  k:'idiom', en:'Heads up.',
+      pide:'What is it for?',
+      ops:['A quick informal warning','A formal complaint','A congratulation'],
+      bien:'A quick informal warning',
+      cuando:'Solo en registro bajo. En un correo al cliente, no.'}
+   ]},
+
+  /* ═══════════ BLOQUE 2 · HUMOR E IRONÍA ═══════════ */
+
+  {t:'Understatement', hoy:'decir menos para decir más',
+   obj:'Entender y usar el understatement británico.',
+   tip:'Si un inglés dice "not bad", puede significar excelente. Esto se malinterpreta todo el tiempo.',
+   hilo:'Hoy todo es lo que NO se dice: la distancia entre las palabras y lo que significan.',
+   enc:'Today: when "quite good" means outstanding, and when it means awful.',
+   items:[
+     {area:'oir',  k:'idea', audio:"Well, that could have gone better.",
+      pide:'How did it go?', ops:['It went badly','It went well','It did not happen'],
+      bien:'It went badly'},
+     {area:'gram', k:'regla', titulo:'Understatement',
+      regla:'Decir menos de lo que se siente es una forma de énfasis, no de tibieza.',
+      bien:"That's not ideal.", mal:'That is a disaster.',
+      porque:'Entre británicos, "not ideal" ante un desastre comunica más control y más gravedad que gritar.'},
+     {area:'hab',  k:'model', en:"That's not ideal.", es:'No es lo ideal. (= es un desastre)'},
+     {area:'voc',  k:'idiom', en:'A bit of a nightmare.',
+      pide:'How bad is it?',
+      ops:['Very bad, said lightly','Slightly annoying','A literal dream'],
+      bien:'Very bad, said lightly',
+      cuando:'Muy británico. En Estados Unidos suena más literal.'},
+     {area:'oir',  k:'video', en:"That could have gone better.",
+      es:'Pudo haber salido mejor. (= salio mal)',
+      pide:'Oyes la ironia en la voz?'},
+     {area:'oir',  k:'dosc', a:"It's not the worst idea.", b:"It's not the worst thing.",
+      bien:'a', audio:"It's not the worst idea."},
+     {area:'hab',  k:'ask',   q:'The launch failed completely. React with understatement.',
+      es:'El lanzamiento fracasó. Reacciona con understatement.',
+      pista:"Well, that could have gone better."}
+   ]},
+
+  {t:'Sarcasm and its risks', hoy:'la ironía y dónde no usarla',
+   obj:'Reconocer sarcasmo por el tono, no por las palabras.',
+   tip:'El sarcasmo mal leído rompe relaciones. Reconocerlo importa más que usarlo.',
+   hilo:'Hoy todo es el tono: la misma frase en serio y en broma.',
+   enc:'Today: spotting sarcasm before you answer it seriously.',
+   items:[
+     {area:'oir',  k:'dosc', a:"Oh, brilliant.", b:"Oh, brilliant!",
+      bien:'a', audio:"Oh, brilliant."},
+     {area:'gram', k:'regla', titulo:'Sarcasm lives in the intonation',
+      regla:'Las palabras no cambian. Lo que cambia es la caída de la voz y el alargamiento.',
+      bien:"Oh, that's just great. (falling, flat)", mal:"Oh, that's just great! (rising, bright)",
+      porque:'En texto se pierde. Por eso el sarcasmo por escrito causa tantos malentendidos.'},
+     {area:'hab',  k:'model', en:"Oh, that's just great.", es:'Ah, qué maravilla. (irónico)'},
+     {area:'voc',  k:'idiom', en:'Tell me about it.',
+      pide:'What does it mean?',
+      ops:["I know, I've been through it too",'Please explain it to me','I have no idea'],
+      bien:"I know, I've been through it too",
+      cuando:'Casi siempre es una queja compartida, no una petición.'},
+     {area:'hab',  k:'roleplay', quien:'A colleague',
+      ctx:'A colleague uses sarcasm about a decision you made. Respond without escalating.',
+      q:"Oh, another process change. How very helpful.",
+      es:'Ah, otro cambio de proceso. Qué útil.',
+      pista:"I know it feels like a lot. Let me explain why this one matters."},
+     {area:'hab',  k:'ask',   q:'Why is sarcasm risky in writing?',
+      es:'Explícame por qué el sarcasmo es riesgoso por escrito.',
+      pista:'Because tone is lost, and it reads as a genuine statement.'}
+   ]},
+
+  {t:'Banter', hoy:'la broma entre colegas',
+   obj:'Seguir una broma de trabajo sin pasarte de la raya.',
+   tip:'El banter es pegamento social. Si no entras, quedas fuera del grupo.',
+   hilo:'Hoy todo es la broma ligera: entrarle, devolverla y saber dónde parar.',
+   enc:'Today: light teasing, and where the line is.',
+   items:[
+     {area:'oir',  k:'idea', audio:"Nice of you to join us. Traffic again, was it?",
+      pide:"What's happening?", ops:['Friendly teasing about being late','A formal reprimand','A welcome'],
+      bien:'Friendly teasing about being late'},
+     {area:'voc',  k:'idiom', en:'To take the mickey.',
+      pide:'What does it mean?',
+      ops:['To tease someone lightly','To steal something','To leave early'],
+      bien:'To tease someone lightly',
+      cuando:'Muy británico. El equivalente americano sería "to razz" o "to bust chops".'},
+     {area:'gram', k:'regla', titulo:'Self-deprecation as entry',
+      regla:'La forma más segura de entrar al banter es burlarte de ti mismo primero.',
+      bien:"Sorry, I clearly can't read a clock.", mal:"The traffic was genuinely terrible.",
+      porque:'Defenderte mata la broma. Seguirle el juego te mete al grupo.'},
+     {area:'hab',  k:'model', en:"Guilty as charged.", es:'Culpable, lo admito.'},
+     {area:'hab',  k:'roleplay', quien:'A teammate',
+      ctx:'You arrive late to a meeting and a teammate teases you.',
+      q:"Look who finally made it.",
+      es:'Miren quién llegó por fin.',
+      pista:"I know, I know. Guilty as charged."},
+     {area:'hab',  k:'ask',   q:'When does banter stop being funny?',
+      es:'Cuándo deja de ser gracioso el banter?',
+      pista:'When it targets something the person cannot change.'}
+   ]},
+
+  {t:'Cultural landmines', hoy:'lo que no se dice',
+   obj:'Saber qué temas y bromas no cruzan fronteras.',
+   tip:'Esto no es corrección política: es no perder un cliente por una broma.',
+   hilo:'Hoy todo son los límites: lo que en un país es gracioso y en otro es un problema.',
+   enc:'Today: the jokes that do not travel.',
+   items:[
+     {area:'oir',  k:'detalle', audio:"In the US that would land very differently.",
+      pide:'What is the speaker saying?', ops:['It would be received badly','It would be funnier','It would be ignored'],
+      bien:'It would be received badly'},
+     {area:'voc',  k:'phrasal', en:'land badly', es:'caer mal / no ser bien recibido',
+      ojo:'"Land" aquí no es aterrizar: es cómo cae algo que dijiste.',
+      frase:'That comment landed badly with the client.',
+      frase_es:'Ese comentario le cayó mal al cliente.'},
+     {area:'gram', k:'regla', titulo:'Hedging across cultures',
+      regla:'Lo que un británico oye como "no", un mexicano o un estadounidense puede oír como "tal vez".',
+      bien:"That's an interesting idea. (may mean: no)",
+      mal:"That's an interesting idea. (taken as: yes)",
+      porque:'El malentendido no es de idioma sino de cultura, y cuesta proyectos.'},
+     {area:'hab',  k:'model', en:'I want to make sure I am reading this correctly.',
+      es:'Quiero asegurarme de estar entendiendo bien.'},
+     {area:'hab',  k:'roleplay', quien:'A British counterpart',
+      ctx:"They said your proposal is 'quite interesting'. You suspect that means no.",
+      q:"Yes, that's quite interesting. We'll certainly bear it in mind.",
+      es:'Sí, bastante interesante. Lo tendremos en cuenta.',
+      pista:"Can I ask directly: is this a no, or worth pursuing?"},
+     {area:'hab',  k:'ask',   q:'How do you check you understood someone politely?',
+      es:'Cómo confirmas que entendiste, con elegancia?',
+      pista:'Just so I am clear, are you saying...?'}
+   ]},
+
+  {t:'Storytelling', hoy:'contar algo y que enganche',
+   obj:'Contar una anécdota de trabajo con ritmo.',
+   tip:'Una buena anécdota abre más puertas que un buen currículum.',
+   hilo:'Hoy todo es el ritmo de una historia: montaje, giro y remate.',
+   enc:'Today: setup, turn, payoff.',
+   items:[
+     {area:'oir',  k:'recuento',
+      audio:"So we had everything ready. Two hours before launch, the supplier called. Turns out they had shipped to the wrong country.",
+      apoyo:['everything ready','two hours before','wrong country'],
+      es:'Cuéntamelo otra vez, con tus palabras y con ritmo.'},
+     {area:'gram', k:'regla', titulo:'The narrative present',
+      regla:'En anécdotas habladas se usa el presente aunque haya pasado: da inmediatez.',
+      bien:"So he walks in and says...", mal:'So he walked in and said...',
+      porque:'El pasado es correcto, pero el presente hace que se sienta como si estuviera ocurriendo.'},
+     {area:'hab',  k:'model', en:"So he walks in, and the first thing he says is...",
+      es:'Entonces entra, y lo primero que dice es...'},
+     {area:'voc',  k:'idiom', en:'Long story short.',
+      pide:'What is it for?',
+      ops:['To skip to the ending','To start a long story','To apologise'],
+      bien:'To skip to the ending',
+      cuando:'Se usa justo antes del remate, para señalar que ya viene.'},
+     {area:'hab',  k:'ask',   q:'Tell me about a time something went wrong at work.',
+      es:'Cuéntame de una vez que algo salió mal en tu trabajo.',
+      pista:'So we had everything ready, and then...'},
+     {area:'hab',  k:'ask',   q:'Now tell it in under thirty seconds.',
+      es:'Ahora cuéntalo en menos de treinta segundos.',
+      pista:'Long story short...'}
+   ]},
+
+  {t:'Humour mastery', hoy:'juntar el bloque del tono',
+   obj:'Leer una sala y responder en el tono correcto, al vuelo.',
+   tip:'Hoy no hay contenido nuevo: es velocidad de lectura social.',
+   hilo:'Hoy no hay tema nuevo: es reconocer el tono y responder igual, rápido.',
+   enc:'Last of the block. Read the tone, match it, move on.',
+   items:[
+     {area:'oir',  k:'dicto', audio:"Well, that's one way to do it.",
+      bien:"Well, that's one way to do it.",
+      es:'Escríbelo. Y fíjate: no es un elogio.'},
+     {area:'gram', k:'cazar', frase:"I'm not disagreeing with you, I just think you're wrong.",
+      mala:'just', buena:'(es una broma hecha)',
+      es:'Esta frase es un chiste conocido: se contradice a propósito. No la corrijas, reconócela.'},
+     {area:'hab',  k:'ask',   q:'Respond to sarcasm without escalating.',
+      es:'Vez 1 de 3. Alguien te contesta con sarcasmo. No escales.',
+      pista:"Fair enough. Let me take another look at it."},
+     {area:'hab',  k:'ask',   q:'Now respond to genuine praise.',
+      es:'Vez 2 de 3. Ahora es un elogio de verdad. Contesta sin falsa modestia.',
+      pista:"Thank you, that means a lot coming from you."},
+     {area:'hab',  k:'ask',   q:'Now respond to understatement that hides a problem.',
+      es:'Vez 3 de 3. Te dicen "not ideal" y es un desastre. Responde a la altura.',
+      pista:"I hear you. Let's treat this as urgent."},
+     {area:'voc',  k:'idiom', en:'Fair enough.',
+      pide:'What does it do?',
+      ops:['Accepts a point and closes it','Starts an argument','Expresses anger'],
+      bien:'Accepts a point and closes it',
+      cuando:'Es de las frases más útiles del inglés: cierra sin ceder y sin pelear.'}
+   ]}
+
+  ].concat(moldeC2_parte2(p, nom, ofi));
+}
+
+
+/* Bloques 3 y 4 del C2. */
+function moldeC2_parte2(p, nom, ofi){
+  return [
+
+  /* ═══════════ BLOQUE 3 · DEBATIR ═══════════ */
+
+  {t:'Building an argument', hoy:'armar un argumento que aguante',
+   obj:'Sostener una posición con estructura, no con volumen.',
+   tip:'A este nivel ya no ganas por hablar bonito. Ganas por estructura.',
+   hilo:'Hoy todo es la arquitectura de un argumento: afirmación, evidencia, implicación.',
+   enc:'Today: claim, evidence, so-what. In that order.',
+   items:[
+     {area:'oir',  k:'idea',
+      audio:"Our retention is down eight points. That tracks with the onboarding change. So I'd revisit that before we spend more on acquisition.",
+      pide:'What is the structure?', ops:['Claim, evidence, recommendation','A complaint','A question'],
+      bien:'Claim, evidence, recommendation'},
+     {area:'gram', k:'regla', titulo:'Signposting',
+      regla:'Anuncia la forma antes del contenido: "there are two issues here", "my concern is threefold".',
+      bien:'There are two problems with that, and the second matters more.',
+      mal:'That has problems.',
+      porque:'Decir cuántos puntos vienen hace que el otro te siga en vez de interrumpirte.'},
+     {area:'hab',  k:'model', en:"There are two issues here, and the second one worries me more.",
+      es:'Hay dos problemas, y el segundo me preocupa más.'},
+     {area:'voc',  k:'palabra', en:'accordingly', es:'en consecuencia',
+      pide:'Which is natural?',
+      ops:['The risk rose, and we adjusted accordingly.','Accordingly I go home.','It is accordingly.'],
+      bien:'The risk rose, and we adjusted accordingly.'},
+     {area:'hab',  k:'ask',   q:'Argue for training budget. Claim, evidence, recommendation.',
+      es:'Defiende el presupuesto de capacitación, en esos tres pasos.',
+      pista:"Turnover costs us more than training would. The numbers show it. So I'd fund it."},
+     {area:'hab',  k:'roleplay', quien:'A sceptical CFO',
+      ctx:'The CFO thinks your budget request is unnecessary. Make the case.',
+      q:"Convince me this is not a nice-to-have.",
+      es:'Convénceme de que esto no es un lujo.',
+      pista:"Let me give you the number first, then the reasoning."}
+   ]},
+
+  {t:'Handling attacks', hoy:'cuando te atacan el argumento',
+   obj:'Defender una posición sin ponerte defensivo.',
+   tip:'Ponerse defensivo pierde el cuarto aunque tengas razón.',
+   hilo:'Hoy todo es qué hacer cuando alguien te ataca: separar el punto de la persona.',
+   enc:'Today: separating the attack from the point.',
+   items:[
+     {area:'oir',  k:'detalle',
+      audio:"With respect, I don't think you've understood the constraint.",
+      pide:'How hostile is this?', ops:['Quite hostile despite the politeness','Friendly','Neutral'],
+      bien:'Quite hostile despite the politeness'},
+     {area:'gram', k:'regla', titulo:'"With respect" is a warning',
+      regla:'"With respect" y "with all due respect" casi siempre anuncian un ataque.',
+      bien:"With respect, that misreads the data.", mal:'That misreads the data.',
+      porque:'La segunda es más honesta. La primera es la misma agresión con un lazo.'},
+     {area:'hab',  k:'model', en:"Let me separate two things you've raised.",
+      es:'Déjame separar dos cosas que planteaste.'},
+     {area:'voc',  k:'idiom', en:'Straw man.',
+      pide:'What is it?',
+      ops:['Attacking a weaker version of the argument','A type of contract','A compliment'],
+      bien:'Attacking a weaker version of the argument',
+      cuando:'Nombrarlo es potente: "I think that\'s a bit of a straw man".'},
+     {area:'oir',  k:'video', en:"With all due respect.",
+      es:'Con todo respeto. (casi siempre anuncia un ataque)',
+      pide:'Suena respetuoso de verdad?'},
+     {area:'hab',  k:'roleplay', quien:'A hostile stakeholder',
+      ctx:'They misrepresent your proposal to make it easier to reject.',
+      q:"So you're saying we should just stop everything and retrain the whole company?",
+      es:'Entonces dices que paremos todo y recapacitemos a toda la empresa?',
+      pista:"That's not quite what I proposed. Let me restate it."},
+     {area:'hab',  k:'ask',   q:'Someone misquotes you. Correct them without heat.',
+      es:'Alguien te cita mal. Corrígelo sin calentarte.',
+      pista:"That's not quite what I said, let me be clearer."}
+   ]},
+
+  {t:'Asking the hard question', hoy:'preguntar lo incómodo',
+   obj:'Hacer la pregunta que nadie quiere hacer, sin costo.',
+   tip:'Saber preguntar lo incómodo es una señal de autoridad, no de grosería.',
+   hilo:'Hoy todo es la pregunta difícil: cómo se construye para que no ofenda.',
+   enc:'Today: the question everyone is avoiding.',
+   items:[
+     {area:'oir',  k:'dosc', a:"Can I ask what's driving that?", b:"Can I ask what's wrong with that?",
+      bien:'a', audio:"Can I ask what's driving that?"},
+     {area:'gram', k:'regla', titulo:'Ask about the reasoning, not the person',
+      regla:'"What\'s driving that?" pregunta por el razonamiento. "Why would you do that?" acusa.',
+      bien:"What's driving that decision?", mal:'Why on earth would you do that?',
+      porque:'La primera invita a explicar. La segunda invita a defenderse.'},
+     {area:'hab',  k:'model', en:"Can I ask what's driving that?", es:'Puedo preguntar qué hay detrás de eso?'},
+     {area:'gram', k:'transf', origen:"Why did you cut the budget?",
+      pide:'Ask it without accusing.', bien:"What drove the decision to cut the budget?"},
+     {area:'voc',  k:'phrasal', en:'push on', es:'insistir en un punto',
+      ojo:'"Push back" es discrepar. "Push on" es insistir en indagar. No son lo mismo.',
+      frase:"If I can push on that for a second.", frase_es:'Si me permites insistir un momento.'},
+     {area:'hab',  k:'ask',   q:'Ask why a project failed, without blaming anyone.',
+      es:'Pregunta por qué falló un proyecto, sin culpar a nadie.',
+      pista:"What do we think was driving the slippage?"}
+   ]},
+
+  {t:'Negotiating', hoy:'negociar con lenguaje',
+   obj:'Ceder poco y parecer que cediste mucho.',
+   tip:'En negociación las palabras hacen la mitad del trabajo.',
+   hilo:'Hoy todo es la condicional: si tú, entonces yo.',
+   enc:'Today: conditional trades, and what they signal.',
+   items:[
+     {area:'oir',  k:'idea',
+      audio:"If you could move on the timeline, we'd have room on the scope.",
+      pide:'What is happening?', ops:['A conditional trade','A refusal','An apology'],
+      bien:'A conditional trade'},
+     {area:'gram', k:'regla', titulo:'The conditional trade',
+      regla:'Nunca cedas solo. Todo lo que das va atado a algo que pides.',
+      bien:"If you could move on price, we could look at the timeline.",
+      mal:'We can move on the timeline.',
+      porque:'La segunda regala. La primera compra.'},
+     {area:'hab',  k:'model', en:"If you could move on price, we could look at timing.",
+      es:'Si pudieras moverte en precio, podríamos ver el tiempo.'},
+     {area:'gram', k:'ordenar', piezas:['If','you','could','move','we','could','too'],
+      es:'Si tú te pudieras mover, nosotros también.'},
+     {area:'voc',  k:'idiom', en:'Meet in the middle.',
+      pide:'What does it mean?',
+      ops:['Both sides concede equally','Meet at a place','Agree fully'],
+      bien:'Both sides concede equally',
+      cuando:'Cuidado: proponerlo temprano revela que tu primera cifra era inflada.'},
+     {area:'hab',  k:'roleplay', quien:'A supplier',
+      ctx:'The supplier wants a longer contract. You want a lower price.',
+      q:"We could do twelve months, but the price stays as quoted.",
+      es:'Podemos hacer doce meses, pero el precio se queda igual.',
+      pista:"If we commit to twelve, I'd need movement on the rate."}
+   ]},
+
+  {t:'Closing', hoy:'cerrar una conversación difícil',
+   obj:'Cerrar con acuerdos claros y sin ambigüedad.',
+   tip:'Muchas juntas mueren aquí: todos salen creyendo cosas distintas.',
+   hilo:'Hoy todo es el cierre: resumir, confirmar, asignar.',
+   enc:'Today: leaving the room with the same understanding.',
+   items:[
+     {area:'oir',  k:'detalle',
+      audio:"So to recap: you'll send the revised figures by Tuesday, and I'll take it to the board Thursday.",
+      pide:'Who does what first?', ops:['They send figures Tuesday','The board meets first','Nothing is agreed'],
+      bien:'They send figures Tuesday'},
+     {area:'gram', k:'regla', titulo:'Recap with names and dates',
+      regla:'Un cierre sin nombre y sin fecha no es un acuerdo, es una intención.',
+      bien:"So, you'll send the figures by Tuesday.", mal:'So we will sort the figures out soon.',
+      porque:'"Soon" y "we" son donde mueren los acuerdos.'},
+     {area:'hab',  k:'model', en:"So to recap: you'll send the figures by Tuesday.",
+      es:'Recapitulando: tú mandas las cifras el martes.'},
+     {area:'voc',  k:'phrasal', en:'circle back', es:'retomar algo después',
+      ojo:'Muy usado en corporativo, y muy odiado. Úsalo sabiendo que a algunos les fastidia.',
+      frase:"Let's circle back on this next week.",
+      frase_es:'Retomemos esto la próxima semana.'},
+     {area:'hab',  k:'ask',   q:'Close a meeting with two clear actions.',
+      es:'Cierra una junta con dos acciones claras.',
+      pista:"So to recap: you'll send X by Tuesday, and I'll do Y by Thursday."},
+     {area:'hab',  k:'roleplay', quien:'A colleague who avoids commitment',
+      ctx:'They keep saying "we should look into that" without committing.',
+      q:"Yeah, we should definitely look into that at some point.",
+      es:'Sí, deberíamos verlo en algún momento.',
+      pista:"Can we put a name and a date on that?"}
+   ]},
+
+  {t:'Debate mastery', hoy:'juntar el bloque del debate',
+   obj:'Sostener una posición bajo presión, tres veces seguidas.',
+   tip:'Hoy es de resistencia: el mismo argumento contra tres ataques distintos.',
+   hilo:'Hoy no hay tema nuevo: es tu argumento aguantando tres tipos de presión.',
+   enc:'Last of the block. Same position, three kinds of pressure.',
+   items:[
+     {area:'oir',  k:'segm', audio:"What exactly are you proposing?",
+      piezas:['What','exactly','are','you','proposing'], es:'Qué estás proponiendo exactamente?'},
+     {area:'gram', k:'cazar', frase:"I would of said something earlier.", mala:'of', buena:"have",
+      es:'"Would of" no existe: viene de oír "would\'ve". Es el error escrito más delator en inglés alto.'},
+     {area:'hab',  k:'ask',   q:'Defend your position against a factual challenge.',
+      es:'Vez 1 de 3. Te discuten los datos.',
+      pista:"Let me show you where that number comes from."},
+     {area:'hab',  k:'ask',   q:'Now against an emotional appeal.',
+      es:'Vez 2 de 3. Ahora te apelan a lo emocional.',
+      pista:"I understand the concern, and the decision still holds."},
+     {area:'hab',  k:'ask',   q:'Now against silence. They just wait.',
+      es:'Vez 3 de 3. No te contestan: solo se quedan callados esperando.',
+      pista:"I'll leave that with you. Happy to walk through it again."},
+     {area:'voc',  k:'idiom', en:"Let's park that.",
+      pide:'What does it mean?',
+      ops:['Set it aside for now','Cancel it','Approve it'],
+      bien:'Set it aside for now',
+      cuando:'Útil para no descarrilar una junta, pero si abusas, la gente nota que nunca regresas al tema.'}
+   ]},
+
+  /* ═══════════ BLOQUE 4 · SONAR NATIVO ═══════════ */
+
+  {t:'Connected speech', hoy:'por qué no les entiendes aunque sabes las palabras',
+   obj:'Descifrar habla rápida real, no dictada.',
+   tip:'Si sabes las palabras y aun así no entiendes, el problema es este.',
+   hilo:'Hoy todo es cómo se pegan las palabras al hablar rápido.',
+   enc:'Today: why "what are you going to do" becomes four sounds.',
+   items:[
+     {area:'oir',  k:'segm', audio:"What are you going to do about it?",
+      piezas:['What','are','you','going','to','do','about','it'],
+      es:'Suena como "whaddaya gonna do about it". Sepáralo.'},
+     {area:'gram', k:'regla', titulo:'Linking and reduction',
+      regla:'Las palabras funcionales se aplastan: to → ta, and → n, of → a.',
+      bien:"I'm gonna have a look at it. (natural)", mal:'I am going to have a look at it. (dictated)',
+      porque:'No es hablar mal: es como suena el idioma cuando nadie está actuando.'},
+     {area:'hab',  k:'model', en:"What are you going to do about it?",
+      es:'Qué vas a hacer al respecto?'},
+     {area:'oir',  k:'dicto', audio:"I'll let you know as soon as I hear back.",
+      bien:"I'll let you know as soon as I hear back.",
+      es:'Escríbelo completo, aunque suene pegado.'},
+     {area:'voc',  k:'pares', a:'want to', b:'won’t do', bien:'a',
+      nota:'Dichos rápido, "wanna" y "won\'t do" se acercan peligrosamente.'},
+     {area:'oir',  k:'video', en:"What are you going to do about it?",
+      es:'Que vas a hacer al respecto?',
+      pide:'Cuentas las ocho palabras o suena a cuatro?'},
+     {area:'hab',  k:'ask',   q:'Say it fast and natural: what are you going to do about it?',
+      es:'Dilo rápido y natural, no dictado.',
+      pista:"What are you going to do about it?"}
+   ]},
+
+  {t:'Stress and meaning', hoy:'la misma frase, cinco significados',
+   obj:'Cambiar el sentido de una frase solo con el énfasis.',
+   tip:'Esto es invisible en el papel y enorme al hablar.',
+   hilo:'Hoy todo es dónde cae la fuerza de la voz y cómo eso cambia todo.',
+   enc:'Today: "I didn\'t say he stole the money" has seven meanings.',
+   items:[
+     {area:'oir',  k:'dosc', a:"I didn't say he stole it.", b:"I didn't say HE stole it.",
+      bien:'b', audio:"I didn't say HE stole it."},
+     {area:'gram', k:'regla', titulo:'Contrastive stress',
+      regla:'La palabra que enfatizas es la que niegas o contrastas.',
+      bien:"I didn't say HE stole it. (someone else did)",
+      mal:"I didn't say he stole it. (flat, ambiguous)",
+      porque:'En inglés el énfasis hace el trabajo que en español hacen el orden y las partículas.'},
+     {area:'hab',  k:'model', en:"I didn't say he stole it.", es:'Yo no dije que él lo robó.'},
+     {area:'hab',  k:'ask',   q:'Say it stressing "say", so it means: I implied it.',
+      es:'Dilo enfatizando "say": no lo dije, lo insinué.',
+      pista:"I didn't SAY he stole it."},
+     {area:'hab',  k:'ask',   q:'Now stress "stole", so it means: he borrowed it.',
+      es:'Ahora enfatiza "stole": no lo robó, lo tomó prestado.',
+      pista:"I didn't say he STOLE it."},
+     {area:'voc',  k:'idiom', en:"That's not what I meant.",
+      pide:'When do you use it?',
+      ops:['When your tone was misread','When you forgot a word','When you agree'],
+      bien:'When your tone was misread',
+      cuando:'A este nivel casi siempre es problema de énfasis, no de vocabulario.'}
+   ]},
+
+  {t:'Idiom density', hoy:'cuántas expresiones son demasiadas',
+   obj:'Usar expresiones sin sonar a libro de modismos.',
+   tip:'El error del C2 es meter demasiadas. Suena a que estás luciéndote.',
+   hilo:'Hoy todo es la dosis: una expresión bien puesta vale más que cinco amontonadas.',
+   enc:'Today: one good idiom beats five stacked.',
+   items:[
+     {area:'oir',  k:'idea',
+      audio:"At the end of the day, we need to touch base and get the ball rolling before we move the needle.",
+      pide:'How does this sound?', ops:['Overloaded with clichés','Natural','Too simple'],
+      bien:'Overloaded with clichés'},
+     {area:'gram', k:'regla', titulo:'Idiom density',
+      regla:'Una expresión por párrafo hablado. Más, y suena a que memorizaste una lista.',
+      bien:"Let's get moving on this.", mal:"Let's touch base, circle back, and move the needle.",
+      porque:'Los nativos usan muchas menos de las que creen los estudiantes avanzados.'},
+     {area:'hab',  k:'model', en:"At the end of the day, it comes down to trust.",
+      es:'A fin de cuentas, se reduce a la confianza.'},
+     {area:'voc',  k:'idiom', en:'Move the needle.',
+      pide:'What does it mean?',
+      ops:['Make a measurable difference','Adjust a machine','Waste time'],
+      bien:'Make a measurable difference',
+      cuando:'Muy de consultoría. En exceso, delata jerga corporativa vacía.'},
+     {area:'gram', k:'cazar', frase:"Let's touch base and circle back to move the needle.",
+      mala:'circle', buena:'(sobran expresiones)',
+      es:'No hay error gramatical: hay exceso. Sobra al menos una.'},
+     {area:'hab',  k:'ask',   q:'Say the same thing with no idioms at all.',
+      es:'Di lo mismo sin ninguna expresión hecha.',
+      pista:"Let's talk next week and decide."}
+   ]},
+
+  {t:'Reading between lines', hoy:'lo que no se dijo',
+   obj:'Oír lo que alguien evitó decir.',
+   tip:'A este nivel la información importante suele estar en la omisión.',
+   hilo:'Hoy todo son las omisiones: lo que no se dice también comunica.',
+   enc:'Today: what the silence is telling you.',
+   items:[
+     {area:'oir',  k:'detalle',
+      audio:"The team worked very hard on this, and the presentation was certainly thorough.",
+      pide:'What is not being said?', ops:['That the work was good','That they worked hard','That it was thorough'],
+      bien:'That the work was good'},
+     {area:'gram', k:'regla', titulo:'Damning with faint praise',
+      regla:'Elogiar solo el esfuerzo o la forma comunica que el fondo falló.',
+      bien:"They worked very hard on it. (= it was not good)",
+      mal:'It was excellent work.',
+      porque:'En cartas de recomendación y evaluaciones, esto es un código entero.'},
+     {area:'hab',  k:'model', en:"I notice you haven't mentioned the budget.",
+      es:'Noto que no has mencionado el presupuesto.'},
+     {area:'voc',  k:'idiom', en:'The elephant in the room.',
+      pide:'What is it?',
+      ops:['The obvious thing nobody names','A large problem solved','A guest'],
+      bien:'The obvious thing nobody names',
+      cuando:'Nombrarlo te da autoridad, pero solo si de verdad nadie lo había dicho.'},
+     {area:'hab',  k:'roleplay', quien:'A colleague hiding bad news',
+      ctx:'Their update carefully avoids the one number that matters.',
+      q:"Overall the quarter went well. The team adapted, morale is strong, and the pipeline looks healthy.",
+      es:'En general el trimestre fue bien. El equipo se adaptó y el pipeline se ve sano.',
+      pista:"I notice we haven't touched on revenue. Where did we land?"},
+     {area:'hab',  k:'ask',   q:'Name the elephant in the room, politely.',
+      es:'Nombra lo que nadie está diciendo, con elegancia.',
+      pista:"Can we talk about the thing nobody's mentioned?"}
+   ]},
+
+  {t:'Your own voice', hoy:'sonar como tú, no como un libro',
+   obj:'Hablar con voz propia en inglés, no como traducción.',
+   tip:'Mucha gente de C2 habla perfecto y suena a nadie. Ese es el último obstáculo.',
+   hilo:'Hoy todo es tu voz: tus muletillas, tu ritmo, tu manera.',
+   enc:'Today: the last thing to learn is sounding like yourself.',
+   items:[
+     {area:'oir',  k:'recuento',
+      audio:"I've been doing this fifteen years, and honestly the thing that still surprises me is how much of it is listening.",
+      apoyo:['fifteen years','still surprises me','how much is listening'],
+      es:'Cuéntamelo con tus palabras y con tu manera de hablar.'},
+     {area:'gram', k:'regla', titulo:'Fillers are not errors',
+      regla:'"I mean", "you know", "look" dan ritmo y tiempo de pensar. Los nativos los usan constantemente.',
+      bien:"Look, I think the real issue is different.", mal:'The real issue is different.',
+      porque:'La segunda es correcta pero plana. Quitar todos los rellenos suena a discurso leído.'},
+     {area:'hab',  k:'model', en:"Look, I think the real issue is something else.",
+      es:'Mira, creo que el problema de fondo es otro.'},
+     {area:'voc',  k:'palabra', en:'honestly', es:'la verdad / honestamente',
+      pide:'Which is natural?',
+      ops:["Honestly, I'd rather not.",'I honestly the meeting.','Honestly is good.'],
+      bien:"Honestly, I'd rather not."},
+     {area:'hab',  k:'ask',   q:'Tell me what you actually think about your job.',
+      es:'Dime qué piensas de verdad de tu trabajo. Sin cuidar el inglés.',
+      pista:"Honestly? The part I like least is..."},
+     {area:'hab',  k:'ask',   q:'Now say the same thing to a stranger at a conference.',
+      es:'Ahora dilo a un desconocido en un congreso. Mismo fondo, otro tono.',
+      pista:"What I enjoy most about the work is..."}
+   ]},
+
+  {t:'Everything at once', hoy:'juntamos todo el nivel',
+   obj:'Cambiar de tono, registro y velocidad sin pensarlo.',
+   tip:'Última parada. Hoy es puro control.',
+   hilo:'Última del nivel. Hoy no aprendes nada nuevo: demuestras que ya lo manejas.',
+   enc:'Last stop. Everything you have, at speed.',
+   items:[
+     {area:'oir',  k:'acento', en:"I'd rather we held off until we've seen the numbers.",
+      es:'Preferiría esperar hasta ver las cifras.',
+      acentos:['us','uk','au','in'], pide:'Which one was hardest?'},
+     {area:'gram', k:'ordenar', piezas:['I','would','rather','we','held','off'],
+      es:'Preferiría que esperáramos.'},
+     {area:'hab',  k:'roleplay', quien:'A hostile client',
+      ctx:'They are unhappy, publicly, in front of your team. You have to hold the line without escalating.',
+      q:"Frankly, this has been a disappointment from start to finish.",
+      es:'Francamente, esto ha sido una decepción de principio a fin.',
+      pista:"I hear you, and I'd like to understand exactly where it fell short."},
+     {area:'hab',  k:'ask',   q:'Summarise your position in three sentences. Formal.',
+      es:'Vez 1 de 3. Resume tu posición en tres frases, formal.',
+      pista:'There are two issues. The first is timing. The second is scope.'},
+     {area:'hab',  k:'ask',   q:'Now the same, casual, to a colleague.',
+      es:'Vez 2 de 3. Lo mismo, en confianza.',
+      pista:"Look, it's basically two things: timing and scope."},
+     {area:'hab',  k:'ask',   q:'Now in one sentence. As fast as you can.',
+      es:'Vez 3 de 3. En una sola frase, lo más rápido que puedas.',
+      pista:"It's timing and scope, and timing worries me more."}
+   ]}
+
   ];
 }
 
 function materialDe(p){
   var n=p.nivel_n||0;
+  // --- C2 tiene su propio molde: registro, ironia, debate y sonar nativo ---
+  if(n>=6 && typeof moldeC2==='function'){
+    var mc=moldeC2(p);
+    try{ mc = frasesDeBrian().concat(mc); }catch(e){}
+    return mc;
+  }
   // --- pre-A1 usa el molde nuevo de 3 areas (listening, gramatica, produccion) ---
   if(n===0 && typeof moldePreA1==='function'){
     var mp=moldePreA1(p);
@@ -3605,6 +4711,7 @@ function ligarBarra(){
       else if(a==='avance')   pantallaAvance();
       else if(a==='maestro')  pantallaMaestro();
       else if(a==='perfil')   pantallaPerfil();
+      else if(a==='mas')      pantallaMas();
     };
   });
   pintarFotos();
@@ -3667,6 +4774,48 @@ function pantallaPerfil(){
   liga('pf-aspecto', function(){ try{pantallaAspecto();}catch(e){} });
   liga('pf-metodo',  function(){ pantallaMetodo(); });
   liga('pf-tutorial',function(){ mapa(); setTimeout(arrancarTutor,300); });
+}
+
+// ── Más: lo que quedaba en el menú de las tres líneas ──
+function pantallaMas(){
+  callarTodo();
+  var OPC=[
+    ['leccion',   '\u{1F4D8}','La lección de hoy',      'Seguir donde te quedaste'],
+    ['tareas',    '\u{1F4E8}','Lo que mandó tu maestro','Correcciones y paquetes'],
+    ['oirme',     '\u{1F3A7}','Oírme hablar',           'Tus grabaciones'],
+    ['personalizar','\u{270F}','Mis frases',            'Cambiar las frases de tu trabajo'],
+    ['voz',       '\u{1F5E3}','Voz y acento',           'Hombre o mujer, cuatro acentos'],
+    ['aspecto',   '\u{1F3A8}','Cómo se ve',             'Colores y tamaño de letra'],
+    ['metodo',    '\u{1F9ED}','El método',              'Por qué hacemos lo que hacemos'],
+    ['tutorial',  '\u{1F440}','Ver el recorrido',       'El paseo guiado otra vez']
+  ];
+  APP.innerHTML='<div class="card">'+
+    '<div class="qlbl">Todo lo demás</div>'+
+    '<h2 class="met-t">Más</h2>'+
+    '<div class="maslista">'+
+      OPC.map(function(o){
+        return '<button class="masb" data-m="'+o[0]+'">'+
+          '<span class="mas-ic">'+o[1]+'</span>'+
+          '<span class="mas-tx"><b>'+esc(o[2])+'</b><small>'+esc(o[3])+'</small></span>'+
+          '<span class="mas-fl">\u203A</span></button>';
+      }).join('')+
+    '</div>'+
+  '</div>';
+  APP.querySelectorAll('.masb').forEach(function(b){
+    b.onclick=function(){
+      var m=b.dataset.m;
+      try{
+        if(m==='leccion')        correr();
+        else if(m==='tareas')    pantallaTareas();
+        else if(m==='oirme')     pantallaOirme();
+        else if(m==='personalizar')pantallaDatos();
+        else if(m==='voz')       pantallaVoz();
+        else if(m==='aspecto')   pantallaAspecto();
+        else if(m==='metodo')    pantallaMetodo();
+        else if(m==='tutorial'){ mapa(); setTimeout(arrancarTutor,320); }
+      }catch(e){ avisito('Eso todavía no está disponible.'); }
+    };
+  });
 }
 
 // ── Avance ──
@@ -4612,9 +5761,18 @@ function irALeccionDe(n){
 // El alumno se ASOMA: ve el tema y una probadita de la gramática,
 // pero el detalle completo solo aparece cuando de verdad llega ahí.
 function asomarseALeccion(n,actual){
-  if(!MAT||!MAT.length)return;
+  // Antes salía sin hacer nada si no había material, y el toque se sentía muerto.
+  if(!MAT||!MAT.length){
+    if(P){ try{ MAT=materialDe(P); }catch(e){} }
+    if(!MAT||!MAT.length){
+      var tr=(typeof tramoDe==='function')?tramoDe(n):null;
+      avisito('Parada '+n+(tr?' · '+tr.nombre:'')+
+        '. Arma tu personaje y se abre.');
+      return;
+    }
+  }
   var idx=(contenidoDe(n)-1)%MAT.length;
-  var S=MAT[idx]; if(!S)return;
+  var S=MAT[idx]; if(!S){ avisito('Parada '+n); return; }
   var abierta=(n<=actual);
 
   var items=S.items||[];
@@ -4723,8 +5881,10 @@ function montarMapa3D(host,c){
       background:getComputedStyle(document.body).getPropertyValue('--crema').trim()||'#F5F1E8',
       onSelect:function(i,info){
         var n=i+1;
-        if(JEFE_LIBRE){ irALeccionDe(n); return; }
-        asomarseALeccion(n,c.parada);
+        try{
+          if(JEFE_LIBRE){ irALeccionDe(n); return; }
+          asomarseALeccion(n,c.parada);
+        }catch(e){ avisito('Parada '+n); }
       }
     });
     if(!MAPA3D)return false;
@@ -4746,10 +5906,22 @@ function mapa3DoViejo(){
 
   var tb=document.querySelector('.topbar');
   if(tb)tb.style.display='';
+  // Por ahora solo pre-A1 y C2 tienen contenido. Los demás se ven pero no entran.
+  var LISTOS={'Pre-A1':1,'C2':1};
+  var nivAhora=(P&&P.nivel)||'Pre-A1';
   APP.innerHTML='<div id="lienzo3d" class="lienzo3d"></div>'+
     '<div class="cab3d">'+
-      '<div class="cab3d-niv">'+esc((P&&P.nivel)||'Pre-A1')+'</div>'+
-      '<div class="cab3d-par">Parada '+c.parada+' de '+PARADAS+'</div>'+
+      '<div>'+
+        '<div class="cab3d-niv">'+esc(nivAhora)+'</div>'+
+        '<div class="cab3d-par">Parada '+c.parada+' de '+PARADAS+'</div>'+
+      '</div>'+
+      '<div class="niveles">'+
+        ['Pre-A1','A1','A2','B1','B2','C1','C2'].map(function(nv){
+          var cerrado=!LISTOS[nv];
+          return '<button class="nivb'+(nv===nivAhora?' on':'')+(cerrado?' cerrado':'')+
+                 '" data-niv="'+nv+'">'+esc(nv)+'</button>';
+        }).join('')+
+      '</div>'+
     '</div>'+
     '<button class="btn3d" id="ir3d">Empezar la parada '+c.parada+'</button>';
 
@@ -4766,6 +5938,22 @@ function mapa3DoViejo(){
 
   var b=document.getElementById('ir3d');
   if(b)b.onclick=function(){ try{correr();}catch(e){} };
+
+  APP.querySelectorAll('.nivb').forEach(function(bt){
+    bt.onclick=function(){
+      var nv=bt.dataset.niv;
+      if(!LISTOS[nv]){
+        avisito(nv+' todavía no está listo. Por ahora solo pre-A1 y C2.');
+        return;
+      }
+      if(!P){ avisito('Primero arma tu personaje.'); return; }
+      P.nivel=nv;
+      P.nivel_n=({'Pre-A1':0,'A1':1,'A2':2,'B1':3,'B2':4,'C1':5,'C2':6})[nv]||0;
+      try{ var d=load(); d.perfil=P; save(d); D=d; }catch(e){}
+      try{ MAT=materialDe(P); }catch(e){}
+      mapa();
+    };
+  });
   marcarTab('mapa');
   return true;
 }
@@ -6648,7 +7836,8 @@ function paso(){
     palabra:'Una palabra de tu trabajo. Escoge en cual frase va bien.',
     deletreo:'Te deletreo la palabra letra por letra en ingles. Escribela.',
     phrasal:'Un verbo con preposicion. Se aprende de a uno porque cambia de significado. Oyelo y usalo en la frase.',
-    idiom:'Una expresion hecha. Palabra por palabra no tiene sentido. Adivina que significa.'
+    idiom:'Una expresion hecha. Palabra por palabra no tiene sentido. Adivina que significa.',
+    video:'Aqui ves a gente de verdad diciendo la frase, a su velocidad. No esperes entender todo la primera vez.'
   };
   var quedan=S.items.length-it-1;
   var h=atras()+marcaReloj()+ayuda(ayudas[x.k]||'Sigue las instrucciones de la tarjeta.',(quedan>0?'quedan '+quedan+' ejercicios':'el cierre de la sesión'))+'<div class="prog">'+S.items.map(function(_,i){return '<i class="'+(i<=it?'on':'')+'"></i>';}).join('')+'</div>'+navPaso(it>0, it<S.items.length-1)+'<div class="qcard">';
@@ -6870,6 +8059,28 @@ function paso(){
        (x.cuando?'<div class="qsub" id="idcuando" style="display:none">'+esc(x.cuando)+'</div>':'')+
        '<button class="btn ghost dudab" id="dudafrase" style="margin-top:12px">Pregúntame lo que sea</button>'+
        '<div id="dudacaja"></div>';
+  }else if(x.k==='video'){
+    h+='<div class="qlbl">Gente de verdad diciéndolo</div>'+
+       '<div class="qsub">Esta frase no es de un libro. Así la dicen en la calle, '+
+       'a su velocidad y con su acento.</div>'+
+       '<div class="qtxt">'+esc(x.en||'')+'</div>'+
+       (x.es?'<div class="qsub">'+esc(x.es)+'</div>':'')+
+       '<div class="vidmarco" id="vidmarco">'+
+         '<div class="vidcargando">Buscando dónde lo dicen…</div>'+
+       '</div>'+
+       '<div class="oirfila">'+
+         '<button class="oirb" id="oir">'+ico('bocina',16)+' Oírla clara</button>'+
+         '<button class="oirb alt" id="oirlento">'+ico('bocina',16)+' Más lento</button>'+
+       '</div>'+
+       '<div class="pidebox">'+esc(x.pide||'¿Se oye igual que cuando yo la digo?')+'</div>'+
+       '<div class="opsfila" id="vidops">'+
+         '<button class="opt" data-i="0">Sí, igual</button>'+
+         '<button class="opt" data-i="1">Más rápido</button>'+
+         '<button class="opt" data-i="2">No la reconocí</button>'+
+       '</div>'+
+       '<div id="res"></div>'+
+       '<button class="mic-big" id="mic"><span class="ring2"></span> Tocar y decirla como ellos</button>'+
+       '<button class="btn ghost" id="skip" style="margin-top:10px">Siguiente</button>';
   }else if(x.k==='acento'){
     h+='<div class="qlbl">Mismo inglés · otra boca</div>'+
        '<div class="qsub">La misma frase, dicha por gente de otro país. Así suena en el mundo real.</div>'+
@@ -7102,6 +8313,51 @@ function paso(){
     });
     var _di=document.getElementById('dudafrase');
     if(_di)_di.onclick=function(e){e.stopPropagation();abrirDudaFrase({en:x.en,es:x.bien});};
+  }
+
+  if(x.k==='video'){
+    // Se usa la búsqueda incrustada de YouTube: su reproductor oficial trae
+    // videos donde de verdad se dice la frase. No cuesta nada ni pide llave,
+    // y si no hay internet, la lección sigue con el audio de siempre.
+    (function(){
+      var marco=document.getElementById('vidmarco');
+      if(!marco)return;
+      var frase=(x.en||'').replace(/[."'!?]/g,'').trim();
+      if(!frase){ marco.innerHTML='<div class="vidcargando">Sin frase que buscar.</div>'; return; }
+      var q=encodeURIComponent('"'+frase+'"');
+      var src='https://www.youtube-nocookie.com/embed?listType=search&list='+q+
+              '&rel=0&modestbranding=1&playsinline=1';
+      var ifr=document.createElement('iframe');
+      ifr.src=src; ifr.loading='lazy'; ifr.allowFullscreen=true;
+      ifr.setAttribute('allow','accelerometer; encrypted-media; picture-in-picture');
+      ifr.title='Gente diciendo: '+frase;
+      var muerto=setTimeout(function(){
+        if(!ifr.dataset.ok){
+          marco.innerHTML='<div class="vidcargando">No pude traer el video. '+
+            'Úsalo con el botón de oír y sigue.</div>';
+        }
+      },7000);
+      ifr.onload=function(){ ifr.dataset.ok='1'; clearTimeout(muerto); };
+      marco.innerHTML=''; marco.appendChild(ifr);
+    })();
+
+    var _ov=document.getElementById('oir');
+    if(_ov)_ov.onclick=function(){ say(x.en||'','en-US'); };
+
+    APP.querySelectorAll('#vidops .opt').forEach(function(b){
+      b.onclick=function(){
+        var i=+b.dataset.i;
+        var dice=['se oyó igual','lo dicen más rápido','no la reconoció'][i];
+        b.classList.add(i===0?'ok':'no');
+        attempts.push({tipo:'video',meta:x.en||'',oido:dice,pct:null});
+        var r=document.getElementById('res');
+        if(r)r.innerHTML='<div class="fb '+(i===0?'ok':'no')+'">'+
+          (i===0?'Bien. Ahora dilo tú con esa misma velocidad.'
+                :'Normal: la gente habla más rápido que los cursos. Óyela lenta, luego a velocidad real, y después dila.')+
+          '</div>';
+        APP.querySelectorAll('#vidops .opt').forEach(function(z){z.disabled=true;});
+      };
+    });
   }
 
   // ---- los 6 ultimos: acentos, roleplay, recuento, pares, palabra, deletreo ----

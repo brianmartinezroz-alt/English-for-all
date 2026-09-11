@@ -222,6 +222,75 @@
   .hilox span{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.13em;
     text-transform:uppercase;opacity:.6;margin-bottom:3px}
 
+  /* ---- hojas de hola y adiós ---- */
+  .hoja-velo{position:fixed;inset:0;z-index:880;background:rgba(42,39,36,0);
+    display:flex;align-items:flex-end;justify-content:center;
+    transition:background .3s ease;pointer-events:auto}
+  .hoja-velo.abierta{background:rgba(42,39,36,.42)}
+  .hoja{width:100%;max-width:470px;background:var(--papel);
+    border-radius:22px 22px 0 0;padding:10px 22px calc(26px + env(safe-area-inset-bottom));
+    box-shadow:0 -10px 40px rgba(0,0,0,.28);
+    transform:translateY(102%);transition:transform .34s cubic-bezier(.22,.9,.3,1);
+    max-height:66vh;overflow-y:auto}
+  .hoja-velo.abierta .hoja{transform:translateY(0)}
+  .hoja-asa{width:38px;height:4px;border-radius:3px;background:var(--linea);
+    margin:0 auto 16px}
+  .hoja-cab{display:flex;align-items:center;gap:13px;margin-bottom:14px}
+  .hoja-foto{width:54px;height:54px;border-radius:50%;object-fit:cover;flex:none;
+    border:2px solid var(--verde)}
+  .hoja-foto.vacia{background:var(--crema);border-color:var(--linea);
+    display:flex;align-items:center;justify-content:center;font-size:24px}
+  .hoja-hola{font-size:13px;color:var(--tenue)}
+  .hoja-nom{font-family:var(--display);font-size:22px;font-weight:600;line-height:1.15}
+  .hoja-racha{background:rgba(216,90,48,.09);border:1px solid rgba(216,90,48,.26);
+    border-radius:10px;padding:9px 13px;font-size:13.5px;margin-bottom:13px}
+  .hoja-racha b{color:var(--coral);font-size:16px}
+  .hoja-hoy{background:var(--crema);border-radius:13px;padding:14px 16px;margin-bottom:15px}
+  .hoja-et{font-family:var(--mono);font-size:9px;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--verde);margin-bottom:4px}
+  .hoja-lec{font-family:var(--display);font-size:20px;font-weight:600;margin-bottom:3px}
+  .hoja-sub{font-size:13.5px;color:var(--tenue);line-height:1.5}
+  .hoja-btn{width:100%}
+  .hoja-mas{width:100%;margin-top:9px;background:none;border:0;font-family:inherit;
+    font-size:13.5px;color:var(--tenue);cursor:pointer;padding:9px}
+  @media (prefers-reduced-motion:reduce){
+    .hoja{transition:none} .hoja-velo{transition:none}
+  }
+
+  /* ---- barra de abajo ---- */
+  .barrabaja{position:fixed;left:0;right:0;bottom:0;z-index:800;
+    display:flex;align-items:flex-end;justify-content:space-around;
+    background:rgba(253,251,246,.97);backdrop-filter:blur(10px);
+    border-top:1px solid var(--linea);
+    padding:8px 6px calc(12px + env(safe-area-inset-bottom))}
+  .tabb{flex:1;background:none;border:0;font-family:inherit;cursor:pointer;
+    font-size:10.5px;color:var(--tenue);line-height:1.3;padding:2px 0}
+  .tabb .ic{display:block;font-size:20px;margin-bottom:2px;opacity:.5}
+  .tabb.on{color:var(--verde);font-weight:600}
+  .tabb.on .ic{opacity:1}
+  .tabb:active{transform:scale(.94)}
+  .tabb.maestro{color:var(--tinta);font-weight:600}
+  .fotomaestro{display:flex;width:44px;height:44px;border-radius:50%;margin:0 auto 2px;
+    align-items:center;justify-content:center;font-size:20px;overflow:hidden;
+    background:linear-gradient(160deg,#93A7B8,#3E5468);
+    border:2.5px solid var(--verde);box-shadow:0 3px 10px rgba(0,0,0,.18)}
+  .fotomaestro img{width:100%;height:100%;object-fit:cover}
+  .tabb .ic img{width:26px;height:26px;border-radius:50%;object-fit:cover;
+    display:block;margin:0 auto}
+  body{padding-bottom:78px}
+  .menub{display:none}          /* fuera las tres líneas */
+  @media (min-width:900px){ .barrabaja{max-width:520px;margin:0 auto;border-radius:18px 18px 0 0} }
+
+  /* ---- foto de perfil ---- */
+  .fotoperfil{width:104px;height:104px;border-radius:50%;margin:0 auto 12px;
+    background:var(--crema);border:2px solid var(--linea);overflow:hidden;
+    display:flex;align-items:center;justify-content:center;font-size:38px;
+    position:relative;cursor:pointer}
+  .fotoperfil img{width:100%;height:100%;object-fit:cover}
+  .fotoperfil .cambiar{position:absolute;left:0;right:0;bottom:0;
+    background:rgba(42,39,36,.72);color:#fff;font-size:9.5px;padding:4px 0;
+    text-align:center;letter-spacing:.04em}
+
   /* ---- corrección al momento ---- */
   .corr{background:rgba(216,90,48,.07);border:1px solid rgba(216,90,48,.28);
     border-radius:11px;padding:13px 15px;margin:11px 0}
@@ -1016,6 +1085,16 @@
   <div class="velo" id="velo"></div>
   <nav class="cajon" id="cajon" aria-label="Menú"></nav>
   <div class="wrapc" id="app"></div>
+
+  <!-- Barra de abajo: reemplaza al menú de las tres líneas.
+       Todo lo que estaba escondido ahí ahora se alcanza con el pulgar. -->
+  <nav class="barrabaja" id="barrabaja" aria-label="Secciones">
+    <button class="tabb on" data-t="mapa"><span class="ic">&#128506;</span>Mapa</button>
+    <button class="tabb" data-t="avance"><span class="ic">&#128202;</span>Avance</button>
+    <button class="tabb maestro" data-t="maestro">
+      <span class="fotomaestro" id="fotomaestro">&#128100;</span>Maestro</button>
+    <button class="tabb" data-t="perfil"><span class="ic" id="icperfil">&#128100;</span>Perfil</button>
+  </nav>
 </div>
 
 <script>
@@ -1024,7 +1103,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v96 · 9 sep · el método y el mapa";
+var VERSION="v98 · 11 sep · hola y adiós";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -2396,6 +2475,14 @@ function router(){
     if(f==='sonido'){pruebaSonido();return;}
     if(f==='voz'){vozPicker();return;}
   }
+  // el saludo sale una vez por sesión, ya con el mapa detrás
+  setTimeout(function(){
+    if(MODO_JEFE||JEFE_LIBRE)return;
+    try{ if(!P)return; if(sessionStorage.getItem('efa_saludo'))return;
+         sessionStorage.setItem('efa_saludo','1'); }catch(e){ return; }
+    hojaHola();
+  },700);
+
   if(MODO_JEFE){
     MODO_JEFE=false;
     try{ pantallaJefe(); }
@@ -3410,8 +3497,6 @@ function pintarCajon(){
     '<button class="cj-b" data-a="tutorial">'+ico('volver')+' Ver otra vez el recorrido</button>'+
     '<div class="cj-sec">Cómo voy</div>'+
     '<button class="cj-b" data-a="avance">'+ico('curva')+' Mi avance y mi curva</button>'+
-    '<button class="cj-b" data-a="avatar">'+ico('persona')+' Mi avatar</button>'+
-    '<button class="cj-b" data-a="personaje">'+ico('tijeras')+' Cambiar mi personaje</button>'+
     '<button class="cj-b" data-a="oirme">'+ico('audifonos')+' Óyete el primer día y hoy</button>'+
     '<div class="cj-sec">Por qué funciona</div>'+
     '<button class="cj-b" data-a="metodo">'+ico('libro')+' El método, explicado</button>'+
@@ -3444,6 +3529,250 @@ function pintarCajon(){
 // El botón del menú solo se enganchaba dentro de marca(), la pantalla de
 // bienvenida. El modo jefe se la salta, así que las tres rayitas quedaban muertas.
 // Ahora se engancha al arrancar, pase lo que pase.
+/* ══ Barra de abajo ══
+   Antes todo vivía en el menú de las tres líneas, que casi nadie abría.
+   Ahora las cuatro secciones están al alcance del pulgar. */
+function pintarFotos(){
+  var f=null;
+  try{ f=localStorage.getItem('efa_foto'); }catch(e){}
+  var fp=document.getElementById('icperfil');
+  if(fp)fp.innerHTML = f ? '<img src="'+f+'" alt="">' : '&#128100;';
+  var fm=document.getElementById('fotomaestro');
+  if(fm){
+    var fb=null; try{ fb=localStorage.getItem('efa_foto_maestro'); }catch(e){}
+    fm.innerHTML = fb ? '<img src="'+fb+'" alt="">' : '&#128100;';
+  }
+}
+function marcarTab(cual){
+  var b=document.getElementById('barrabaja');
+  if(!b)return;
+  b.querySelectorAll('.tabb').forEach(function(t){
+    t.classList.toggle('on', t.dataset.t===cual && t.dataset.t!=='maestro');
+  });
+}
+function ligarBarra(){
+  var b=document.getElementById('barrabaja');
+  if(!b || b.dataset.listo)return;
+  b.dataset.listo='1';
+  b.querySelectorAll('.tabb').forEach(function(t){
+    t.onclick=function(){
+      var a=t.dataset.t;
+      marcarTab(a);
+      if(a==='mapa')          mapa();
+      else if(a==='avance')   pantallaAvance();
+      else if(a==='maestro')  pantallaMaestro();
+      else if(a==='perfil')   pantallaPerfil();
+    };
+  });
+  pintarFotos();
+}
+document.addEventListener('DOMContentLoaded',ligarBarra);
+setTimeout(ligarBarra,300);
+
+// ── Perfil: con foto propia, sin monito ──
+function pantallaPerfil(){
+  callarTodo();
+  var f=null; try{ f=localStorage.getItem('efa_foto'); }catch(e){}
+  var c; try{ c=progreso(); }catch(e){ c={parada:1,puntos:0,racha:0}; }
+  APP.innerHTML='<div class="card">'+
+    '<div class="qlbl">Tu perfil</div>'+
+    '<div class="fotoperfil" id="fperfil">'+
+      (f?'<img src="'+f+'" alt="">':'&#128100;')+
+      '<span class="cambiar">cambiar</span>'+
+    '</div>'+
+    '<input type="file" id="subirfoto" accept="image/*" style="display:none">'+
+    '<h2 style="text-align:center;font-family:var(--display);font-size:23px;margin-bottom:3px">'+
+      esc((P&&P.nombre)||'Tu nombre')+'</h2>'+
+    '<p class="qsub" style="text-align:center">'+
+      esc((P&&P.trabajo_es)||'')+((P&&P.nivel)?' · '+esc(P.nivel):'')+'</p>'+
+    '<div class="jefe-bloque"><div class="jefe-h">Tus datos</div>'+
+      '<button class="btn ghost" id="pf-datos">Cambiar mis datos</button>'+
+      '<button class="btn ghost" id="pf-voz" style="margin-top:8px">Voz y acento</button>'+
+      '<button class="btn ghost" id="pf-aspecto" style="margin-top:8px">Cómo se ve la app</button>'+
+    '</div>'+
+    '<div class="jefe-bloque"><div class="jefe-h">Ayuda</div>'+
+      '<button class="btn ghost" id="pf-metodo">El método, explicado</button>'+
+      '<button class="btn ghost" id="pf-tutorial" style="margin-top:8px">Ver el recorrido otra vez</button>'+
+    '</div>'+
+  '</div>';
+  var fp=document.getElementById('fperfil'), inp=document.getElementById('subirfoto');
+  if(fp&&inp){
+    fp.onclick=function(){ inp.click(); };
+    inp.onchange=function(){
+      var file=inp.files&&inp.files[0]; if(!file)return;
+      var r=new FileReader();
+      r.onload=function(){
+        // se guarda reducida, para no llenar el teléfono
+        var im=new Image();
+        im.onload=function(){
+          var L=Math.min(im.width,im.height), cv=document.createElement('canvas');
+          cv.width=cv.height=240;
+          var x=cv.getContext('2d');
+          x.drawImage(im,(im.width-L)/2,(im.height-L)/2,L,L,0,0,240,240);
+          var d=cv.toDataURL('image/jpeg',0.82);
+          try{ localStorage.setItem('efa_foto',d); }catch(e){ avisito('No cupo la foto.'); return; }
+          pantallaPerfil(); pintarFotos();
+        };
+        im.src=r.result;
+      };
+      r.readAsDataURL(file);
+    };
+  }
+  function liga(id,fn){var b=document.getElementById(id); if(b)b.onclick=fn;}
+  liga('pf-datos',   function(){ try{pantallaDatos();}catch(e){} });
+  liga('pf-voz',     function(){ try{pantallaVoz();}catch(e){} });
+  liga('pf-aspecto', function(){ try{pantallaAspecto();}catch(e){} });
+  liga('pf-metodo',  function(){ pantallaMetodo(); });
+  liga('pf-tutorial',function(){ mapa(); setTimeout(arrancarTutor,300); });
+}
+
+// ── Avance ──
+function pantallaAvance(){
+  callarTodo();
+  var c; try{ c=progreso(); }catch(e){ c={parada:1,puntos:0,gastados:0,racha:0}; }
+  var mem=memoria(), dom=0, tot=0;
+  for(var k in mem){ tot++; if(mem[k]&&mem[k].dominada)dom++; }
+  APP.innerHTML='<div class="card">'+
+    '<div class="qlbl">Tu avance</div>'+
+    '<h2 class="met-t">Cómo vas</h2>'+
+    '<div class="aprendi"><div class="apfila">'+
+      '<div class="apbox"><b>'+c.parada+'</b><span>parada</span></div>'+
+      '<div class="apbox"><b>'+(c.racha||0)+'</b><span>días seguidos</span></div>'+
+      '<div class="apbox"><b>'+puntosLibres()+'</b><span>puntos</span></div>'+
+    '</div></div>'+
+    '<div class="jefe-bloque"><div class="jefe-h">Frases</div>'+
+      '<p class="qsub">Has practicado <b>'+tot+'</b> frases. '+
+      'Ya dominas <b>'+dom+'</b>.</p></div>'+
+    '<button class="btn" id="av-tareas" style="margin-top:12px">Ver mis tareas</button>'+
+  '</div>';
+  var b=document.getElementById('av-tareas');
+  if(b)b.onclick=function(){ try{pantallaTareas();}catch(e){ avisito('Aún no hay tareas.'); } };
+}
+
+// ── Maestro ──
+function pantallaMaestro(){
+  callarTodo();
+  var fb=null; try{ fb=localStorage.getItem('efa_foto_maestro'); }catch(e){}
+  APP.innerHTML='<div class="card">'+
+    '<div class="qlbl">Tu maestro</div>'+
+    '<div class="fotoperfil" style="cursor:default">'+
+      (fb?'<img src="'+fb+'" alt="">':'&#128100;')+'</div>'+
+    '<h2 style="text-align:center;font-family:var(--display);font-size:23px;margin-bottom:3px">'+
+      'Brian Martínez</h2>'+
+    '<p class="qsub" style="text-align:center">Maestría en Educación · University of Limerick</p>'+
+    '<div class="jefe-bloque"><div class="jefe-h">Lo que hace por ti</div>'+
+      '<p class="qsub">Oye tus grabaciones, escoge máximo tres cosas que corregir, '+
+      'y te las devuelve con su nombre. Un algoritmo te dice que te equivocaste. '+
+      'Un maestro te dice en qué y cómo arreglarlo.</p></div>'+
+    '<button class="btn" id="ma-tareas">Lo que me mandó</button>'+
+    '<button class="btn ghost" id="ma-metodo" style="margin-top:8px">Por qué enseña así</button>'+
+  '</div>';
+  var t=document.getElementById('ma-tareas');
+  if(t)t.onclick=function(){ try{pantallaTareas();}catch(e){ avisito('Todavía no hay nada.'); } };
+  var m=document.getElementById('ma-metodo');
+  if(m)m.onclick=function(){ pantallaMetodo(); };
+}
+
+/* ══ Hola y adiós ══
+   Antes el saludo tapaba toda la pantalla y el alumno no veía a dónde iba.
+   Ahora sube desde abajo a media pantalla, con el mapa detrás. Y al salir,
+   una despedida con la misma forma. */
+
+function saludoDelDia(){
+  var h=new Date().getHours();
+  if(h<12) return 'Buenos días';
+  if(h<19) return 'Buenas tardes';
+  return 'Buenas noches';
+}
+
+function hojaHola(){
+  if(document.getElementById('hojahola'))return;
+  var c; try{ c=progreso(); }catch(e){ c={parada:1,racha:0}; }
+  var nom=(P&&P.nombre)||'';
+  var f=null; try{ f=localStorage.getItem('efa_foto'); }catch(e){}
+  var racha=c.racha||0;
+
+  var v=document.createElement('div');
+  v.className='hoja-velo'; v.id='hojahola';
+  v.innerHTML='<div class="hoja">'+
+    '<div class="hoja-asa"></div>'+
+    '<div class="hoja-cab">'+
+      (f?'<img class="hoja-foto" src="'+f+'" alt="">':'<div class="hoja-foto vacia">\u{1F464}</div>')+
+      '<div><div class="hoja-hola">'+saludoDelDia()+'</div>'+
+      '<div class="hoja-nom">'+esc(nom||'qué gusto verte')+'</div></div>'+
+    '</div>'+
+    (racha>0?'<div class="hoja-racha"><b>'+racha+'</b> días seguidos. No la rompas hoy.</div>':'')+
+    '<div class="hoja-hoy">'+
+      '<div class="hoja-et">Hoy te toca</div>'+
+      '<div class="hoja-lec">Parada '+c.parada+'</div>'+
+      '<div class="hoja-sub">Diez minutos y ya. Ni uno más si no quieres.</div>'+
+    '</div>'+
+    '<button class="btn hoja-btn" id="hojair">Empezar</button>'+
+    '<button class="hoja-mas" id="hojamas">Solo quiero ver el mapa</button>'+
+  '</div>';
+  document.body.appendChild(v);
+  requestAnimationFrame(function(){ v.classList.add('abierta'); });
+
+  function cerrar(){
+    v.classList.remove('abierta');
+    setTimeout(function(){ v.remove(); },340);
+  }
+  v.onclick=function(e){ if(e.target===v)cerrar(); };
+  var ir=document.getElementById('hojair');
+  if(ir)ir.onclick=function(){ cerrar(); setTimeout(function(){ try{correr();}catch(e){} },300); };
+  var mas=document.getElementById('hojamas');
+  if(mas)mas.onclick=cerrar;
+}
+
+function hojaAdios(){
+  if(document.getElementById('hojaadios'))return;
+  var c; try{ c=progreso(); }catch(e){ c={parada:1,racha:0}; }
+  var f=null; try{ f=localStorage.getItem('efa_foto'); }catch(e){}
+  var v=document.createElement('div');
+  v.className='hoja-velo'; v.id='hojaadios';
+  v.innerHTML='<div class="hoja">'+
+    '<div class="hoja-asa"></div>'+
+    '<div class="hoja-cab">'+
+      (f?'<img class="hoja-foto" src="'+f+'" alt="">':'<div class="hoja-foto vacia">\u{1F44B}</div>')+
+      '<div><div class="hoja-hola">Nos vemos</div>'+
+      '<div class="hoja-nom">'+esc((P&&P.nombre)||'')+'</div></div>'+
+    '</div>'+
+    '<div class="hoja-hoy">'+
+      '<div class="hoja-et">Antes de irte</div>'+
+      '<div class="hoja-sub" style="font-size:14.5px;line-height:1.55">'+
+      'Lo que practicaste hoy ya va en camino a tu maestro. '+
+      'Si algo se te atoró, te va a volver a salir en unos días, '+
+      'justo cuando ya casi lo olvidabas. Así se queda.</div>'+
+    '</div>'+
+    '<button class="btn hoja-btn" id="adiosok">Cerrar</button>'+
+    '<button class="hoja-mas" id="adiosseguir">Mejor sigo un rato</button>'+
+  '</div>';
+  document.body.appendChild(v);
+  requestAnimationFrame(function(){ v.classList.add('abierta'); });
+  function cerrar(){ v.classList.remove('abierta'); setTimeout(function(){v.remove();},340); }
+  v.onclick=function(e){ if(e.target===v)cerrar(); };
+  var k=document.getElementById('adiosok');
+  if(k)k.onclick=cerrar;
+  var g=document.getElementById('adiosseguir');
+  if(g)g.onclick=cerrar;
+}
+
+// la despedida sale cuando el alumno intenta irse
+(function(){
+  var yaSalio=false;
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='hidden')yaSalio=true;
+  });
+  window.addEventListener('pagehide',function(){ yaSalio=true; });
+  // en computadora: al llevar el cursor fuera por arriba
+  document.addEventListener('mouseout',function(e){
+    if(yaSalio||e.relatedTarget||e.clientY>12)return;
+    try{ if(!P)return; }catch(err){ return; }
+    yaSalio=true;
+    hojaAdios();
+  });
+})();
+
 function ligarMenu(){
   var mb=document.getElementById('menub'), vl=document.getElementById('velo');
   if(mb&&!mb.onclick){
@@ -3547,7 +3876,13 @@ function cerrarCajon(){
 }
 function iconoAvatar(){
   // su muñeco, con lo que traiga puesto: es su foto de perfil
-  return munecoFoto(progreso().avatar||{},52);
+  // Antes iba el monito. Ahora va la foto del alumno; si no puso, un círculo sobrio.
+  var f=null; try{ f=localStorage.getItem('efa_foto'); }catch(e){}
+  if(f)return '<img src="'+f+'" alt="" style="width:52px;height:52px;border-radius:50%;'+
+    'object-fit:cover;border:2px solid var(--verde);box-shadow:0 2px 8px rgba(0,0,0,.2)">';
+  return '<div style="width:52px;height:52px;border-radius:50%;background:var(--crema);'+
+    'border:2px solid var(--linea);display:flex;align-items:center;justify-content:center;'+
+    'font-size:22px">\u{1F464}</div>';
 }
 
 /* ═══════════ colores de la app ═══════════ */

@@ -393,6 +393,12 @@
     padding:12px 22px;font-size:14.5px;font-weight:600;text-decoration:none}
   .vidbtn:active{transform:scale(.97)}
   .vidcargando{padding:18px;text-align:center;color:var(--tenue);font-size:13.5px}
+  /* el video se ve dentro de la app, en su recuadro */
+  .vidplayer{position:relative;width:100%;padding-bottom:56.25%;height:0;
+    border-radius:13px;overflow:hidden;background:#000;border:1px solid var(--linea)}
+  .vidplayer iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
+  .vidpie{font-size:12px;color:var(--tenue);text-align:center;margin-top:7px;line-height:1.45}
+  .vidpie a{color:var(--tenue)}
 
   /* ---- phrasal verbs y expresiones ---- */
   .phrgrande{font-family:var(--display);font-size:29px;text-align:center;margin:14px 0 3px;
@@ -1233,7 +1239,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v123 · 13 sep · solo Google, 7 mapas";
+var VERSION="v124 · 14 sep · video dentro de la lección";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -7536,6 +7542,41 @@ var VOZ_ENDPOINT='https://script.google.com/macros/s/AKfycbxJgynQD_GCLvdzlDNUrc8
 // Si está vacío, el alumno tiene que mandarla por correo.
 var DATOS_ENDPOINT='https://script.google.com/macros/s/AKfycbyW4nHbMi8a4pcOS_0PUOYR053PEYwQ0tFjm9hZM4Tx7kq2hK6VdrZy9PGqyrlsSrimng/exec';
 
+/* Buscador de videos. Si esta linea queda vacia, la app sigue funcionando
+   igual que antes: en vez del recuadro ofrece abrir la busqueda en YouTube. */
+var VIDEO_ENDPOINT='https://script.google.com/macros/s/AKfycbxO2E9js4kqt0j3XyFMxKnJ1bGLidnqLqXPlRadiRhk0Ri-0EH0tFh1z7_o7pSO_Haz/exec';
+
+// Lo que ya se busco una vez queda guardado en el telefono del alumno, asi
+// que la segunda vez que vea esa leccion el video aparece al instante.
+var VIDEO_CACHE_K='efa_videos';
+function videosGuardados(){
+  try{return JSON.parse(localStorage.getItem(VIDEO_CACHE_K)||'{}');}catch(e){return {};}
+}
+function guardarVideo(k,v){
+  try{var t=videosGuardados();t[k]=v;localStorage.setItem(VIDEO_CACHE_K,JSON.stringify(t));}catch(e){}
+}
+function videoDeFrase(frase,cb){
+  var k=clave(frase);
+  var t=videosGuardados();
+  if(t[k]!==undefined){cb(t[k]||null);return;}
+  if(!VIDEO_ENDPOINT){cb(null);return;}
+  var listo=false;
+  // Si el servidor tarda demasiado no se deja al alumno esperando.
+  var reloj=setTimeout(function(){if(!listo){listo=true;cb(null);}},9000);
+  fetch(VIDEO_ENDPOINT+'?frase='+encodeURIComponent(frase))
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(listo)return;listo=true;clearTimeout(reloj);
+      var id=null;
+      if(d&&d.ok&&d.resultados&&d.resultados[0])id=d.resultados[0].id||null;
+      // Solo se guarda cuando el servidor contesto bien. Si estaba caido,
+      // no se guarda nada y la proxima vez se vuelve a intentar.
+      if(d&&d.ok)guardarVideo(k,id||0);
+      cb(id);
+    })
+    .catch(function(){if(listo)return;listo=true;clearTimeout(reloj);cb(null);});
+}
+
 function hayIA(){return !!IA_ENDPOINT;}
 function pedirIA(accion,datos,ok,falla){
   if(!hayIA()){falla&&falla();return;}
@@ -8972,19 +9013,39 @@ function paso(){
       if(!marco)return;
       var frase=(x.en||'').replace(/[."'!?]/g,'').trim();
       if(!frase){ marco.innerHTML='<div class="vidcargando">Sin frase que buscar.</div>'; return; }
-      // YouTube quitó la búsqueda incrustada (listType=search), así que el
-      // reproductor dentro de la app ya no trae resultados. En su lugar se
-      // abre la búsqueda real en otra pestaña: funciona siempre y es gratis.
-      var q=encodeURIComponent('"'+frase+'"');
-      var url='https://www.youtube.com/results?search_query='+q;
-      marco.innerHTML=
-        '<div class="vidcaja">'+
-          '<div class="vidfrase">'+esc(frase)+'</div>'+
-          '<p class="vidnota">Ábrelo en YouTube y oye a gente de verdad diciéndolo. '+
-          'Regresa aquí cuando lo hayas oído dos o tres veces.</p>'+
-          '<a class="vidbtn" href="'+url+'" target="_blank" rel="noopener">'+
-            'Oírlo en YouTube</a>'+
-        '</div>';
+      // Nuestro servidor busca el video una sola vez y guarda cual fue.
+      // El video se ve AQUI DENTRO: el alumno no sale de la leccion.
+      videoDeFrase(frase,function(id){
+        var m=document.getElementById('vidmarco');
+        if(!m)return;
+
+        if(id){
+          // Ojo: no arranca solo. El alumno decide cuando, porque puede
+          // estar en el trabajo o en el camion.
+          m.innerHTML=
+            '<div class="vidplayer">'+
+              '<iframe src="https://www.youtube-nocookie.com/embed/'+id+
+              '?rel=0&modestbranding=1&playsinline=1" title="Video" '+
+              'allow="accelerometer; encrypted-media; picture-in-picture" '+
+              'allowfullscreen loading="lazy"></iframe>'+
+            '</div>'+
+            '<p class="vidpie">Dale al triángulo para verlo. Si no carga, '+
+            '<a href="https://www.youtube.com/watch?v='+id+'" target="_blank" rel="noopener">'+
+            'ábrelo en YouTube</a>.</p>';
+          return;
+        }
+
+        // No hubo video para esta frase: se deja el camino de siempre.
+        var q=encodeURIComponent('"'+frase+'"');
+        m.innerHTML=
+          '<div class="vidcaja">'+
+            '<div class="vidfrase">'+esc(frase)+'</div>'+
+            '<p class="vidnota">Todavía no tengo un video para esta frase. '+
+            'Puedes buscarla en YouTube y regresar aquí cuando la hayas oído dos o tres veces.</p>'+
+            '<a class="vidbtn" href="https://www.youtube.com/results?search_query='+q+'" '+
+            'target="_blank" rel="noopener">Buscarla en YouTube</a>'+
+          '</div>';
+      });
     })();
 
     var _ov=document.getElementById('oir');

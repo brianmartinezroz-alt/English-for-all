@@ -410,6 +410,11 @@
   .vidplayer iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
   .vidpie{font-size:12px;color:var(--tenue);text-align:center;margin-top:7px;line-height:1.45}
   .vidpie a{color:var(--tenue)}
+  /* el ejemplo en video que acompana al vocabulario nuevo */
+  .vocvid{margin:14px 0 4px}
+  .vocvid.oculto{display:none}
+  .vocvid-t{font-size:12.5px;color:var(--tenue);margin-bottom:6px;
+    text-transform:uppercase;letter-spacing:.06em}
 
   /* ---- phrasal verbs y expresiones ---- */
   .phrgrande{font-family:var(--display);font-size:29px;text-align:center;margin:14px 0 3px;
@@ -1250,7 +1255,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v124 · 14 sep · video en la lección, dos niveles abiertos";
+var VERSION="v125 · 14 sep · video en el vocabulario nuevo";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -7606,21 +7611,83 @@ var VIDEO_ENDPOINT='https://script.google.com/macros/s/AKfycbxO2E9js4kqt0j3XyFMx
 // Lo que ya se busco una vez queda guardado en el telefono del alumno, asi
 // que la segunda vez que vea esa leccion el video aparece al instante.
 var VIDEO_CACHE_K='efa_videos';
+
+/* ============ VIDEO DE EJEMPLO PARA EL VOCABULARIO ============
+   La idea: cada vez que se ensena algo nuevo, ver a alguien usandolo.
+   Pero no en todo. En los niveles bajos el vocabulario es concreto y ver
+   la palabra en uso ayuda mucho. De B1 para arriba el vocabulario suelto
+   ya no es el trabajo: ahi lo que de verdad se entiende viendo a la gente
+   son las expresiones hechas y los verbos con preposicion.
+   Por eso:
+     Pre-A1, A1, A2  -> palabras nuevas, expresiones y verbos con preposicion
+     B1, B2, C1, C2  -> solo expresiones y verbos con preposicion            */
+function llevaVideo(k){
+  var n=(P&&typeof P.nivel_n==='number')?P.nivel_n:0;
+  if(k==='idiom'||k==='phrasal')return true;
+  if(k==='palabra')return n<=2;
+  return false;
+}
+function pistaDe(k){
+  if(k==='idiom')  return 'idiom meaning example';
+  if(k==='phrasal')return 'phrasal verb meaning example';
+  return 'vocabulary word meaning example';
+}
+// oculto=true para el idiom: el video no se ensena antes de que adivine,
+// porque el titulo del video le regalaria la respuesta.
+function cajaVideoVocab(termino,k,oculto){
+  if(!llevaVideo(k)||!termino)return '';
+  return '<div class="vocvid'+(oculto?' oculto':'')+'" id="vocvid" '+
+      'data-term="'+esc(termino)+'" data-pista="'+esc(pistaDe(k))+'">'+
+      '<div class="vocvid-t">Míralo en uso</div>'+
+      '<div class="vidmarco"><div class="vidcargando">Buscando un ejemplo…</div></div>'+
+      '<button class="btn" id="vocsig" style="display:none;margin-top:10px">Siguiente</button>'+
+    '</div>';
+}
+
+var VOCVID={listo:false,id:null,cb:null};
+function pintarVideoVocab(){
+  var caja=document.getElementById('vocvid');
+  VOCVID={listo:false,id:null,cb:null};
+  if(!caja)return;
+  videoDeFrase(caja.getAttribute('data-term'),caja.getAttribute('data-pista'),function(id){
+    VOCVID.listo=true;VOCVID.id=id;
+    var c=document.getElementById('vocvid');
+    if(c){
+      if(!id){
+        c.parentNode&&c.parentNode.removeChild(c);   // sin video, la caja se quita
+      }else{
+        var m=c.querySelector('.vidmarco');
+        if(m)m.innerHTML='<div class="vidplayer"><iframe '+
+          'src="https://www.youtube-nocookie.com/embed/'+id+
+          '?rel=0&modestbranding=1&playsinline=1" title="Ejemplo en video" '+
+          'allow="accelerometer; encrypted-media; picture-in-picture" '+
+          'allowfullscreen loading="lazy"></iframe></div>';
+      }
+    }
+    if(VOCVID.cb){var f=VOCVID.cb;VOCVID.cb=null;f(id);}
+  });
+}
+function cuandoHayaVideo(f){
+  if(VOCVID.listo)f(VOCVID.id); else VOCVID.cb=f;
+}
+
 function videosGuardados(){
   try{return JSON.parse(localStorage.getItem(VIDEO_CACHE_K)||'{}');}catch(e){return {};}
 }
 function guardarVideo(k,v){
   try{var t=videosGuardados();t[k]=v;localStorage.setItem(VIDEO_CACHE_K,JSON.stringify(t));}catch(e){}
 }
-function videoDeFrase(frase,cb){
-  var k=clave(frase);
+function videoDeFrase(frase,pista,cb){
+  if(typeof pista==='function'){cb=pista;pista='';}
+  var k=clave(frase)+'|'+(pista||'');
   var t=videosGuardados();
   if(t[k]!==undefined){cb(t[k]||null);return;}
   if(!VIDEO_ENDPOINT){cb(null);return;}
   var listo=false;
   // Si el servidor tarda demasiado no se deja al alumno esperando.
   var reloj=setTimeout(function(){if(!listo){listo=true;cb(null);}},9000);
-  fetch(VIDEO_ENDPOINT+'?frase='+encodeURIComponent(frase))
+  fetch(VIDEO_ENDPOINT+'?frase='+encodeURIComponent(frase)+
+        (pista?'&extra='+encodeURIComponent(pista):''))
     .then(function(r){return r.json();})
     .then(function(d){
       if(listo)return;listo=true;clearTimeout(reloj);
@@ -8773,6 +8840,7 @@ function paso(){
        '<div class="phrgrande">'+esc(x.en||'')+'</div>'+
        '<div class="phrsig">'+esc(x.es||'')+'</div>'+
        (x.ojo?'<div class="pidebox">'+esc(x.ojo)+'</div>':'')+
+       cajaVideoVocab(x.en,'phrasal',false)+
        '<div class="oirfila">'+
          '<button class="oirb" id="oir">'+ico('bocina',16)+' Oírlo</button>'+
          '<button class="oirb alt" id="oires">🇲🇽 Qué significa</button>'+
@@ -8798,6 +8866,7 @@ function paso(){
        '</div>'+
        '<div id="res"></div>'+
        (x.cuando?'<div class="qsub" id="idcuando" style="display:none">'+esc(x.cuando)+'</div>':'')+
+       cajaVideoVocab(x.en,'idiom',true)+
        '<button class="btn ghost dudab" id="dudafrase" style="margin-top:12px">Pregúntame lo que sea</button>'+
        '<div id="dudacaja"></div>';
   }else if(x.k==='video'){
@@ -8892,6 +8961,7 @@ function paso(){
            '</div>';
          }).join('')+
        '</div>'+
+       cajaVideoVocab(x.en,'palabra',false)+
        '<div id="res"></div>';
   }else if(x.k==='deletreo'){
     h+='<div class="qlbl">Deletreo · letra por letra</div>'+
@@ -8926,6 +8996,7 @@ function paso(){
   if(_mid)_mid.textContent=(it+1)+' de '+S.items.length;
   ligarDuda();
   ligarVideo();
+  pintarVideoVocab();
 
   // --- precarga: el audio de este paso y del siguiente, para que suene al instante ---
   (function(){
@@ -9054,7 +9125,22 @@ function paso(){
         var cu=document.getElementById('idcuando');
         if(cu)cu.style.display='';
         APP.querySelectorAll('#idops .opt').forEach(function(z){z.disabled=true;});
-        setTimeout(function(){it++;paso();},3000);
+
+        // Si hay ejemplo en video, se destapa y el alumno decide cuando
+        // seguir. Si no hay, se pasa solo como antes.
+        var yaSeguimos=false;
+        function seguir(){ if(yaSeguimos)return; yaSeguimos=true; it++; paso(); }
+        var vcaja=document.getElementById('vocvid');
+        if(!vcaja){ setTimeout(seguir,3000); return; }
+        var reloj=setTimeout(seguir,3500);
+        cuandoHayaVideo(function(vid){
+          var c=document.getElementById('vocvid');
+          if(!vid||!c)return;              // sin video: que corra el reloj
+          clearTimeout(reloj);
+          c.classList.remove('oculto');
+          var sg=document.getElementById('vocsig');
+          if(sg){ sg.style.display=''; sg.onclick=seguir; }
+        });
       };
     });
     var _di=document.getElementById('dudafrase');

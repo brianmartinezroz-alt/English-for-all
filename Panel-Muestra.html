@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Panel de seguimiento · MUESTRA con datos de ejemplo · English For All</title>
+<style>
+  :root{
+    --papel:#fcfcfb; --tarjeta:#ffffff; --linea:#e4e2dd;
+    --tinta:#1c1b19; --tinta2:#55524c; --tenue:#86827a;
+    --verde:#1D9E75; --azul:#2F6BB5;
+    --aviso:#8a5a00; --aviso-fondo:#fdf4e0; --aviso-linea:#e8c87a;
+    --display:'Georgia','Times New Roman',serif;
+    --radio:14px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --papel:#1a1a19; --tarjeta:#232322; --linea:#38372f;
+      --tinta:#f2f0ec; --tinta2:#c3bfb6; --tenue:#8e8a81;
+      --verde:#25A57C; --azul:#4F86CC;
+      --aviso:#f0c874; --aviso-fondo:#2e2616; --aviso-linea:#5c4a1e;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--papel);color:var(--tinta);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+
+  /* ---------- aviso permanente de que esto es una muestra ---------- */
+  .muestra{position:sticky;top:0;z-index:50;background:var(--aviso-fondo);
+    color:var(--aviso);border-bottom:2px solid var(--aviso-linea);
+    padding:11px 16px;font-size:13.5px;line-height:1.45;text-align:center;font-weight:600}
+  .muestra b{font-weight:700;letter-spacing:.04em}
+
+  .envoltura{max-width:940px;margin:0 auto;padding-block:26px 44px;padding-left:16px;padding-right:16px}
+
+  header h1{font-family:var(--display);font-size:30px;line-height:1.15;margin:0 0 6px;font-weight:600}
+  header .sub{color:var(--tenue);font-size:14px;margin:0 0 4px}
+  header .rango{color:var(--tenue);font-size:13px;margin:0}
+
+  section{margin-top:34px}
+  h2{font-family:var(--display);font-size:20px;margin:0 0 3px;font-weight:600}
+  .h2sub{color:var(--tenue);font-size:13.5px;margin:0 0 16px}
+
+  /* ---------- números grandes ---------- */
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-top:22px}
+  .tile{background:var(--tarjeta);border:1px solid var(--linea);border-radius:var(--radio);padding:15px 15px 13px}
+  .tile .n{font-family:var(--display);font-size:31px;line-height:1.05;margin-bottom:3px}
+  .tile .et{font-size:12.5px;color:var(--tenue);line-height:1.35}
+  .tile .pie{font-size:11.5px;color:var(--tenue);margin-top:7px}
+  @media(max-width:640px){.tiles{grid-template-columns:repeat(2,1fr)}}
+
+  /* ---------- nota del maestro ---------- */
+  .nota{background:var(--tarjeta);border:1px solid var(--linea);border-left:3px solid var(--verde);
+    border-radius:var(--radio);padding:16px 17px}
+  .nota .quien{font-size:12px;color:var(--tenue);margin-bottom:7px;text-transform:uppercase;letter-spacing:.06em}
+  .nota p{margin:0 0 9px}
+  .nota p:last-child{margin-bottom:0}
+
+  /* ---------- barras por persona ---------- */
+  .leyenda{display:flex;gap:15px;flex-wrap:wrap;margin-bottom:14px;font-size:12.5px;color:var(--tinta2)}
+  .leyenda span{display:flex;align-items:center;gap:6px}
+  .pastilla{width:11px;height:11px;border-radius:3px;flex:none}
+
+  .fila{margin-bottom:13px}
+  .fila .cab{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:5px}
+  .fila .quien{font-size:14px}
+  .fila .dato{font-size:12.5px;color:var(--tenue);white-space:nowrap}
+  .pista{position:relative;height:11px;background:var(--linea);border-radius:6px;overflow:hidden}
+  .barra{position:absolute;top:0;left:0;height:100%;border-radius:0 4px 4px 0;transition:width .5s ease}
+
+  /* ---------- semanas ---------- */
+  .semanas{display:flex;align-items:flex-end;gap:8px;height:150px;padding-top:6px}
+  .sem{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;height:100%}
+  .sem .col{width:100%;max-width:52px;background:var(--verde);border-radius:4px 4px 0 0;min-height:3px;
+    position:relative;cursor:default;transition:width .3s}
+  .sem .col:hover{filter:brightness(1.12)}
+  .sem .val{font-size:12px;color:var(--tinta2);font-variant-numeric:tabular-nums}
+  .sem .et{font-size:11.5px;color:var(--tenue);text-align:center;line-height:1.25}
+  .ejes{border-top:1px solid var(--linea);margin-top:0;padding-top:8px}
+
+  /* ---------- donde se atoran ---------- */
+  .atoro{margin-bottom:12px}
+  .atoro .cab{display:flex;justify-content:space-between;gap:10px;margin-bottom:5px;font-size:13.5px}
+  .atoro .cuantos{color:var(--tenue);font-size:12.5px;white-space:nowrap}
+
+  /* ---------- tabla ---------- */
+  .tablabox{overflow-x:auto;border:1px solid var(--linea);border-radius:var(--radio);background:var(--tarjeta)}
+  table{border-collapse:collapse;width:100%;min-width:520px;font-size:13.5px}
+  th,td{padding:11px 13px;text-align:left;border-bottom:1px solid var(--linea)}
+  th{font-size:12px;color:var(--tenue);font-weight:600;text-transform:uppercase;letter-spacing:.04em;
+    background:var(--papel)}
+  tr:last-child td{border-bottom:0}
+  td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+  .etnivel{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;white-space:nowrap}
+
+  footer{margin-top:42px;padding-top:18px;border-top:1px solid var(--linea);
+    font-size:12.5px;color:var(--tenue);line-height:1.6}
+  footer strong{color:var(--aviso)}
+</style>
+</head>
+<body>
+
+<div class="muestra">
+  <b>MUESTRA</b> · Este panel no contiene información real. Los nombres y las cifras
+  son inventados y sirven únicamente para mostrar cómo se ve el seguimiento.
+</div>
+
+<div class="envoltura">
+
+<header>
+  <h1>Panel de seguimiento</h1>
+  <p class="sub">Programa de inglés hablado · English For All</p>
+  <p class="rango">Ejemplo de un grupo de 5 participantes · cuarta semana</p>
+</header>
+
+<section>
+  <div class="tiles">
+    <div class="tile">
+      <div class="n" style="color:var(--verde)">5<span style="font-size:17px;color:var(--tenue)"> de 5</span></div>
+      <div class="et">Participantes activos</div>
+      <div class="pie">Entraron al menos una vez esta semana</div>
+    </div>
+    <div class="tile">
+      <div class="n">18</div>
+      <div class="et">Sesiones esta semana</div>
+      <div class="pie">Meta del grupo: 15</div>
+    </div>
+    <div class="tile">
+      <div class="n">412</div>
+      <div class="et">Minutos hablando inglés</div>
+      <div class="pie">Acumulado del grupo</div>
+    </div>
+    <div class="tile">
+      <div class="n">4<span style="font-size:17px;color:var(--tenue)"> de 5</span></div>
+      <div class="et">Con constancia</div>
+      <div class="pie">Tres días o más por semana</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Lo que veo esta semana</h2>
+  <p class="h2sub">La lectura del maestro. Es la parte que los números no dicen solos.</p>
+  <div class="nota">
+    <div class="quien">Nota de Brian Martínez</div>
+    <p>El grupo agarró ritmo. Cuatro de los cinco ya entran sin que haya que recordarles,
+    y las sesiones se están haciendo temprano, antes del turno, que es cuando mejor rinden.</p>
+    <p>Donde sí hay que meter mano es en las preguntas. Tres personas producen bien cuando
+    afirman algo, pero se traban al preguntar. Es normal en esta etapa y ya ajusté las
+    próximas lecciones para insistir ahí.</p>
+    <p>Una persona lleva ocho días sin entrar. Ya le escribí; suele ser tema de carga de
+    trabajo, no de interés.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Avance por persona</h2>
+  <p class="h2sub">Lecciones terminadas de las 24 que tiene su nivel.</p>
+
+  <div class="leyenda">
+    <span><i class="pastilla" style="background:var(--verde)"></i> Desde cero</span>
+    <span><i class="pastilla" style="background:var(--azul)"></i> Avanzado</span>
+  </div>
+
+  <div id="personas"></div>
+</section>
+
+<section>
+  <h2>Actividad por semana</h2>
+  <p class="h2sub">Sesiones completadas por todo el grupo.</p>
+  <div class="semanas" id="semanas"></div>
+  <div class="ejes"></div>
+</section>
+
+<section>
+  <h2>Dónde se atoran</h2>
+  <p class="h2sub">Lo que más se repite al corregir la pronunciación. Es lo que define
+  las siguientes lecciones.</p>
+  <div id="atoros"></div>
+</section>
+
+<section>
+  <h2>Detalle</h2>
+  <p class="h2sub">Los mismos datos, en tabla.</p>
+  <div class="tablabox">
+    <table>
+      <thead>
+        <tr>
+          <th>Participante</th><th>Nivel</th><th>Lecciones</th>
+          <th>Sesiones</th><th>Minutos</th><th>Última vez</th>
+        </tr>
+      </thead>
+      <tbody id="tabla"></tbody>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <p><strong>Recordatorio: este panel es una muestra.</strong> Todos los nombres y las cifras
+  que aparecen aquí son inventados. Ninguna persona real está representada en esta página.</p>
+  <p>English For All · Brian Martínez Rodríguez · brianmartinezroz@gmail.com</p>
+</footer>
+
+</div>
+
+<script>
+/* Datos de ejemplo. Inventados a proposito: sirven para ensenar la forma
+   del panel, no para informar de nadie. */
+var GENTE=[
+  {quien:'Alejandra R.', nivel:'cero', lecc:11, ses:14, min:118, ultima:'ayer'},
+  {quien:'Miguel A.',    nivel:'cero', lecc:9,  ses:12, min:96,  ultima:'hoy'},
+  {quien:'Norma L.',     nivel:'alto', lecc:8,  ses:10, min:94,  ultima:'hace 2 días'},
+  {quien:'Rubén C.',     nivel:'cero', lecc:6,  ses:8,  min:64,  ultima:'ayer'},
+  {quien:'Tania M.',     nivel:'alto', lecc:3,  ses:4,  min:40,  ultima:'hace 8 días'}
+];
+var SEMANAS=[
+  {et:'Sem 1', n:7},{et:'Sem 2', n:12},{et:'Sem 3', n:11},
+  {et:'Sem 4', n:18},{et:'Sem 5', n:16},{et:'Sem 6', n:14}
+];
+var ATOROS=[
+  {que:'Preguntas: se traban al invertir el orden', n:14},
+  {que:'Sonido "th" en think, three, thanks',       n:11},
+  {que:'Pasado: pronunciar la terminación -ed',      n:9},
+  {que:'Números largos y horas',                     n:6},
+  {que:'Decir "no entendí" sin quedarse callado',    n:4}
+];
+
+var TOTAL_LECCIONES=24;
+function color(n){ return n==='alto' ? 'var(--azul)' : 'var(--verde)'; }
+function nombreNivel(n){ return n==='alto' ? 'Avanzado' : 'Desde cero'; }
+function esc(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* --- barras por persona: cada una lleva su numero escrito, para que la
+       identidad nunca dependa solo del color --- */
+document.getElementById('personas').innerHTML = GENTE.map(function(p){
+  var pct = Math.round(p.lecc / TOTAL_LECCIONES * 100);
+  return '<div class="fila">'+
+    '<div class="cab">'+
+      '<span class="quien">'+esc(p.quien)+'</span>'+
+      '<span class="dato">'+p.lecc+' de '+TOTAL_LECCIONES+' · '+nombreNivel(p.nivel)+'</span>'+
+    '</div>'+
+    '<div class="pista" title="'+esc(p.quien)+': '+p.lecc+' de '+TOTAL_LECCIONES+' lecciones">'+
+      '<div class="barra" style="width:'+pct+'%;background:'+color(p.nivel)+'"></div>'+
+    '</div>'+
+  '</div>';
+}).join('');
+
+/* --- semanas --- */
+var tope = Math.max.apply(null, SEMANAS.map(function(s){return s.n;}));
+document.getElementById('semanas').innerHTML = SEMANAS.map(function(s){
+  var alto = Math.round(s.n / tope * 100);
+  return '<div class="sem">'+
+    '<span class="val">'+s.n+'</span>'+
+    '<div class="col" style="height:'+alto+'%" title="'+s.et+': '+s.n+' sesiones"></div>'+
+    '<span class="et">'+s.et+'</span>'+
+  '</div>';
+}).join('');
+
+/* --- donde se atoran: una sola serie, un solo color --- */
+var topeA = Math.max.apply(null, ATOROS.map(function(a){return a.n;}));
+document.getElementById('atoros').innerHTML = ATOROS.map(function(a){
+  var pct = Math.round(a.n / topeA * 100);
+  return '<div class="atoro">'+
+    '<div class="cab"><span>'+esc(a.que)+'</span>'+
+      '<span class="cuantos">'+a.n+' veces</span></div>'+
+    '<div class="pista" title="'+esc(a.que)+': '+a.n+' veces">'+
+      '<div class="barra" style="width:'+pct+'%;background:var(--verde)"></div>'+
+    '</div>'+
+  '</div>';
+}).join('');
+
+/* --- tabla --- */
+document.getElementById('tabla').innerHTML = GENTE.map(function(p){
+  return '<tr>'+
+    '<td>'+esc(p.quien)+'</td>'+
+    '<td><span class="etnivel"><i class="pastilla" style="background:'+color(p.nivel)+'"></i>'+
+      nombreNivel(p.nivel)+'</span></td>'+
+    '<td class="num">'+p.lecc+' de '+TOTAL_LECCIONES+'</td>'+
+    '<td class="num">'+p.ses+'</td>'+
+    '<td class="num">'+p.min+'</td>'+
+    '<td class="num">'+esc(p.ultima)+'</td>'+
+  '</tr>';
+}).join('');
+</script>
+</body>
+</html>

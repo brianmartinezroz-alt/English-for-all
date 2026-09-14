@@ -393,6 +393,17 @@
     padding:12px 22px;font-size:14.5px;font-weight:600;text-decoration:none}
   .vidbtn:active{transform:scale(.97)}
   .vidcargando{padding:18px;text-align:center;color:var(--tenue);font-size:13.5px}
+  /* escoger por donde empezar */
+  .picknv{display:flex;flex-direction:column;gap:10px;margin:14px 0 4px}
+  .picknv button{display:block;width:100%;text-align:left;background:var(--papel);
+    border:2px solid var(--linea);border-radius:14px;padding:14px 15px;cursor:pointer;
+    font-family:inherit;color:inherit}
+  .picknv button b{display:block;font-family:var(--display);font-size:19px;margin-bottom:4px}
+  .picknv button span{display:block;font-size:13.5px;color:var(--tenue);line-height:1.45}
+  .picknv button i{display:inline-block;margin-top:8px;font-style:normal;font-size:12px;
+    font-weight:600;color:var(--verde)}
+  .picknv button.sel{border-color:var(--verde);background:rgba(29,158,117,.07)}
+  .picknv button:active{transform:scale(.99)}
   /* el video se ve dentro de la app, en su recuadro */
   .vidplayer{position:relative;width:100%;padding-bottom:56.25%;height:0;
     border-radius:13px;overflow:hidden;background:#000;border:1px solid var(--linea)}
@@ -1239,7 +1250,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v124 · 14 sep · video dentro de la lección";
+var VERSION="v124 · 14 sep · video en la lección, dos niveles abiertos";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -7397,6 +7408,33 @@ var NIVEL_Q=[
    es:'Es una pregunta hipotética. Contesta como si fuera real.',
    ok:/\b(would|could|might|i'd|if i|rather|instead of)\b/i,vale:5,avanzada:true}
 ];
+/* Niveles que hoy tienen las 24 lecciones completas. Cuando A1, A2, B1, B2
+   o C1 esten escritos, se agrega su numero aqui y la app los abre sola.
+   0=Pre-A1  1=A1  2=A2  3=B1  4=B2  5=C1  6=C2 */
+var NIVELES_ABIERTOS=[0,6];
+
+var NOMBRE_NIVEL={0:'Desde cero',1:'A1',2:'A2',3:'B1',4:'B2',5:'C1',6:'Avanzado'};
+var CODIGO_NIVEL={0:'Pre-A1',1:'A1',2:'A2',3:'B1',4:'B2',5:'C1',6:'C2'};
+
+var OPCIONES_NIVEL=[
+  {n:0,tit:'Desde cero',
+   sub:'Nunca lo he llevado, o lo llevé hace años y no lo uso. Empezamos por presentarte, tu día y tu trabajo.'},
+  {n:6,tit:'Avanzado',
+   sub:'Ya me defiendo hablando. Quiero pulir: tono, formalidad, juntas, y sonar natural.'}
+];
+
+// Si el cuestionario cae en un nivel que todavia no esta escrito, se usa el
+// abierto mas cercano. Asi nadie aterriza en una leccion vacia.
+function nivelAbiertoCercano(n){
+  if(NIVELES_ABIERTOS.indexOf(n)>=0)return n;
+  var mejor=NIVELES_ABIERTOS[0],dist=99;
+  NIVELES_ABIERTOS.forEach(function(a){
+    var d=Math.abs(a-n);
+    if(d<dist){dist=d;mejor=a;}
+  });
+  return mejor;
+}
+
 function nivelDe(pts){
   if(pts<=1)return {cod:'Pre-A1',n:0,txt:'Empezamos desde cero. Eso está bien: aquí nadie tiene que llegar sabiendo.'};
   if(pts<=3)return {cod:'A1',n:1,txt:'Ya tienes algo. Vamos a construir sobre eso.'};
@@ -7497,32 +7535,51 @@ function pruebaNivel(){
     say(bien?'Bien.':'Está bien, lo anoto.','es-MX');
     document.getElementById('cont1').onclick=function(){i++;paso1();};
   }
-  function cerrar(){
+function cerrar(){
     var nv=nivelDe(pts);
-    if(nv.alto){
-      edatos.nivel=nv.cod;edatos.nivel_n=nv.n;edatos.nivel_pts=pts;edatos.nivel_resp=resp;
-      APP.innerHTML='<div class="qcard"><div class="qlbl">Hay que ser honestos</div>'+
-        '<div class="qtxt">Tu inglés va por arriba de este programa.</div>'+
-        '<div class="qsub">Esta práctica diaria está hecha para llevar a alguien de cero a A2, y tú ya pasaste ese punto. '+
-        'Si sigues, vas a estar repitiendo frases que ya dominas — y eso no te sirve ni a ti ni a mí.</div>'+
-        '<div class="objx"><span>Lo que sí te sirve</span>Conversación libre y preparación Cambridge (FCE, CAE) con Brian, en sesiones reales.</div>'+
-        '<p class="tiny" style="text-align:left">Le voy a avisar a Brian que entraste con este nivel, para que te contacte.</p>'+
-        '<button class="btn" id="go2" style="margin-top:14px">Entendido · avisarle a Brian</button>'+
-        '<button class="btn ghost" id="go3" style="margin-top:8px">Aun así quiero practicar aquí</button></div>';
-      say('Tu inglés va por arriba de este programa. Le voy a avisar a Brian para que te contacte.','es-MX');
-      document.getElementById('go2').onclick=cerrarPerfil;
-      document.getElementById('go3').onclick=function(){edatos.nivel_n=3;cerrarPerfil();};
-      return;
-    }
     edatos.nivel=nv.cod;edatos.nivel_n=nv.n;edatos.nivel_pts=pts;edatos.nivel_resp=resp;
-    APP.innerHTML='<div class="qcard"><div class="qlbl">Listo</div>'+
-      '<div class="qtxt">Ya sé por dónde empezar contigo.</div>'+
-      '<div class="qsub">'+esc(nv.txt)+'</div>'+
-      '<div class="objx"><span>Tu punto de partida</span>'+nv.cod+'</div>'+
-      '<p class="tiny">Esto no es definitivo. Brian lo confirma cuando te escuche, y se ajusta si hace falta.</p>'+
-      '<button class="btn" id="go" style="margin-top:12px">Continuar</button></div>';
-    say(nv.txt,'es-MX');
-    document.getElementById('go').onclick=cerrarPerfil;
+    escogerNivel(nv);
+  }
+
+  // Hoy solo dos niveles tienen el curso completo. En vez de mandar al alumno
+  // a ciegas a uno que todavia no existe, se le ensenan los abiertos y el
+  // escoge. El cuestionario ya no decide: sugiere.
+  function escogerNivel(nv){
+    var sug=nivelAbiertoCercano(nv.n);
+    var eleg=sug;
+    var ops=OPCIONES_NIVEL.filter(function(o){return NIVELES_ABIERTOS.indexOf(o.n)>=0;});
+
+    APP.innerHTML='<div class="qcard"><div class="qlbl">Ultimo paso</div>'+
+      '<div class="qtxt">&iquest;Por d&oacute;nde quieres empezar?</div>'+
+      '<div class="qsub">Por lo que me contestaste, yo te pondr&iacute;a en <b>'+esc(NOMBRE_NIVEL[sug])+'</b>. '+
+      'Pero t&uacute; decides, y se puede cambiar despu&eacute;s.</div>'+
+      '<div class="picknv" id="pn">'+
+        ops.map(function(o){
+          return '<button data-n="'+o.n+'" class="'+(o.n===sug?'sel':'')+'">'+
+            '<b>'+esc(o.tit)+'</b>'+
+            '<span>'+esc(o.sub)+'</span>'+
+            (o.n===sug?'<i>te recomiendo empezar aqu&iacute;</i>':'')+
+          '</button>';
+        }).join('')+
+      '</div>'+
+      (nv.alto?'<p class="tiny" style="text-align:left">Por lo que contestaste, tu ingl&eacute;s ya va alto. '+
+        'Le aviso a Brian para que te cuente de las sesiones de conversaci&oacute;n y preparaci&oacute;n Cambridge.</p>':'')+
+      '<button class="btn" id="gonv" style="margin-top:14px">Empezar</button></div>';
+
+    say('Dime por donde quieres empezar.','es-MX');
+
+    APP.querySelectorAll('#pn button').forEach(function(b){
+      b.onclick=function(){
+        APP.querySelectorAll('#pn button').forEach(function(x){x.classList.remove('sel');});
+        b.classList.add('sel');
+        eleg=+b.getAttribute('data-n');
+      };
+    });
+    document.getElementById('gonv').onclick=function(){
+      edatos.nivel_n=eleg;
+      edatos.nivel=CODIGO_NIVEL[eleg]||nv.cod;
+      cerrarPerfil();
+    };
   }
   paso1();
 }

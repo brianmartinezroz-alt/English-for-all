@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Práctica de inglés hablado · English For All</title>
+<!-- para que se pueda instalar como app en el celular -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#15140F">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="EFA">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -1272,9 +1279,18 @@
 var DESTINO='brianmartinezroz@gmail.com';
 </script>
 <script>
+/* Enciende el ayudante que permite instalar la app. Si falla, no pasa nada:
+   la app sigue funcionando igual desde el navegador. */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
+</script>
+<script>
 (function(){
 "use strict";
-var VERSION="v129 · 15 sep · saludos y despedidas variados";
+var VERSION="v130 · 15 sep · ya se puede instalar en el celular";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};

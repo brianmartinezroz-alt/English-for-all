@@ -85,6 +85,22 @@
   .qsub{font-size:13.5px;color:var(--tinta-2);margin-bottom:20px;line-height:1.55}
 
   /* ── botones ── */
+  /* ---- cada nivel toma el color de su propio mapa ----
+     El mapa de cada nivel ya tiene su material y su color: madera y tierra
+     en el primero, piedra verde, ladrillo cobre, marmol acero, marmol vino,
+     obsidiana y oro, cristal casi blanco. Los botones ahora van a juego, de
+     modo que el alumno reconoce en que nivel esta con solo ver la pantalla.
+     El azul del microfono y el rojo de grabando NO se tocan: esos tres
+     colores significan cosas distintas y deben seguir siendo los mismos
+     en todos los niveles. */
+  [data-nv="pre-a1"]{ --verde:#8F5A26; --verde-hondo:#6E4318; --verde-suave:#F3EBDF; }
+  [data-nv="a1"]    { --verde:#2E7D55; --verde-hondo:#1F5C3E; --verde-suave:#E6F0E9; }
+  [data-nv="a2"]    { --verde:#B0552A; --verde-hondo:#8A3F1C; --verde-suave:#F6E9E0; }
+  [data-nv="b1"]    { --verde:#1F7A8C; --verde-hondo:#145A69; --verde-suave:#E4F0F3; }
+  [data-nv="b2"]    { --verde:#8C2F4A; --verde-hondo:#6B2038; --verde-suave:#F5E7EB; }
+  [data-nv="c1"]    { --verde:#5B3E8E; --verde-hondo:#452D6E; --verde-suave:#EDE8F5; }
+  [data-nv="c2"]    { --verde:#3A4552; --verde-hondo:#2A3441; --verde-suave:#EAEEF2; }
+
   .btn{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;background:var(--verde);
        color:#fff;border:0;border-radius:10px;padding:14px;font-size:14.5px;font-weight:700;
        cursor:pointer;font-family:var(--body);transition:background .15s}
@@ -1255,7 +1271,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v126 · 15 sep · video en el vocabulario nuevo";
+var VERSION="v127 · 15 sep · cada nivel con el color de su mapa";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -2067,9 +2083,7 @@ function moldePreA1(p){
      {area:'hab',  k:'ask',   q:'What is your name?', es:'Como te llamas?', pista:'My name is '+nom+'.'},
      {area:'voc',  k:'palabra', en:'work', es:'trabajo / trabajar',
       pide:'En cual frase va bien?',
-      ops:['I work every day.','I work a apple.','I work blue.'], bien:'I work every day.'},
-     {area:'oir',  k:'video', en:'Nice to meet you.', es:'Mucho gusto.',
-      pide:'Se oye igual que cuando yo la digo?'}
+      ops:['I work every day.','I work a apple.','I work blue.'], bien:'I work every day.'}
    ]},
 
   {t:'Mucho gusto', hoy:'saludar y despedirte',
@@ -2195,9 +2209,7 @@ function moldePreA1(p){
      {area:'hab',  k:'ask',   q:'Do you work every day?', es:'Trabajas todos los dias? Contesta: Yes, I do.',
       pista:'Yes, I do. I work every day.'},
      {area:'voc',  k:'pares', a:'work', b:'walk', bien:'a',
-      nota:'"Work" es trabajar. "Walk" es caminar. Cambia una sola vocal.'},
-     {area:'oir',  k:'video', en:'What do you do?', es:'A que te dedicas?',
-      pide:'Lo dicen igual de despacio?'}
+      nota:'"Work" es trabajar. "Walk" es caminar. Cambia una sola vocal.'}
    ]},
 
   {t:'Antes del trabajo', hoy:'lo que haces en la manana',
@@ -2366,9 +2378,7 @@ function moldePreA1_parte2(p, nom, ofi, ofiEN, lug, lugEN){
       ops:['I check the boxes.','I check to my house.','I check happy.'], bien:'I check the boxes.'},
      {area:'voc',  k:'phrasal', en:'turn on', es:'encender / prender',
       ojo:'Para apagar es "turn off". Se usan igual con maquinas y con luces.',
-      frase:'I turn on the machine.', frase_es:'Prendo la maquina.'},
-     {area:'oir',  k:'video', en:'Can you help me?', es:'Me puedes ayudar?',
-      pide:'Como suena cuando lo dice gente de verdad?'}
+      frase:'I turn on the machine.', frase_es:'Prendo la maquina.'}
    ]},
 
   {t:'Con quien trabajas', hoy:'hablar de tus companeros',
@@ -2478,9 +2488,7 @@ function moldePreA1_parte2(p, nom, ofi, ofiEN, lug, lugEN){
       pide:'Escribe el numero que te deletreo.'},
      {area:'voc',  k:'phrasal', en:'clock in', es:'checar entrada',
       ojo:'Para la salida se dice "clock out".',
-      frase:'I clock in at seven.', frase_es:'Checo entrada a las siete.'},
-     {area:'oir',  k:'video', en:'What time is it?', es:'Que hora es?',
-      pide:'Cuantas veces tuviste que oirlo?'}
+      frase:'I clock in at seven.', frase_es:'Checo entrada a las siete.'}
    ]},
 
   {t:'Cantidades', hoy:'cuantas cosas, cuantas piezas',
@@ -2630,9 +2638,6 @@ function moldeC2(p){
       ops:['Sense the mood and adjust','Read aloud in the meeting','Study the audience report'],
       bien:'Sense the mood and adjust',
       cuando:'Se dice de quien no ajusta su tono: "he did not read the room".'},
-     {area:'oir',  k:'video', en:"I'm afraid that won't be possible.",
-      es:'Me temo que no va a ser posible.',
-      pide:'Fijate en el tono: es amable o es firme?'},
      {area:'hab',  k:'roleplay', quien:'A board member',
       ctx:'You must decline a request from someone far above you, without damaging the relationship.',
       q:'We need this delivered by Friday. Can you commit to that?',
@@ -2793,9 +2798,6 @@ function moldeC2(p){
       ops:['Very bad, said lightly','Slightly annoying','A literal dream'],
       bien:'Very bad, said lightly',
       cuando:'Muy británico. En Estados Unidos suena más literal.'},
-     {area:'oir',  k:'video', en:"That could have gone better.",
-      es:'Pudo haber salido mejor. (= salio mal)',
-      pide:'Oyes la ironia en la voz?'},
      {area:'oir',  k:'dosc', a:"It's not the worst idea.", b:"It's not the worst thing.",
       bien:'a', audio:"It's not the worst idea."},
      {area:'hab',  k:'ask',   q:'The launch failed completely. React with understatement.',
@@ -3009,9 +3011,6 @@ function moldeC2_parte2(p, nom, ofi){
       ops:['Attacking a weaker version of the argument','A type of contract','A compliment'],
       bien:'Attacking a weaker version of the argument',
       cuando:'Nombrarlo es potente: "I think that\'s a bit of a straw man".'},
-     {area:'oir',  k:'video', en:"With all due respect.",
-      es:'Con todo respeto. (casi siempre anuncia un ataque)',
-      pide:'Suena respetuoso de verdad?'},
      {area:'hab',  k:'roleplay', quien:'A hostile stakeholder',
       ctx:'They misrepresent your proposal to make it easier to reject.',
       q:"So you're saying we should just stop everything and retrain the whole company?",
@@ -3154,9 +3153,6 @@ function moldeC2_parte2(p, nom, ofi){
       es:'Escríbelo completo, aunque suene pegado.'},
      {area:'voc',  k:'pares', a:'want to', b:'won’t do', bien:'a',
       nota:'Dichos rápido, "wanna" y "won\'t do" se acercan peligrosamente.'},
-     {area:'oir',  k:'video', en:"What are you going to do about it?",
-      es:'Que vas a hacer al respecto?',
-      pide:'Cuentas las ocho palabras o suena a cuatro?'},
      {area:'hab',  k:'ask',   q:'Say it fast and natural: what are you going to do about it?',
       es:'Dilo rápido y natural, no dictado.',
       pista:"What are you going to do about it?"}
@@ -6336,6 +6332,7 @@ function velo(sel,titulo,txt,alCerrar){
 // El jefe entra directo a la lección de esa casilla.
 // El despachador: intenta el 3D y si no, cae al de siempre.
 function mapa(){
+  pintarColorDelNivel();
   mostrarAyudaSiToca('mapa');
   if(mapa3DoViejo())return;
   mapaViejo();
@@ -6470,6 +6467,17 @@ function nivelDelMapa(){
   return (P&&P.nivel)||'Pre-A1';
 }
 var MAPA_NIVEL_FORZADO='';
+
+// Le pone al body la etiqueta del nivel para que el CSS de arriba cambie el
+// color de los botones. Se llama al entrar y cada vez que se pinta el mapa.
+function pintarColorDelNivel(){
+  try{
+    var cod=String(nivelDelMapa()||'Pre-A1').toLowerCase().replace(/\s+/g,'');
+    var buenos={'pre-a1':1,'a1':1,'a2':1,'b1':1,'b2':1,'c1':1,'c2':1};
+    if(!buenos[cod])cod='pre-a1';
+    document.body.setAttribute('data-nv',cod);
+  }catch(e){}
+}
 
 function montarMapa3D(host,c){
   if(MAPA3D_APAGADO)return false;
@@ -8290,6 +8298,7 @@ function avanzar(){
 }
 
 function cerrarPerfil(){
+  setTimeout(pintarColorDelNivel,0);   // al terminar el alta ya se sabe el nivel
   P={nombre:edatos.nombre,
      trabajo_es:edatos.trabajo_es,trabajo_en:edatos.trabajo_en,
      lugar_es:edatos.lugar_es,lugar_en:edatos.lugar_en,
@@ -8645,7 +8654,6 @@ function paso(){
     deletreo:'Te deletreo la palabra letra por letra en ingles. Escribela.',
     phrasal:'Un verbo con preposicion. Se aprende de a uno porque cambia de significado. Oyelo y usalo en la frase.',
     idiom:'Una expresion hecha. Palabra por palabra no tiene sentido. Adivina que significa.',
-    video:'Aqui ves a gente de verdad diciendo la frase, a su velocidad. No esperes entender todo la primera vez.'
   };
   var quedan=S.items.length-it-1;
   var h=atras()+marcaReloj()+ayuda(ayudas[x.k]||'Sigue las instrucciones de la tarjeta.',(quedan>0?'quedan '+quedan+' ejercicios':'el cierre de la sesión'))+'<div class="prog">'+S.items.map(function(_,i){return '<i class="'+(i<=it?'on':'')+'"></i>';}).join('')+'</div>'+navPaso(it>0, it<S.items.length-1)+'<div class="qcard">';
@@ -8869,28 +8877,6 @@ function paso(){
        cajaVideoVocab(x.en,'idiom',true)+
        '<button class="btn ghost dudab" id="dudafrase" style="margin-top:12px">Pregúntame lo que sea</button>'+
        '<div id="dudacaja"></div>';
-  }else if(x.k==='video'){
-    h+='<div class="qlbl">Gente de verdad diciéndolo</div>'+
-       '<div class="qsub">Esta frase no es de un libro. Así la dicen en la calle, '+
-       'a su velocidad y con su acento.</div>'+
-       '<div class="qtxt">'+esc(x.en||'')+'</div>'+
-       (x.es?'<div class="qsub">'+esc(x.es)+'</div>':'')+
-       '<div class="vidmarco" id="vidmarco">'+
-         '<div class="vidcargando">Buscando dónde lo dicen…</div>'+
-       '</div>'+
-       '<div class="oirfila">'+
-         '<button class="oirb" id="oir">'+ico('bocina',16)+' Oírla clara</button>'+
-         '<button class="oirb alt" id="oirlento">'+ico('bocina',16)+' Más lento</button>'+
-       '</div>'+
-       '<div class="pidebox">'+esc(x.pide||'¿Se oye igual que cuando yo la digo?')+'</div>'+
-       '<div class="opsfila" id="vidops">'+
-         '<button class="opt" data-i="0">Sí, igual</button>'+
-         '<button class="opt" data-i="1">Más rápido</button>'+
-         '<button class="opt" data-i="2">No la reconocí</button>'+
-       '</div>'+
-       '<div id="res"></div>'+
-       '<button class="mic-big" id="mic"><span class="ring2"></span> Tocar y decirla como ellos</button>'+
-       '<button class="btn ghost" id="skip" style="margin-top:10px">Siguiente</button>';
   }else if(x.k==='acento'){
     h+='<div class="qlbl">Mismo inglés · otra boca</div>'+
        '<div class="qsub">La misma frase, dicha por gente de otro país. Así suena en el mundo real.</div>'+
@@ -9147,70 +9133,7 @@ function paso(){
     if(_di)_di.onclick=function(e){e.stopPropagation();abrirDudaFrase({en:x.en,es:x.bien});};
   }
 
-  if(x.k==='video'){
-    // Se usa la búsqueda incrustada de YouTube: su reproductor oficial trae
-    // videos donde de verdad se dice la frase. No cuesta nada ni pide llave,
-    // y si no hay internet, la lección sigue con el audio de siempre.
-    (function(){
-      var marco=document.getElementById('vidmarco');
-      if(!marco)return;
-      var frase=(x.en||'').replace(/[."'!?]/g,'').trim();
-      if(!frase){ marco.innerHTML='<div class="vidcargando">Sin frase que buscar.</div>'; return; }
-      // Nuestro servidor busca el video una sola vez y guarda cual fue.
-      // El video se ve AQUI DENTRO: el alumno no sale de la leccion.
-      videoDeFrase(frase,'english phrase meaning how to use',function(id){
-        var m=document.getElementById('vidmarco');
-        if(!m)return;
 
-        if(id){
-          // Ojo: no arranca solo. El alumno decide cuando, porque puede
-          // estar en el trabajo o en el camion.
-          m.innerHTML=
-            '<div class="vidplayer">'+
-              '<iframe src="https://www.youtube-nocookie.com/embed/'+id+
-              '?rel=0&modestbranding=1&playsinline=1" title="Video" '+
-              'allow="accelerometer; encrypted-media; picture-in-picture" '+
-              'allowfullscreen loading="lazy"></iframe>'+
-            '</div>'+
-            '<p class="vidpie">Dale al triángulo para verlo. Si no carga, '+
-            '<a href="https://www.youtube.com/watch?v='+id+'" target="_blank" rel="noopener">'+
-            'ábrelo en YouTube</a>.</p>';
-          return;
-        }
-
-        // No hubo video para esta frase: se deja el camino de siempre.
-        var q=encodeURIComponent('"'+frase+'"');
-        m.innerHTML=
-          '<div class="vidcaja">'+
-            '<div class="vidfrase">'+esc(frase)+'</div>'+
-            '<p class="vidnota">Todavía no tengo un video para esta frase. '+
-            'Puedes buscarla en YouTube y regresar aquí cuando la hayas oído dos o tres veces.</p>'+
-            '<a class="vidbtn" href="https://www.youtube.com/results?search_query='+q+'" '+
-            'target="_blank" rel="noopener">Buscarla en YouTube</a>'+
-          '</div>';
-      });
-    })();
-
-    var _ov=document.getElementById('oir');
-    if(_ov)_ov.onclick=function(){ say(x.en||'','en-US'); };
-
-    APP.querySelectorAll('#vidops .opt').forEach(function(b){
-      b.onclick=function(){
-        var i=+b.dataset.i;
-        var dice=['se oyó igual','lo dicen más rápido','no la reconoció'][i];
-        b.classList.add(i===0?'ok':'no');
-        attempts.push({tipo:'video',meta:x.en||'',oido:dice,pct:null});
-        var r=document.getElementById('res');
-        if(r)r.innerHTML='<div class="fb '+(i===0?'ok':'no')+'">'+
-          (i===0?'Bien. Ahora dilo tú con esa misma velocidad.'
-                :'Normal: la gente habla más rápido que los cursos. Óyela lenta, luego a velocidad real, y después dila.')+
-          '</div>';
-        APP.querySelectorAll('#vidops .opt').forEach(function(z){z.disabled=true;});
-      };
-    });
-  }
-
-  // ---- los 6 ultimos: acentos, roleplay, recuento, pares, palabra, deletreo ----
   if(x.k==='acento'){
     APP.querySelectorAll('.acefila .aceb').forEach(function(b){
       b.onclick=function(){

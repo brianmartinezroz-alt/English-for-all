@@ -317,8 +317,12 @@
     border:2px solid var(--verde)}
   .hoja-foto.vacia{background:var(--crema);border-color:var(--linea);
     display:flex;align-items:center;justify-content:center;font-size:24px}
-  .hoja-hola{font-size:13px;color:var(--tenue)}
-  .hoja-nom{font-family:var(--display);font-size:22px;font-weight:600;line-height:1.15}
+  /* El saludo es lo que se viene a aprender, asi que es lo mas grande de
+     la ventana. El nombre pasa a segundo termino. */
+  .hoja-hola{font-family:var(--display);font-size:31px;font-weight:600;
+    line-height:1.1;color:var(--tinta);margin-bottom:3px}
+  .hoja-nom{font-size:14.5px;color:var(--tenue);font-weight:500;line-height:1.3}
+  @media(max-width:380px){ .hoja-hola{font-size:26px} }
   .hoja-racha{background:rgba(216,90,48,.09);border:1px solid rgba(216,90,48,.26);
     border-radius:10px;padding:9px 13px;font-size:13.5px;margin-bottom:13px}
   .hoja-racha b{color:var(--coral);font-size:16px}
@@ -1290,7 +1294,7 @@ if('serviceWorker' in navigator){
 <script>
 (function(){
 "use strict";
-var VERSION="v130 · 15 sep · ya se puede instalar en el celular";
+var VERSION="v131 · 15 sep · el saludo suena y se ve en grande";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -3784,7 +3788,7 @@ function pantallaJefe(){
   APP.querySelectorAll('[data-niv]').forEach(function(b){
     b.onclick=function(){
       var n=+b.dataset.niv;
-      if(!P){avisito('Primero arma tu personaje, si no no hay material.');return;}
+      if(!P){avisito('Primero cuéntame de ti, si no no hay material.');return;}
       P.nivel_n=n;
       P.nivel=(NIVELES_JEFE[n]||{}).cod||'A1';
       var d=load(); d.perfil=P; save(d); D=d;
@@ -3893,15 +3897,14 @@ function router(){
     if(MODO_JEFE||JEFE_LIBRE)return;
     try{ if(!P)return; }catch(e){ return; }
 
-    if(!D.tutorVisto&&!TUTOR_VIVO){
-      try{ sessionStorage.setItem('efa_saludo','1'); }catch(e){}
-      arrancarTutor();
-      return;
-    }
-    try{ if(sessionStorage.getItem('efa_saludo'))return;
-         sessionStorage.setItem('efa_saludo','1'); }catch(e){ return; }
+    // La primera vez manda el recorrido; el saludo sale al terminarlo.
+    if(!D.tutorVisto&&!TUTOR_VIVO){ arrancarTutor(); return; }
+    // De ahi en adelante, el saludo sale CADA VEZ que se abre la app.
+    // Antes se apuntaba en sessionStorage y no se volvia a ver: al recargar
+    // nunca aparecia, y despues del recorrido tampoco, porque la marca ya
+    // estaba puesta. Por eso parecia que el saludo no existia.
     hojaHola();
-  },900);
+  },2000);   // dos segundos: primero que se vea el mapa, luego el saludo
 
   if(MODO_JEFE){
     MODO_JEFE=false;
@@ -3923,6 +3926,7 @@ function router(){
   if(PAQUETE_ACTIVO!==D.paquete){PAQUETE_ACTIVO=D.paquete;armarRutas();}
   if(D.velAudio)VEL_AUDIO=D.velAudio;
   aplicarVoz(D.voz);elegirVozES();if(D.rate)RATE=D.rate;
+  pintarColorDelNivel();   // el color del nivel, pase por donde pase la app
 
   if(PERSONALIZANDO){ seguirPersonalizacion(); return; }
 
@@ -5360,8 +5364,16 @@ function hojaHola(){
   // Un saludo distinto cada vez, escogido por la hora y por si ya nos
   // conocemos. Antes siempre decía lo mismo ("Buenos días") y el alumno
   // solo aprendía una forma de saludar, que es justo lo que no queremos.
-  var sal; try{ sal=saludoDelDia((c.parada||1)>1); }
-  catch(e){ sal={en:horaDelDia(),es:'',reg:0}; }
+  // La primerisima vez se presenta: "Nice to meet you". De la segunda en
+  // adelante ya se conocen, y toca saludo normal.
+  var primeraVez=false;
+  try{ primeraVez=!(D&&D.sesiones&&D.sesiones.length); }catch(e){}
+  var sal;
+  if(primeraVez){
+    sal={en:'Nice to meet you.',es:'Mucho gusto — cuando apenas se conocen.',reg:0};
+  }else{
+    try{ sal=saludoDelDia(true); }catch(e){ sal={en:horaDelDia(),es:'',reg:0}; }
+  }
   var hayEs=(typeof modoIdioma==='function')?(modoIdioma()!=='en'):true;
 
   var v=document.createElement('div');
@@ -5382,12 +5394,14 @@ function hojaHola(){
       '<div class="hoja-lec">Parada '+c.parada+'</div>'+
       '<div class="hoja-sub">Diez minutos y ya. Ni uno más si no quieres.</div>'+
     '</div>'+
-    '<button class="oirb hoja-oir" id="hojaoir">'+ico('bocina',15)+' Oír el saludo</button>'+
+    '<button class="oirb hoja-oir" id="hojaoir">'+ico('bocina',15)+' Repetir</button>'+
     '<button class="btn hoja-btn" id="hojair">Empezar</button>'+
     '<button class="hoja-mas" id="hojamas">Solo quiero ver el mapa</button>'+
   '</div>';
   document.body.appendChild(v);
   requestAnimationFrame(function(){ v.classList.add('abierta'); });
+  // Se dice solo. Es una app de hablado: el saludo se oye antes de leerse.
+  setTimeout(function(){ try{ say(sal.en,'en-US'); }catch(e){} },380);
 
   function cerrar(){
     v.classList.remove('abierta');
@@ -5438,7 +5452,7 @@ function hojaAdios(porTiempo){
       'justo cuando ya casi lo olvidabas. Así se queda.</div>'+
     '</div>'+
     '<div class="adios-frase">Diez minutos al día pesan más que tres horas el domingo.</div>'+
-    '<button class="oirb hoja-oir" id="adiosoir">'+ico('bocina',15)+' Oír la despedida</button>'+
+    '<button class="oirb hoja-oir" id="adiosoir">'+ico('bocina',15)+' Repetir</button>'+
     '<button class="btn hoja-btn" id="adiosok">'+
       (porTiempo?'Voy a acabarlos':'Cerrar')+'</button>'+
     '<button class="hoja-mas" id="adiosseguir">'+
@@ -5446,6 +5460,7 @@ function hojaAdios(porTiempo){
   '</div>';
   document.body.appendChild(v);
   requestAnimationFrame(function(){ v.classList.add('abierta'); });
+  setTimeout(function(){ try{ say(des.en,'en-US'); }catch(e){} },380);
   function cerrar(){ v.classList.remove('abierta'); setTimeout(function(){v.remove();},340); }
   v.onclick=function(e){ if(e.target===v)cerrar(); };
   var ao=document.getElementById('adiosoir');
@@ -6249,6 +6264,9 @@ function cerrarTutor(){
   var v=document.getElementById('tutor');
   if(v&&v.remove)v.remove();
   try{ var d=load(); d.tutorVisto=true; save(d); D=d; }catch(e){}
+  // Al acabar el recorrido, el saludo. Antes se lo saltaba y el alumno
+  // nunca veia la ventana de bienvenida en toda su primera sesion.
+  setTimeout(function(){ try{ if(P&&!MODO_JEFE&&!JEFE_LIBRE)hojaHola(); }catch(e){} },450);
 }
 
 function pintarTutor(){
@@ -6498,7 +6516,7 @@ function asomarseALeccion(n,actual){
     if(!MAT||!MAT.length){
       var tr=(typeof tramoDe==='function')?tramoDe(n):null;
       avisito('Parada '+n+(tr?' · '+tr.nombre:'')+
-        '. Arma tu personaje y se abre.');
+        '. Cuéntame de ti y se abre.');
       return;
     }
   }
@@ -6705,7 +6723,7 @@ function mapa3DoViejo(){
   var b=document.getElementById('ir3d');
   if(b){
     if(!P){
-      b.textContent='Empezar: arma tu personaje';
+      b.textContent='Empezar: cuéntame de ti';
       b.onclick=function(){ try{personalizar();}catch(e){ avisito('No pude abrir el alta.'); } };
     }else{
       b.onclick=function(){
@@ -6725,7 +6743,7 @@ function mapa3DoViejo(){
         avisito(nv+' todavía no está listo. Por ahora solo pre-A1 y C2.');
         return;
       }
-      if(!P){ avisito('Primero arma tu personaje.'); return; }
+      if(!P){ avisito('Primero cuéntame de ti, para armarte tus frases.'); return; }
       P.nivel=nv;
       P.nivel_n=({'Pre-A1':0,'A1':1,'A2':2,'B1':3,'B2':4,'C1':5,'C2':6})[nv]||0;
       try{ var d=load(); d.perfil=P; save(d); D=d; }catch(e){}
@@ -6758,10 +6776,10 @@ function mapaViejo(){
 
   h+='<div class="mapbotones">'+
      '<button class="btn" id="seguir">'+
-       (!yaPersonalizo()?'Empezar: arma tu personaje'
+       (!yaPersonalizo()?'Empezar: cuéntame de ti'
          :(esRepaso(c.parada)?'Repasar lo que se te atora':'Practicar la parada '+c.parada))+'</button>'+
      (yaPersonalizo()
-       ?'<button class="btn ghost" id="miperfil" style="margin-top:8px">Mi avance y mi avatar</button>'
+       ?'<button class="btn ghost" id="miperfil" style="margin-top:8px">Mi avance y mi perfil</button>'
        :'<p class="tiny" style="margin-top:10px">Son unos minutos. Con tus respuestas armo tus frases: '+
         'no son de un libro, salen de tu trabajo.</p>')+
      '</div>';
@@ -6792,7 +6810,7 @@ function mapaViejo(){
   // el recorrido ya no se dispara aqui: lo lanza el arranque, para que
   // valga igual con el mapa 3D que con este tablero de respaldo
   if(!yaPersonalizo()){
-    say('Este es tu camino. Toca el botón para armar tu personaje y tus frases.','es-MX');
+    say('Este es tu camino. Toca el botón y te hago unas preguntas para armar tus frases.','es-MX');
   }else if(SALTAR_DESDE&&SALTAR_DESDE<c.parada){
     var de=SALTAR_DESDE; SALTAR_DESDE=0;
     setTimeout(function(){
@@ -6895,9 +6913,9 @@ function perfilAlumno(){
   if(!P){
     APP.innerHTML=atras()+'<div class="qcard"><div class="qlbl">Tu avance</div>'+
       '<div class="qtxt">Todavía no hay nada que mostrarte.</div>'+
-      '<div class="qsub">En cuanto armes tu personaje y contestes unas preguntas, '+
+      '<div class="qsub">En cuanto me cuentes de ti y contestes unas preguntas, '+
       'aquí vas a ver tu curva, tus frases dominadas y tu muñeco.</div>'+
-      '<button class="btn" id="vamos">Armar mi personaje</button></div>';
+      '<button class="btn" id="vamos">Empezar</button></div>';
     ligarAtras(function(){mapa();});
     var v=document.getElementById('vamos');
     if(v)v.onclick=personalizar;
@@ -8003,6 +8021,7 @@ function preguntaExperiencia(){
 
 /* ═══════════ marca · lo primero que se ve ═══════════ */
 function marca(){
+  try{ pintarColorDelNivel(); }catch(e){}
   var mb=document.getElementById('menub'), vl=document.getElementById('velo');
   if(mb&&!mb.onclick){
     mb.onclick=function(){ CAJON_ABIERTO?cerrarCajon():abrirCajon(); };

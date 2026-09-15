@@ -437,6 +437,15 @@
   .vidplayer iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
   .vidpie{font-size:12px;color:var(--tenue);text-align:center;margin-top:7px;line-height:1.45}
   .vidpie a{color:var(--tenue)}
+  /* barrita de "solo estas mirando otro nivel" */
+  .visitabarra{position:fixed;left:12px;right:12px;bottom:78px;z-index:820;
+    background:var(--tinta);color:#fff;border-radius:13px;padding:11px 13px;
+    display:flex;align-items:center;gap:11px;font-size:13px;line-height:1.35;
+    box-shadow:0 8px 24px rgba(0,0,0,.24)}
+  .visitabarra b{color:var(--verde-suave)}
+  .visitabarra button{flex:none;background:var(--verde);color:#fff;border:0;
+    border-radius:9px;padding:9px 13px;font-size:13px;font-weight:600;
+    font-family:inherit;cursor:pointer}
   /* el renglon que explica el saludo o la despedida que tocó hoy */
   .hoja-gloss{font-size:12.5px;color:var(--tenue);line-height:1.45;margin:-4px 0 12px}
   .hoja-oir{width:100%;margin-bottom:9px}
@@ -1294,7 +1303,7 @@ if('serviceWorker' in navigator){
 <script>
 (function(){
 "use strict";
-var VERSION="v131 · 15 sep · el saludo suena y se ve en grande";
+var VERSION="v132 · 15 sep · se pueden ver todos los mapas";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -6492,6 +6501,7 @@ function velo(sel,titulo,txt,alCerrar){
 // El despachador: intenta el 3D y si no, cae al de siempre.
 function mapa(){
   pintarColorDelNivel();
+  avisoDeVisita();
   mostrarAyudaSiToca('mapa');
   if(mapa3DoViejo())return;
   mapaViejo();
@@ -6510,19 +6520,30 @@ function irALeccionDe(n){
 // El alumno se ASOMA: ve el tema y una probadita de la gramática,
 // pero el detalle completo solo aparece cuando de verdad llega ahí.
 function asomarseALeccion(n,actual){
+  // Si está de visita en otro nivel, lo que se enseña es el material de ESE
+  // nivel, no el suyo. De eso se trata: ver qué vocabulario viene más
+  // adelante aunque todavía no lo pueda practicar.
+  var deVisita=!!VISITANDO;
+  var mat=deVisita?MAT_VISITA:MAT;
   // Antes salía sin hacer nada si no había material, y el toque se sentía muerto.
-  if(!MAT||!MAT.length){
-    if(P){ try{ MAT=materialDe(P); }catch(e){} }
-    if(!MAT||!MAT.length){
+  if(!mat||!mat.length){
+    if(P){
+      try{
+        if(deVisita){ MAT_VISITA=materialDe(perfilDeNivel(VISITANDO)); mat=MAT_VISITA; }
+        else { MAT=materialDe(P); mat=MAT; }
+      }catch(e){}
+    }
+    if(!mat||!mat.length){
       var tr=(typeof tramoDe==='function')?tramoDe(n):null;
       avisito('Parada '+n+(tr?' · '+tr.nombre:'')+
         '. Cuéntame de ti y se abre.');
       return;
     }
   }
-  var idx=(contenidoDe(n)-1)%MAT.length;
-  var S=MAT[idx]; if(!S){ avisito('Parada '+n); return; }
-  var abierta=(n<=actual);
+  var idx=(contenidoDe(n)-1)%mat.length;
+  var S=mat[idx]; if(!S){ avisito('Parada '+n); return; }
+  // De visita, ninguna parada esta "abierta": todas son de asomarse.
+  var abierta=deVisita?false:(n<=actual);
 
   var items=S.items||[];
   var regla=null, palabras=[];
@@ -6561,6 +6582,10 @@ function asomarseALeccion(n,actual){
   var ir=document.getElementById('asomir');
   if(ir)ir.onclick=function(){
     v.remove();
+    if(deVisita){
+      avisito('Esto es de '+VISITANDO+'. Por ahora solo para que veas qué viene.');
+      return;
+    }
     if(n===actual){ sIdx=idx; it=0; attempts=[]; vistos={}; t0=Date.now(); correr(); }
     else if(abierta)avisito('Ya la pasaste. Lo que se te atoró vuelve solo en una parada de repaso.');
     else avisito('Todavía no llegas aquí. Termina las de antes y se abre sola.');
@@ -6615,6 +6640,11 @@ function zonasDelNivel(){
 function soltarMapa(){
   try{ if(MAPA3D&&MAPA3D.dispose)MAPA3D.dispose(); }catch(e){}
   MAPA3D=null;
+  // Al salir del mapa se acaba la visita: nadie se queda atrapado viendo
+  // un nivel que no es el suyo.
+  VISITANDO=null; MAPA_NIVEL_FORZADO=''; MAT_VISITA=null;
+  var v=document.getElementById('visitabarra');
+  if(v&&v.remove)v.remove();
 }
 
 /* Que tema de mapa toca. Usa el mismo nombre de nivel que las zonas
@@ -6626,6 +6656,58 @@ function nivelDelMapa(){
   return (P&&P.nivel)||'Pre-A1';
 }
 var MAPA_NIVEL_FORZADO='';
+
+/* ═══════════ mirar otros niveles ═══════════
+   Regla que puso Brian:
+     · Un nivel IGUAL O MÁS ABAJO que el tuyo se puede estudiar de verdad.
+       Alguien de B2 puede regresar a repasar A1 cuando quiera.
+     · Un nivel MÁS ARRIBA solo se puede MIRAR: se ve el mapa y, al tocar
+       una parada, se abre la ventanita con el vocabulario y la gramática
+       que toca ahí. Pero no se practica.
+   Ver lo que viene motiva; practicarlo antes de tiempo, no.                */
+var VISITANDO=null;    // nivel que se está mirando sin poder practicarlo
+var MAT_VISITA=null;   // el material de ESE nivel, solo para la ventanita
+
+function nOrden(nv){
+  return ({'Pre-A1':0,'A1':1,'A2':2,'B1':3,'B2':4,'C1':5,'C2':6})[nv]||0;
+}
+
+// Una copia del perfil del alumno pero con otro nivel, para sacar el
+// material de ESE nivel sin tocar el suyo.
+function perfilDeNivel(nv){
+  var falso={}; for(var k in P)falso[k]=P[k];
+  falso.nivel=nv; falso.nivel_n=nOrden(nv);
+  return falso;
+}
+
+function visitarNivel(nv){
+  VISITANDO=nv;
+  MAPA_NIVEL_FORZADO=nv;     // el mapa y los colores se pintan de ese nivel
+  MAT_VISITA=null;
+  try{ MAT_VISITA=materialDe(perfilDeNivel(nv)); }catch(e){ MAT_VISITA=null; }
+  mapa();
+}
+
+function volverAMiNivel(){
+  VISITANDO=null; MAPA_NIVEL_FORZADO=''; MAT_VISITA=null;
+  try{ if(P)MAT=materialDe(P); }catch(e){}
+  mapa();
+}
+
+// La barrita que le recuerda que solo está de visita.
+function avisoDeVisita(){
+  var v=document.getElementById('visitabarra');
+  if(v&&v.remove)v.remove();
+  if(!VISITANDO)return;
+  var d=document.createElement('div');
+  d.id='visitabarra'; d.className='visitabarra';
+  d.innerHTML='<span>Estás viendo <b>'+esc(VISITANDO)+'</b>. '+
+    'Aquí solo puedes asomarte a lo que viene.</span>'+
+    '<button id="visitasalir">Volver a lo mío</button>';
+  document.body.appendChild(d);
+  var b=document.getElementById('visitasalir');
+  if(b)b.onclick=function(e){ e.stopPropagation(); volverAMiNivel(); };
+}
 
 // Le pone al body la etiqueta del nivel para que el CSS de arriba cambie el
 // color de los botones. Se llama al entrar y cada vez que se pinta el mapa.
@@ -6701,7 +6783,9 @@ function mapa3DoViejo(){
       '</div>'+
       '<div class="niveles">'+
         ['Pre-A1','A1','A2','B1','B2','C1','C2'].map(function(nv){
-          var cerrado=!LISTOS[nv] && !SOY_JEFE;   // al jefe no se le cierra nada
+          // Ya no hay niveles cerrados: los de arriba se pueden mirar.
+          // Se marcan en gris claro para que se note que son de asomarse.
+          var cerrado=(nOrden(nv)>nOrden(nivAhora)) && !SOY_JEFE;
           return '<button class="nivb'+(nv===nivAhora?' on':'')+(cerrado?' cerrado':'')+
                  '" data-niv="'+nv+'">'+esc(nv)+'</button>';
         }).join('')+
@@ -6738,14 +6822,23 @@ function mapa3DoViejo(){
   APP.querySelectorAll('.nivb').forEach(function(bt){
     bt.onclick=function(){
       var nv=bt.dataset.niv;
-      // El jefe entra a TODOS los niveles, aunque no tengan contenido propio.
-      if(!LISTOS[nv] && !JEFE_LIBRE && !MODO_JEFE){
-        avisito(nv+' todavía no está listo. Por ahora solo pre-A1 y C2.');
+      if(!P){ avisito('Primero cuéntame de ti, para armarte tus frases.'); return; }
+
+      // El jefe entra a donde sea, a estudiar.
+      var jefe=(typeof JEFE_LIBRE!=='undefined'&&JEFE_LIBRE)||
+               (typeof MODO_JEFE!=='undefined'&&MODO_JEFE);
+      var mio=nOrden(VISITANDO||(P&&P.nivel)||'Pre-A1');
+      if(VISITANDO)mio=nOrden((P&&P.nivel)||'Pre-A1');
+      var alla=nOrden(nv);
+
+      if(alla>mio && !jefe){
+        visitarNivel(nv);     // más arriba del suyo: solo mirar
         return;
       }
-      if(!P){ avisito('Primero cuéntame de ti, para armarte tus frases.'); return; }
-      P.nivel=nv;
-      P.nivel_n=({'Pre-A1':0,'A1':1,'A2':2,'B1':3,'B2':4,'C1':5,'C2':6})[nv]||0;
+
+      // Su nivel o uno de abajo: se estudia de verdad.
+      VISITANDO=null; MAPA_NIVEL_FORZADO=''; MAT_VISITA=null;
+      P.nivel=nv; P.nivel_n=alla;
       try{ var d=load(); d.perfil=P; save(d); D=d; }catch(e){}
       try{ MAT=materialDe(P); }catch(e){}
       mapa();

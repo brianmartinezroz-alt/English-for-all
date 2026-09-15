@@ -1255,7 +1255,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v125 · 14 sep · video en el vocabulario nuevo";
+var VERSION="v126 · 15 sep · video en el vocabulario nuevo";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -9158,7 +9158,7 @@ function paso(){
       if(!frase){ marco.innerHTML='<div class="vidcargando">Sin frase que buscar.</div>'; return; }
       // Nuestro servidor busca el video una sola vez y guarda cual fue.
       // El video se ve AQUI DENTRO: el alumno no sale de la leccion.
-      videoDeFrase(frase,function(id){
+      videoDeFrase(frase,'english phrase meaning how to use',function(id){
         var m=document.getElementById('vidmarco');
         if(!m)return;
 

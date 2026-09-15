@@ -1271,7 +1271,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v127 · 15 sep · cada nivel con el color de su mapa";
+var VERSION="v128 · 15 sep · colores por nivel, más lento ya sirve, se ve lo que dijiste";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -1375,7 +1375,9 @@ function hablar(t,lang,cb){
   // es británica o australiana, varios navegadores la ignoran y usan la de fábrica
   if(v){u.voice=v;u.lang=v.lang;}
   else{u.lang=es?'es-MX':'en-US';}
-  u.rate=es?Math.min(1.15,(RATE||0.85)+0.12):(RATE||0.85);
+  // Si el alumno pidió "Más lento", también aquí se le baja.
+  var base=es?Math.min(1.15,(RATE||0.85)+0.12):(RATE||0.85);
+  u.rate=VEL_PEDIDA?Math.max(0.5,base*VEL_PEDIDA):base;
   u.pitch=1;
   if(cb)u.onend=cb;
   speechSynthesis.speak(u);
@@ -1445,15 +1447,20 @@ function callarTodo(){
 // Se separa "el archivo no existe" de "el navegador no me dejó sonar".
 // Antes se confundían y un bloqueo momentáneo dejaba la frase en voz genérica
 // para el resto de la sesión.
-function reproducir(url,onOk,onNoExiste,onBloqueado){
+function reproducir(url,onOk,onNoExiste,onBloqueado,vel){
   callarTodo();
   var miTurno=TURNO;
   var a=new Audio();
   a.preload='auto';
-  // la velocidad se ajusta aquí: un solo archivo sirve para todas.
+  // La velocidad se ajusta aquí: un solo archivo sirve para todas.
   // preservesPitch evita que suene a caricatura al bajarle.
+  // vel = lo que pidió el botón "Más lento" para ESTA frase.
+  // VEL_AUDIO = la preferencia general del alumno, de sus ajustes.
+  // Antes solo se miraba la preferencia general, y por eso el botón de
+  // "Más lento" no hacía nada: mandaba el dato al servidor de voz, que
+  // lo ignora y devuelve exactamente el mismo audio.
   try{
-    a.playbackRate=VEL_AUDIO;
+    a.playbackRate=(vel||VEL_AUDIO);
     if('preservesPitch' in a)a.preservesPitch=true;
     if('mozPreservesPitch' in a)a.mozPreservesPitch=true;
     if('webkitPreservesPitch' in a)a.webkitPreservesPitch=true;
@@ -1524,24 +1531,28 @@ function sexoDeLaFrase(t){
 function vozDelServidor(texto,lang,cb,onFalla){
   if(!VOZ_ENDPOINT){onFalla&&onFalla();return;}
   var miTurno=TURNO;
-  var vel=VEL_PEDIDA;   // se toma ya, porque la respuesta llega despues
-  var k=clave(texto)+'|'+(PAQUETE_ACTIVO||'audio-us')+'|'+sexoDeLaFrase(texto)+(vel?'|v'+vel:'');
+  // Se toma ya, porque la respuesta del servidor llega después.
+  var vel=VEL_PEDIDA;
+  // Ojo: la velocidad NO va en la llave. El servidor devuelve el mismo audio
+  // pida lo que pida, así que se guarda una sola vez y se reproduce más
+  // despacio aquí. Antes se guardaba aparte y se gastaba una llamada de balde.
+  var k=clave(texto)+'|'+(PAQUETE_ACTIVO||'audio-us')+'|'+sexoDeLaFrase(texto);
 
   if(VOZ_CACHE[k]){
     if(miTurno!==TURNO)return;
-    reproducir(VOZ_CACHE[k],function(){cb&&cb();},function(){onFalla&&onFalla();},function(){cb&&cb();});
+    reproducir(VOZ_CACHE[k],function(){cb&&cb();},function(){onFalla&&onFalla();},function(){cb&&cb();},vel);
     return;
   }
   fetch(VOZ_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify({texto:texto,idioma:(lang==='es-MX'?'es':'en'),
-      paquete:PAQUETE_ACTIVO||'audio-us',sexo:sexoDeLaFrase(texto),vel:vel||undefined})})
+      paquete:PAQUETE_ACTIVO||'audio-us',sexo:sexoDeLaFrase(texto)})})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){
       if(!d||!d.ok||!d.audio){delete VOZ_CACHE[k];onFalla&&onFalla();return;}
       var url='data:audio/mpeg;base64,'+d.audio;
       VOZ_CACHE[k]=url;
       if(miTurno!==TURNO)return;   // ya cambió de pantalla: no suena
-      reproducir(url,function(){cb&&cb();},function(){onFalla&&onFalla();},function(){cb&&cb();});
+      reproducir(url,function(){cb&&cb();},function(){onFalla&&onFalla();},function(){cb&&cb();},vel);
     })
     .catch(function(){delete VOZ_CACHE[k];onFalla&&onFalla();});   // reintentable
 }
@@ -1637,7 +1648,8 @@ function decirConTuVoz(texto,lang,cb,archivo){
     reproducir(c.url,
       function(){AUDIO_RUTA=c.r;AUDIO_HAY++;cb&&cb();},   // sonó
       intenta,                                            // no existe: siguiente
-      function(){AUDIO_RUTA=c.r;cb&&cb();}                // existe pero bloqueado: no se marca
+      function(){AUDIO_RUTA=c.r;cb&&cb();},               // existe pero bloqueado: no se marca
+      VEL_PEDIDA
     );
   })();
 }
@@ -4524,7 +4536,8 @@ function abrirDudaFrase(x){
       function(txt){
         mic.classList.remove('oyendo'); mic.innerHTML=ico('boca',18);
         if(inp){ inp.value=txt; }
-        mandar();
+        PREG_POR_VOZ=true;
+        verLoQueOi(txt);
       },
       function(err){
         mic.classList.remove('oyendo'); mic.innerHTML=ico('boca',18);
@@ -4532,6 +4545,26 @@ function abrirDudaFrase(x){
                                  :'No pude abrir el micrófono. Escríbelo mejor.');
       });
   };
+
+  // Antes, lo que el microfono entendiera se mandaba al instante. Si entendia
+  // mal, el alumno no se enteraba nunca y la respuesta llegaba fuera de lugar.
+  // Ahora se le ensena por escrito lo que se oyo y el decide si es eso.
+  var PREG_POR_VOZ=false;
+  function verLoQueOi(txt){
+    var r=document.getElementById('dfres');
+    if(!r){ mandar(); return; }
+    r.innerHTML='<div class="heard"><div class="hl">esto te oí</div>'+
+      '<div class="ht">'+esc(txt)+'</div>'+
+      '<p class="tiny" style="margin:7px 0 0">Si no es eso, corrígelo en el renglón de arriba.</p>'+
+      '<div class="oirfila" style="margin-top:8px">'+
+        '<button class="oirb" id="dfsi">Sí, es eso · preguntar</button>'+
+        '<button class="oirb alt" id="dfno">Decirlo otra vez</button>'+
+      '</div></div>';
+    var si=document.getElementById('dfsi');
+    if(si)si.onclick=function(ev){ ev.stopPropagation(); mandar(); };
+    var no=document.getElementById('dfno');
+    if(no)no.onclick=function(ev){ ev.stopPropagation(); var m=document.getElementById('dfmic'); if(m)m.click(); };
+  }
 
   function instruccion(q){
     var niv=(P&&P.nivel)||'A1';
@@ -4569,7 +4602,7 @@ function abrirDudaFrase(x){
     var r=document.getElementById('dfres');
     if(!hayIA()){
       if(r)r.innerHTML='<div class="heard"><span class="ok2">Anotada. Brian te la contesta al revisar tu sesión.</span></div>';
-      try{ DUDAS.push(q); }catch(e){}
+      try{ DUDAS.push((PREG_POR_VOZ?'(hablando) ':'')+q); }catch(e){}
       attempts.push({tipo:'pregunta',meta:frase,oido:q,pct:null});
       return;
     }
@@ -4594,7 +4627,9 @@ function abrirDudaFrase(x){
           '</div></div>';
         if(esIngles)say(prim,'en-US'); else say(t,'es-MX');
         attempts.push({tipo:'pregunta-'+MODO,meta:q||frase,oido:t,pct:null});
-        try{ DUDAS.push((q||MODO)+'  →  '+t); }catch(e){}
+        // Se guarda la pregunta Y la respuesta, y si la dijo hablando se anota,
+        // para que Brian sepa si el microfono la entendio bien.
+        try{ DUDAS.push((PREG_POR_VOZ?'(hablando) ':'')+(q||MODO)+'  →  '+t); }catch(e){}
         var o=document.getElementById('dfoir');
         if(o)o.onclick=function(ev){ev.stopPropagation();
           if(esIngles)say(prim,'en-US'); else say(t,'es-MX');};
@@ -9774,8 +9809,6 @@ function cierre(){
     var codigo2=recogido();
     var cuerpo='Sesión '+(sIdx+1)+' — '+S.t+'\n'+P.nombre+' · '+rec.fecha+'\n\n'+
       (rec.observacion?'LO QUE ESCRIBIÓ EL ALUMNO:\n'+rec.observacion+'\n\n':'')+
-      (DUDAS.length?'DUDAS QUE PREGUNTÓ:\n'+DUDAS.map(function(d){return '· '+d;}).join('\n')+'\n\n':'')+
-      (rec.observacion?'LO QUE ESCRIBIÓ:\n'+rec.observacion+'\n\n':'')+
       (DUDAS.length?'DUDAS QUE PREGUNTÓ:\n'+DUDAS.map(function(d){return '· '+d;}).join('\n')+'\n\n':'')+
       'Perfil: '+P.trabajo_es+', '+P.lugar_es+', '+P.accion_es+'\n'+
       'Intentos:\n'+attempts.map(function(a){

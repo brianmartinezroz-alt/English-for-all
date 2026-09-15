@@ -426,6 +426,9 @@
   .vidplayer iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
   .vidpie{font-size:12px;color:var(--tenue);text-align:center;margin-top:7px;line-height:1.45}
   .vidpie a{color:var(--tenue)}
+  /* el renglon que explica el saludo o la despedida que tocó hoy */
+  .hoja-gloss{font-size:12.5px;color:var(--tenue);line-height:1.45;margin:-4px 0 12px}
+  .hoja-oir{width:100%;margin-bottom:9px}
   /* el ejemplo en video que acompana al vocabulario nuevo */
   .vocvid{margin:14px 0 4px}
   .vocvid.oculto{display:none}
@@ -1271,7 +1274,7 @@ var DESTINO='brianmartinezroz@gmail.com';
 <script>
 (function(){
 "use strict";
-var VERSION="v128 · 15 sep · colores por nivel, más lento ya sirve, se ve lo que dijiste";
+var VERSION="v129 · 15 sep · saludos y despedidas variados";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -3983,6 +3986,67 @@ var SALUDOS=[
 ];
 var REGISTRO=['neutral · sirve siempre','informal · con confianza','formal · con alguien de respeto'];
 
+/* ═══════════ despedidas: una distinta cada vez que cierra ═══════════ */
+// Misma idea que los saludos: despedirse de una sola forma deja al alumno
+// atorado cuando le contestan distinto. reg y mom significan lo mismo.
+// cuando: 0 siempre · 1 solo si va a volver pronto · 2 solo al terminar del todo
+var DESPEDIDAS=[
+  {en:'Bye.',es:'Adiós.',reg:0,mom:0,cuando:0},
+  {en:'Goodbye.',es:'Adiós — un poco más formal.',reg:2,mom:0,cuando:0},
+  {en:'See you.',es:'Nos vemos.',reg:1,mom:0,cuando:0},
+  {en:'See you later.',es:'Nos vemos al rato.',reg:1,mom:0,cuando:1},
+  {en:'See you tomorrow.',es:'Nos vemos mañana.',reg:0,mom:0,cuando:1},
+  {en:'See you soon.',es:'Nos vemos pronto.',reg:0,mom:0,cuando:1},
+  {en:'Talk to you later.',es:'Luego hablamos.',reg:1,mom:0,cuando:1},
+  {en:'Catch you later.',es:'Ahí nos vemos — muy de confianza.',reg:1,mom:0,cuando:1},
+  {en:'Take care.',es:'Cuídate.',reg:0,mom:0,cuando:0},
+  {en:'Take it easy.',es:'Tómalo con calma.',reg:1,mom:0,cuando:0},
+  {en:'Have a good one.',es:'Que te vaya bien.',reg:1,mom:0,cuando:0},
+  {en:'Have a good day.',es:'Que tengas buen día.',reg:0,mom:1,cuando:0},
+  {en:'Have a good afternoon.',es:'Que tengas buena tarde.',reg:0,mom:2,cuando:0},
+  {en:'Have a good evening.',es:'Que tengas buena noche.',reg:0,mom:3,cuando:0},
+  {en:'Good night.',es:'Buenas noches — al despedirse, no al llegar.',reg:0,mom:3,cuando:2},
+  {en:'Rest well.',es:'Que descanses.',reg:0,mom:3,cuando:2},
+  {en:'Have a good weekend.',es:'Buen fin de semana.',reg:0,mom:0,cuando:0,finde:1},
+  {en:'Enjoy your day.',es:'Disfruta tu día.',reg:0,mom:1,cuando:0},
+  {en:'It was good seeing you.',es:'Qué gusto haberte visto.',reg:0,mom:0,cuando:2},
+  {en:'Nice talking to you.',es:'Qué gusto platicar contigo.',reg:0,mom:0,cuando:2},
+  {en:'Until next time.',es:'Hasta la próxima.',reg:2,mom:0,cuando:2},
+  {en:'Keep it up.',es:'Sigue así.',reg:1,mom:0,cuando:2},
+  {en:'Good work today.',es:'Buen trabajo hoy.',reg:0,mom:0,cuando:2},
+  {en:'Well done today.',es:'Bien hecho hoy.',reg:0,mom:0,cuando:2},
+  {en:'All the best.',es:'Que te vaya muy bien — más formal.',reg:2,mom:0,cuando:0},
+  {en:'So long.',es:'Hasta luego — algo anticuado.',reg:1,mom:0,cuando:0},
+  {en:'Later.',es:'Ahí nos vemos — muy corto, de confianza.',reg:1,mom:0,cuando:1},
+  {en:'Get home safe.',es:'Llega bien a casa.',reg:0,mom:3,cuando:2}
+];
+
+// Escoge una que embone con la hora y que no sea la de la vez pasada.
+function despedidaDelDia(termino){
+  var m=(typeof momento==='function')?momento():0;
+  var diaHoy=new Date().getDay();   // 0 domingo ... 6 sabado
+  var pool=DESPEDIDAS.filter(function(s){
+    // "Have a good weekend" un martes suena raro: solo de jueves a sabado
+    if(s.finde&&!(diaHoy>=4&&diaHoy<=6))return false;
+    if(s.mom!==0&&s.mom!==m)return false;
+    if(s.cuando===1&&termino)return false;
+    if(s.cuando===2&&!termino)return false;
+    return true;
+  });
+  if(!pool.length)pool=[DESPEDIDAS[0]];
+  var previo=D&&D.ultimaDespedida;
+  var libres=pool.filter(function(s){return s.en!==previo;});
+  if(libres.length)pool=libres;
+  var s=pool[Math.floor(Math.random()*pool.length)];
+  try{
+    D.ultimaDespedida=s.en;
+    D.despedidasVistas=(D.despedidasVistas||[]);
+    if(D.despedidasVistas.indexOf(s.en)<0)D.despedidasVistas.push(s.en);
+    save(D);
+  }catch(e){}
+  return s;
+}
+
 function momento(){
   var h=new Date().getHours();
   return h<12?1:(h<19?2:3);
@@ -5277,14 +5341,24 @@ function hojaHola(){
   var f=null; try{ f=localStorage.getItem('efa_foto'); }catch(e){}
   var racha=c.racha||0;
 
+  // Un saludo distinto cada vez, escogido por la hora y por si ya nos
+  // conocemos. Antes siempre decía lo mismo ("Buenos días") y el alumno
+  // solo aprendía una forma de saludar, que es justo lo que no queremos.
+  var sal; try{ sal=saludoDelDia((c.parada||1)>1); }
+  catch(e){ sal={en:horaDelDia(),es:'',reg:0}; }
+  var hayEs=(typeof modoIdioma==='function')?(modoIdioma()!=='en'):true;
+
   var v=document.createElement('div');
   v.className='hoja-velo'; v.id='hojahola';
   v.innerHTML='<div class="hoja">'+
     '<div class="hoja-asa"></div>'+
     '<div class="hoja-cab">'+
       (f?'<img class="hoja-foto" src="'+f+'" alt="">':'<div class="hoja-foto vacia">\u{1F464}</div>')+
-      '<div><div class="hoja-hola">'+horaDelDia()+'</div>'+
+      '<div><div class="hoja-hola">'+esc(sal.en)+'</div>'+
       '<div class="hoja-nom">'+esc(nom||'qué gusto verte')+'</div></div>'+
+    '</div>'+
+    '<div class="hoja-gloss">'+
+      (hayEs&&sal.es?esc(sal.es)+' · ':'')+esc(REGISTRO[sal.reg||0])+
     '</div>'+
     (racha>0?'<div class="hoja-racha"><b>'+racha+'</b> días seguidos. No la rompas hoy.</div>':'')+
     '<div class="hoja-hoy">'+
@@ -5292,6 +5366,7 @@ function hojaHola(){
       '<div class="hoja-lec">Parada '+c.parada+'</div>'+
       '<div class="hoja-sub">Diez minutos y ya. Ni uno más si no quieres.</div>'+
     '</div>'+
+    '<button class="oirb hoja-oir" id="hojaoir">'+ico('bocina',15)+' Oír el saludo</button>'+
     '<button class="btn hoja-btn" id="hojair">Empezar</button>'+
     '<button class="hoja-mas" id="hojamas">Solo quiero ver el mapa</button>'+
   '</div>';
@@ -5303,6 +5378,8 @@ function hojaHola(){
     setTimeout(function(){ v.remove(); },340);
   }
   v.onclick=function(e){ if(e.target===v)cerrar(); };
+  var so=document.getElementById('hojaoir');
+  if(so)so.onclick=function(e){ e.stopPropagation(); try{say(sal.en,'en-US');}catch(err){} };
   var ir=document.getElementById('hojair');
   if(ir)ir.onclick=function(){ cerrar(); setTimeout(function(){ try{correr();}catch(e){} },300); };
   var mas=document.getElementById('hojamas');
@@ -5313,14 +5390,25 @@ function hojaAdios(porTiempo){
   if(document.getElementById('hojaadios'))return;
   var c; try{ c=progreso(); }catch(e){ c={parada:1,racha:0}; }
   var f=null; try{ f=localStorage.getItem('efa_foto'); }catch(e){}
+
+  // porTiempo=true significa que todavia le faltan ejercicios, o sea que va
+  // a volver en un momento; por eso ahi salen las de "nos vemos al rato" y
+  // al terminar de verdad salen las de "buen trabajo hoy".
+  var des; try{ des=despedidaDelDia(!porTiempo); }
+  catch(e){ des={en:'See you tomorrow.',es:'Nos vemos mañana.',reg:0}; }
+  var hayEs2=(typeof modoIdioma==='function')?(modoIdioma()!=='en'):true;
+
   var v=document.createElement('div');
   v.className='hoja-velo'; v.id='hojaadios';
   v.innerHTML='<div class="hoja">'+
     '<div class="hoja-asa"></div>'+
     '<div class="hoja-cab">'+
       (f?'<img class="hoja-foto" src="'+f+'" alt="">':'<div class="hoja-foto vacia">\u{1F44B}</div>')+
-      '<div><div class="hoja-hola">'+(porTiempo?'Ya casi acabas':'Nos vemos')+'</div>'+
+      '<div><div class="hoja-hola">'+esc(des.en)+'</div>'+
       '<div class="hoja-nom">'+esc((P&&P.nombre)||'')+'</div></div>'+
+    '</div>'+
+    '<div class="hoja-gloss">'+
+      (hayEs2&&des.es?esc(des.es)+' · ':'')+esc(REGISTRO[des.reg||0])+
     '</div>'+
     (porTiempo
       ? '<div class="hoja-racha">Te faltan <b>dos</b> ejercicios. '+
@@ -5333,8 +5421,8 @@ function hojaAdios(porTiempo){
       'Si algo se te atoró, te va a volver a salir en unos días, '+
       'justo cuando ya casi lo olvidabas. Así se queda.</div>'+
     '</div>'+
-    '<div class="adios-frase">Nos vemos mañana. Diez minutos al día pesan más '+
-      'que tres horas el domingo.</div>'+
+    '<div class="adios-frase">Diez minutos al día pesan más que tres horas el domingo.</div>'+
+    '<button class="oirb hoja-oir" id="adiosoir">'+ico('bocina',15)+' Oír la despedida</button>'+
     '<button class="btn hoja-btn" id="adiosok">'+
       (porTiempo?'Voy a acabarlos':'Cerrar')+'</button>'+
     '<button class="hoja-mas" id="adiosseguir">'+
@@ -5344,6 +5432,8 @@ function hojaAdios(porTiempo){
   requestAnimationFrame(function(){ v.classList.add('abierta'); });
   function cerrar(){ v.classList.remove('abierta'); setTimeout(function(){v.remove();},340); }
   v.onclick=function(e){ if(e.target===v)cerrar(); };
+  var ao=document.getElementById('adiosoir');
+  if(ao)ao.onclick=function(e){ e.stopPropagation(); try{say(des.en,'en-US');}catch(err){} };
   var k=document.getElementById('adiosok');
   if(k)k.onclick=cerrar;
   var g=document.getElementById('adiosseguir');

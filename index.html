@@ -804,6 +804,37 @@
 <style>
   .bubble-ia{background:var(--verde-suave);border:1px solid var(--verde);border-radius:12px;
     padding:14px 16px;margin-bottom:12px;animation:aparece .3s ease both}
+  /* ---- examen: la conversacion en dos fases, todo en una pantalla ---- */
+  .chfase{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--verde-hondo);background:var(--verde-suave);border:1px solid var(--verde);
+    border-radius:999px;padding:6px 12px;display:inline-block;margin-bottom:10px}
+  .chbarra{height:4px;background:var(--linea);border-radius:999px;overflow:hidden;margin-bottom:14px}
+  .chbarra i{display:block;height:100%;width:0;background:var(--verde);border-radius:999px;
+    transition:width .45s ease}
+  .chcaja{max-height:44vh;overflow-y:auto;margin-bottom:13px;padding:2px;
+    display:flex;flex-direction:column;gap:9px;-webkit-overflow-scrolling:touch}
+  .chcaja:empty{display:none}
+  .chb{border-radius:13px;padding:11px 14px;font-size:15px;line-height:1.45;max-width:88%;
+    animation:aparece .28s ease both}
+  .chb .qui{font-family:var(--mono);font-size:8.5px;letter-spacing:.13em;text-transform:uppercase;
+    opacity:.55;display:block;margin-bottom:3px}
+  .chb .pes{font-size:12.5px;opacity:.72;margin-top:4px;font-style:italic}
+  .chb.ia{align-self:flex-start;background:var(--verde-suave);border:1px solid var(--verde);
+    border-bottom-left-radius:4px}
+  .chb.yo{align-self:flex-end;background:var(--crema);border:1px solid var(--linea);
+    border-bottom-right-radius:4px}
+  .chb.esp .txt{opacity:.5;font-style:italic}
+  .chayuda{background:var(--crema);border:1px dashed var(--linea);border-radius:10px;
+    padding:10px 12px;margin-bottom:12px}
+  .chayuda b{font-family:var(--mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;
+    display:block;opacity:.6;margin-bottom:6px;font-weight:400}
+  .chayuda span{display:inline-block;background:var(--papel);border:1px solid var(--linea);
+    border-radius:8px;padding:5px 9px;margin:0 5px 5px 0;font-size:13px}
+  .chnota{background:var(--verde-suave);border:1px solid var(--verde);border-radius:12px;
+    padding:15px 16px;margin-bottom:10px;font-size:14.5px;line-height:1.5}
+  .chnota .gr{font-family:var(--display);font-size:36px;color:var(--verde-hondo);
+    display:block;line-height:1;margin-bottom:6px}
+  .guiado .chb{font-size:17px}
 </style>
 <style>
   .ctxbox{background:var(--crema);border-left:3px solid var(--verde);border-radius:0 10px 10px 0;
@@ -1303,7 +1334,7 @@ if('serviceWorker' in navigator){
 <script>
 (function(){
 "use strict";
-var VERSION="v132 · 15 sep · se pueden ver todos los mapas";
+var VERSION="v134 · 15 sep · examen final por nivel, con conversación en dos fases";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -1777,22 +1808,90 @@ function diagnostico(){
      y MENOS despues de que ya dijo algo (ahi si, ya acabo)
    - se corta sola a los 45 segundos para no quedarse abierta
    - si el navegador la cierra sola, se vuelve a abrir sin que se note */
-var ESPERA_ANTES = 9000;   // pensando antes de soltar la primera palabra
+var ESPERA_ANTES = 10000;  // pensando antes de soltar la primera palabra
 var ESPERA_DESPUES = 2600; // pausa despues de haber dicho algo = ya acabo
+var ESPERA_TRABADO = 4200; // se trabo: se le da mas aire antes de cortarlo
+var ESPERA_INCOMPLETO = 3800; // dijo menos de lo que se le pidio: aun no acaba
+
+/* Ruiditos que NO son la frase: duda, muletilla, tos. Si lo ultimo que se
+   oyo es uno de estos, el alumno NO termino — se esta trabando. Cortarlo
+   ahi es el error que mas mata una app de hablado. */
+var MULETILLAS=['uh','uhh','um','umm','erm','er','eh','ehh','mm','mmm','hmm',
+  'ah','ahh','este','esteee','mmhm','ehm'];
+
+/* Palabras que casi nunca cierran una frase. Si lo ultimo que dijo es una
+   de estas, todavia viene algo: se le espera. NO significa que se trabo,
+   por eso va aparte — "a" o "the" son palabras de verdad. */
+var COLGADAS=['a','an','the','my','your','his','her','to','in','on','at','of',
+  'and','or','but','with','for','is','are','am','i'];
+function quedaColgado(t){
+  var u=ultimaPalabra(t).toLowerCase().replace(/[^a-z']/g,'');
+  return COLGADAS.indexOf(u)>=0;
+}
+function esMuletilla(p){
+  p=String(p||'').toLowerCase().replace(/[^a-záéíóúñ ]/g,'').trim();
+  return MULETILLAS.indexOf(p)>=0;
+}
+function ultimaPalabra(t){
+  var p=String(t||'').trim().split(/\s+/);
+  return p.length?p[p.length-1]:'';
+}
+// "I I I work" o "wor- work": el mismo arranque repetido = tartamudeo
+// ¿Se esta trabando AHORITA? Mira el final: sirve para decidir cuanto
+// silencio aguantar antes de cortarlo.
+function seTrabo(t){
+  var p=String(t||'').toLowerCase().replace(/[^a-z' ]/g,'').trim().split(/\s+/).filter(Boolean);
+  if(!p.length)return false;
+  if(esMuletilla(p[p.length-1]))return true;
+  return parTrabado(p,p.length-1);
+}
+// ¿Se trabo en algun momento? Mira toda la frase: sirve para decirle
+// "se te trabo" en vez de marcarle un error que no cometio.
+function huboTrabon(t){
+  var p=String(t||'').toLowerCase().replace(/[^a-z' ]/g,'').trim().split(/\s+/).filter(Boolean);
+  for(var i=0;i<p.length;i++){
+    if(esMuletilla(p[i]))return true;
+    if(parTrabado(p,i))return true;
+  }
+  return false;
+}
+function parTrabado(p,i){
+  if(i<1)return false;
+  if(p[i]===p[i-1])return true;                       // "I I"
+  if(p[i-1].length>=3 && p[i]!==p[i-1] &&
+     p[i].indexOf(p[i-1].slice(0,3))===0)return true; // "wor- work"
+  return false;
+}
+function cuantasPalabras(t){
+  return String(t||'').trim().split(/\s+/).filter(Boolean).length;
+}
 var TOPE_TOTAL = 45000;
 
-function listen(lang,onDone,onErr){
+/* listen(idioma, cuandoTermine, cuandoFalle, opciones)
+   opciones.meta = la frase que se le pidio decir. Con eso el micrófono
+   sabe cuanto falta y tiene la paciencia justa.
+   cuandoTermine(texto, confianza, extra) — extra.alternativas trae las
+   otras versiones que entendio el navegador, que sirven para no marcarle
+   error a alguien que en realidad si lo dijo bien. */
+function listen(lang,onDone,onErr,ops){
   if(!SR){onErr&&onErr('sin-soporte');return null;}
   try{ callarTodo(); }catch(e){}   // sin esto el micrófono oye a la app
+  ops=ops||{};
+  var meta=String(ops.meta||'');
+  var palabrasMeta=cuantasPalabras(meta);
 
   var r=new SR();
   r.lang=lang||'en-US';
   r.interimResults=true;      // para saber que sigue hablando
   r.continuous=true;          // que NO se apague al primer silencio
-  r.maxAlternatives=1;
+  // Varias versiones de lo mismo. El navegador suele acertar en la segunda
+  // o la tercera cuando el acento es marcado; quedarse con la primera es
+  // marcarle error a quien lo dijo bien.
+  r.maxAlternatives=6;
 
   var firme='', confianza=0, terminado=false, cerrandoYo=false;
   var relojSilencio=null, relojTope=null, dijoAlgo=false;
+  var ultimoSuelto='', alternativas=[], seTraboAlguna=false, reaperturas=0;
 
   function acabar(){
     if(terminado)return;
@@ -1800,14 +1899,25 @@ function listen(lang,onDone,onErr){
     clearTimeout(relojSilencio); clearTimeout(relojTope);
     cerrandoYo=true;
     try{ r.stop(); }catch(e){}
-    var t=firme.trim();
-    if(t) onDone(t, confianza||0.9);
+    var t=(firme.trim()||ultimoSuelto.trim());
+    if(t) onDone(t, confianza||0.9, {alternativas:alternativas.slice(), trabado:seTraboAlguna});
     else   onErr&&onErr('no-speech');
   }
 
+  /* Cuanto silencio se aguanta antes de dar por terminado.
+     No es un numero fijo: depende de si se trabo y de cuanto le falta. */
+  function cuantoEsperar(){
+    if(!dijoAlgo) return ESPERA_ANTES;
+    var hastaAhora=(firme+' '+ultimoSuelto);
+    if(seTrabo(hastaAhora)) return ESPERA_TRABADO;
+    if(quedaColgado(hastaAhora)) return ESPERA_INCOMPLETO;   // "I am a..." sigue
+    if(palabrasMeta>2 && cuantasPalabras(hastaAhora) < palabrasMeta*0.7)
+      return ESPERA_INCOMPLETO;    // dijo la mitad: seguro sigue
+    return ESPERA_DESPUES;
+  }
   function reiniciarEspera(){
     clearTimeout(relojSilencio);
-    relojSilencio=setTimeout(acabar, dijoAlgo?ESPERA_DESPUES:ESPERA_ANTES);
+    relojSilencio=setTimeout(acabar, cuantoEsperar());
   }
 
   r.onresult=function(e){
@@ -1815,13 +1925,30 @@ function listen(lang,onDone,onErr){
     for(var i=e.resultIndex;i<e.results.length;i++){
       var res=e.results[i];
       if(res.isFinal){
-        firme += (firme?' ':'') + res[0].transcript.trim();
-        if(res[0].confidence) confianza=res[0].confidence;
+        var mejor=res[0].transcript.trim();
+        // Un ruidito suelto y con poca confianza no es lo que dijo: es
+        // el ventilador, un carro, alguien tosiendo. No se anota.
+        var basura = mejor && cuantasPalabras(mejor)<=1 && esMuletilla(mejor) &&
+                     (res[0].confidence||1) < 0.55;
+        // Si lo que llega es exactamente lo que ya se tenia (el navegador
+        // reentrego el mismo final tras reabrir), no se pega dos veces.
+        var yaEstaba = mejor && (firme===mejor ||
+          firme.slice(-mejor.length-1)===(' '+mejor) || firme.slice(-mejor.length)===mejor);
+        if(!basura && mejor && !yaEstaba){
+          firme += (firme?' ':'') + mejor;
+          if(res[0].confidence) confianza=res[0].confidence;
+          for(var a=0;a<res.length;a++){
+            var alt=(res[a].transcript||'').trim();
+            if(alt && alternativas.indexOf(alt)<0) alternativas.push(alt);
+          }
+        }
       } else {
         suelto += res[0].transcript;
       }
     }
+    if(suelto.trim()) ultimoSuelto=suelto;
     if(firme.trim()||suelto.trim())dijoAlgo=true;
+    if(huboTrabon(firme+' '+suelto)) seTraboAlguna=true;
     reiniciarEspera();
   };
 
@@ -1843,8 +1970,14 @@ function listen(lang,onDone,onErr){
      continuo. Si eso pasa y el alumno no ha terminado, se reabre calladito. */
   r.onend=function(){
     if(terminado||cerrandoYo)return;
-    try{ r.start(); reiniciarEspera(); }
-    catch(e){ acabar(); }
+    // Chrome cierra el micrófono cada tanto. Si lo que lleva dicho todavia
+    // no alcanza para la frase que se le pidio, se reabre y se le sigue
+    // escuchando: lo que ya dijo NO se pierde, se le va sumando.
+    if(reaperturas<4){
+      reaperturas++;
+      try{ r.start(); reiniciarEspera(); return; }catch(e){}
+    }
+    acabar();
   };
 
   try{
@@ -2054,6 +2187,19 @@ function comparar(meta,oido){
   m.forEach(function(w,i){total+=peso(w);if(marcas[i])logrado+=peso(w);});
   return {pct:total?Math.round(logrado/total*100):0, marcas:marcas, palabras:m};
 }
+/* El navegador entrega varias versiones de lo que oyo. Se comparan todas
+   contra la frase meta y se toma la que mejor embona. Alguien con acento
+   marcado suele salir bien en la segunda o la tercera, y quedarse con la
+   primera era marcarle un error que no cometio. */
+function compararMejor(meta,oido,alternativas){
+  var mejor=comparar(meta,oido); mejor.dicho=oido;
+  (alternativas||[]).forEach(function(alt){
+    var c=comparar(meta,alt);
+    if(c.pct>mejor.pct){ c.dicho=alt; mejor=c; }
+  });
+  return mejor;
+}
+
 function pintar(meta,cmp){
   return cmp.palabras.map(function(w,i){
     return '<span class="'+(cmp.marcas[i]?'w-ok':'w-no')+'">'+esc(w)+'</span>';
@@ -2079,12 +2225,25 @@ var ACCIONES=[
 ];
 var HORAS=[['6','at six'],['7','at seven'],['8','at eight'],['9','at nine'],['10','at ten'],['más tarde','later']];
 var GUSTOS=[
-  ['mi trabajo','my job'],['mi familia','my family'],['la música','music'],['cocinar','cooking'],
-  ['el fútbol','football'],['viajar','traveling'],['leer','reading']
+  ['mi familia','my family'],['la música','music'],['cocinar','cooking'],
+  ['el fútbol','football'],['viajar','traveling'],['leer','reading'],
+  ['las series y el cine','films and series'],['hacer ejercicio','working out'],
+  ['los videojuegos','video games'],['salir con amigos','going out with friends'],
+  ['mis animales','my pets'],['mi trabajo','my job']
 ];
 var METAS=[
-  ['por mi trabajo','for my job'],['para viajar','to travel'],['para estudiar','to study'],
-  ['para mis hijos','for my children'],['porque me gusta','because I like it']
+  ['para viajar','to travel'],['por mi trabajo','for my job'],
+  ['para entender películas y música','to understand films and music'],
+  ['para estudiar','to study'],['para mis hijos','for my children'],
+  ['para hablar con gente de fuera','to talk to people abroad'],
+  ['porque me gusta','because I like it']
+];
+// De que va a ser SU ingles. Antes todo el programa salia de business, por
+// que nacio con Olan. Con esto el material se acomoda a cada quien.
+var ENFOQUES=[
+  ['Las dos cosas','vida y trabajo, mitad y mitad'],
+  ['Mi vida diaria','familia, viajes, series, amigos'],
+  ['Mi trabajo','juntas, clientes, correos, teléfono']
 ];
 
 /* ═══════════ armar el material desde el perfil ═══════════ */
@@ -3348,7 +3507,132 @@ function moldeC2_parte2(p, nom, ofi){
   ];
 }
 
+
+/* ═══════════ los números, por nivel ═══════════ */
+// Decision de Brian, 15 de septiembre:
+//   pre-A1  los que se confunden de oido: thirteen/thirty, fifteen/fifty
+//   A1      los años, dichos como se dicen de verdad (nineteen eighty-five)
+//   A2      cantidades grandes en cientos (fifteen hundred) y precios
+//   B1+     dinero de trabajo: miles, millones, decimales, porcentajes
+// OJO con el patron de cientos: solo corre de 1100 a 1900. Mil es
+// "a thousand" y dos mil es "two thousand", nunca "ten hundred" ni
+// "twenty hundred". Esa nota va escrita en el ejercicio para que nadie
+// la enseñe mal.
+function etiquetaNumero(){
+  var n=(P&&P.nivel_n)||0;
+  if(n<=0)return 'los que se oyen parecido';
+  if(n===1)return 'los a\u00f1os';
+  if(n===2)return 'cantidades grandes';
+  if(n===3)return 'dinero y porcentajes';
+  return 'cifras de reporte';
+}
+function numerosDe(n){
+  var T={
+    0:[
+      {k:'num',en:'thirteen',bien:{es:'13',en:'thirteen'},
+       ops:[{es:'13',en:'thirteen'},{es:'30',en:'thirty'}],
+       nota:'THIR-teen lleva la fuerza al final. THIR-ty la lleva al principio.'},
+      {k:'num',en:'fifty',bien:{es:'50',en:'fifty'},
+       ops:[{es:'15',en:'fifteen'},{es:'50',en:'fifty'}],
+       nota:'Si oyes la t al final (fifTEEN) es el chico. Si no, es el grande.'},
+      {k:'num',en:'forty',bien:{es:'40',en:'forty'},
+       ops:[{es:'14',en:'fourteen'},{es:'40',en:'forty'}],
+       nota:'Cuarenta se escribe forty, sin la u de four. Es de las que mas se escriben mal.'},
+      {k:'num',en:'half past seven',bien:{es:'7:30',en:'half past seven'},
+       ops:[{es:'7:30',en:'half past seven'},{es:'6:30',en:'half past six'}],
+       nota:'"Half past" es y media. Se dice la hora que YA paso, no la que viene.'}
+    ],
+    1:[
+      {k:'num',en:'nineteen eighty-five',bien:{es:'1985',en:'nineteen eighty-five'},
+       ops:[{es:'1985',en:'nineteen eighty-five'},{es:'1995',en:'nineteen ninety-five'}],
+       nota:'Los años se parten en dos: 19-85. No se dice "one thousand nine hundred".'},
+      {k:'num',en:'nineteen seventy-two',bien:{es:'1972',en:'nineteen seventy-two'},
+       ops:[{es:'1972',en:'nineteen seventy-two'},{es:'1962',en:'nineteen sixty-two'}],
+       nota:'Igual: 19 y luego 72. Asi dice la gente su año de nacimiento.'},
+      {k:'num',en:'two thousand and five',bien:{es:'2005',en:'two thousand and five'},
+       ops:[{es:'2005',en:'two thousand and five'},{es:'2015',en:'twenty fifteen'}],
+       nota:'Del 2000 al 2009 no se parte: two thousand and five. Del 2010 en adelante si: twenty fifteen.'},
+      {k:'num',en:'twenty twenty-six',bien:{es:'2026',en:'twenty twenty-six'},
+       ops:[{es:'2026',en:'twenty twenty-six'},{es:'2016',en:'twenty sixteen'}],
+       nota:'Este año: twenty twenty-six. Se volvio a partir en dos, como los de 1900.'}
+    ],
+    2:[
+      {k:'num',en:'fifteen hundred',bien:{es:'1,500',en:'fifteen hundred'},
+       ops:[{es:'1,500',en:'fifteen hundred'},{es:'50,000',en:'fifty thousand'}],
+       nota:'De 1,100 a 1,900 se dice en cientos: fifteen hundred. OJO: mil es "a thousand", '+
+            'no "ten hundred"; y dos mil es "two thousand", no "twenty hundred". El patron '+
+            'solo corre entre once y diecinueve cientos.'},
+      {k:'num',en:'eighteen hundred',bien:{es:'1,800',en:'eighteen hundred'},
+       ops:[{es:'1,800',en:'eighteen hundred'},{es:'800',en:'eight hundred'}],
+       nota:'Mil ochocientos, dicho corto. En la calle y en el trabajo se dice asi.'},
+      {k:'num',en:'two thousand four hundred',bien:{es:'2,400',en:'two thousand four hundred'},
+       ops:[{es:'2,400',en:'two thousand four hundred'},{es:'24,000',en:'twenty-four thousand'}],
+       nota:'Pasando los 2,000 ya no se dice en cientos. Aqui si va "two thousand".'},
+      {k:'num',en:'three ninety-nine',bien:{es:'$3.99',en:'three ninety-nine'},
+       ops:[{es:'$3.99',en:'three ninety-nine'},{es:'$399',en:'three hundred ninety-nine'}],
+       nota:'Los precios se dicen cortos: "three ninety-nine" son tres con noventa y nueve.'}
+    ],
+    3:[
+      {k:'num',en:'a hundred and fifty thousand',bien:{es:'150,000',en:'a hundred and fifty thousand'},
+       ops:[{es:'150,000',en:'a hundred and fifty thousand'},{es:'115,000',en:'a hundred and fifteen thousand'}],
+       nota:'Ciento cincuenta mil. El "and" entre cientos y decenas es britanico; el americano lo salta.'},
+      {k:'num',en:'two point five million',bien:{es:'2.5 millones',en:'two point five million'},
+       ops:[{es:'2.5 millones',en:'two point five million'},{es:'2.5 mil',en:'two point five thousand'}],
+       nota:'El punto decimal se dice "point", y lo de despues se lee digito por digito.'},
+      {k:'num',en:'zero point seven five',bien:{es:'0.75',en:'zero point seven five'},
+       ops:[{es:'0.75',en:'zero point seven five'},{es:'0.075',en:'zero point zero seven five'}],
+       nota:'Despues del punto: siete, cinco. Nunca "seventy-five".'},
+      {k:'num',en:'up eight per cent',bien:{es:'+8%',en:'up eight per cent'},
+       ops:[{es:'+8%',en:'up eight per cent'},{es:'-8%',en:'down eight per cent'}],
+       nota:'"Up" sube, "down" baja. En un reporte esa palabra cambia toda la frase.'}
+    ],
+    4:[
+      {k:'num',en:'one point two billion',bien:{es:'1,200 millones',en:'one point two billion'},
+       ops:[{es:'1,200 millones',en:'one point two billion'},{es:'1,200 millones de millones',en:'one point two trillion'}],
+       nota:'Cuidado: el "billion" ingles son mil millones, no un billon. Ese es el error mas caro.'},
+      {k:'num',en:'a quarter of a million',bien:{es:'250,000',en:'a quarter of a million'},
+       ops:[{es:'250,000',en:'a quarter of a million'},{es:'25,000',en:'twenty-five thousand'}],
+       nota:'Un cuarto de millon. En juntas se dice asi mas que con la cifra.'},
+      {k:'num',en:'twenty-three point four per cent',bien:{es:'23.4%',en:'twenty-three point four per cent'},
+       ops:[{es:'23.4%',en:'twenty-three point four per cent'},{es:'23.04%',en:'twenty-three point zero four per cent'}],
+       nota:'Hay que oir si dice "zero" despues del punto. Cambia el numero por completo.'},
+      {k:'num',en:'roughly nineteen hundred units',bien:{es:'~1,900 piezas',en:'roughly nineteen hundred units'},
+       ops:[{es:'~1,900 piezas',en:'roughly nineteen hundred units'},{es:'~900 piezas',en:'roughly nine hundred units'}],
+       nota:'Aqui vuelve el patron de cientos: 1,900 son "nineteen hundred". Arriba de 1,900 ya no.'}
+    ]
+  };
+  if(n>=5) return T[4];
+  return T[n]||T[0];
+}
+
+// Reglas que valen para todos los niveles: se le quita lo que todavia no le
+// toca y se le mete lo que si.
+function afinarPorNivel(mat,p){
+  if(!mat||!mat.length)return mat;
+  var n=(p&&p.nivel_n)||0;
+  var nums=numerosDe(n), ni=0;
+  mat.forEach(function(S,si){
+    if(!S||!S.items||!S.items.length)return;
+    // El habla libre es de B2 para arriba: abajo todavia no tienen con que
+    // llenar un minuto solos, y se vuelve un silencio incomodo.
+    if(n<4){
+      var sinFree=S.items.filter(function(z){ return z.k!=='free'; });
+      if(sinFree.length>=2) S.items=sinFree;
+    }
+    // Un numero cada dos sesiones, del tipo que toca a su nivel
+    if(nums.length && si%2===1) S.items.push(nums[ni++ % nums.length]);
+  });
+  return mat;
+}
+
+// materialDe de verdad ahora pasa por el afinador. El molde de cada nivel
+// sigue igual; lo que cambia es lo que se le quita y se le mete despues.
 function materialDe(p){
+  var m=materialDe_(p);
+  try{ m=afinarPorNivel(m,p); }catch(e){}
+  return m;
+}
+function materialDe_(p){
   var n=p.nivel_n||0;
   // --- C2 tiene su propio molde: registro, ironia, debate y sonar nativo ---
   if(n>=6 && typeof moldeC2==='function'){
@@ -3905,6 +4189,9 @@ function router(){
   setTimeout(function(){
     if(MODO_JEFE||JEFE_LIBRE)return;
     try{ if(!P)return; }catch(e){ return; }
+    // Si todavia esta en la pantalla de marca, el saludo no tiene nada
+    // encima que saludar. Sale cuando ya se ve el mapa.
+    if(!vioMarca)return;
 
     // La primera vez manda el recorrido; el saludo sale al terminarlo.
     if(!D.tutorVisto&&!TUTOR_VIVO){ arrancarTutor(); return; }
@@ -5722,7 +6009,8 @@ function pantallaDatos(){
     ['accion_es', 'Qué haces cada día'],
     ['hora_es',   'A qué hora entras'],
     ['gusto_es',  'Qué te gusta'],
-    ['meta_es',   'Para qué quieres el inglés']
+    ['meta_es',   'Para qué quieres el inglés'],
+    ['enfoque_es','Qué inglés te sirve más']
   ];
   function pinta(){
     APP.innerHTML=atras()+'<div class="qcard"><div class="qlbl">Mis datos</div>'+
@@ -6811,10 +7099,8 @@ function mapa3DoViejo(){
       b.onclick=function(){ try{personalizar();}catch(e){ avisito('No pude abrir el alta.'); } };
     }else{
       b.onclick=function(){
-        try{
-          if(!MAT||!MAT.length)MAT=materialDe(P);
-          correr();
-        }catch(e){ avisito('No pude abrir la lección: '+String(e).slice(0,60)); }
+        try{ arrancarParada(); }
+        catch(e){ avisito('No pude abrir la lección: '+String(e).slice(0,60)); }
       };
     }
   }
@@ -6881,9 +7167,7 @@ function mapaViejo(){
 
   document.getElementById('seguir').onclick=function(){
     // sin sus respuestas, el material sería genérico: mejor mandarlo a armarlo
-    if(!yaPersonalizo()){ personalizar(); return; }
-    if(esRepaso(c.parada)){ arrancarRepaso(); return; }
-    sIdx=(contenidoDe(c.parada)-1)%MAT.length;it=0;attempts=[];t0=Date.now();correr();
+    arrancarParada();
   };
   var mp=document.getElementById('miperfil');
   if(mp)mp.onclick=perfilAlumno;
@@ -7961,6 +8245,49 @@ function videoDeFrase(frase,pista,cb){
     .catch(function(){if(listo)return;listo=true;clearTimeout(reloj);cb(null);});
 }
 
+
+/* ═══════════ a qué le tira cada alumno ═══════════ */
+// El programa nacio para Olan y salio todo de oficina: juntas, clientes,
+// reportes. Sirve para quien trabaja en eso y estorba para los demas.
+// Ahora cada quien dice de que quiere su ingles y TODO lo que produce la IA
+// (preguntas, roleplays, repreguntas, correcciones) se acomoda a eso.
+function enfoqueClave(txt){
+  var t=String(txt||'').toLowerCase();
+  if(t.indexOf('vida')>=0 && t.indexOf('trabajo')<0) return 'vida';
+  if(t.indexOf('trabajo')>=0 && t.indexOf('vida')<0) return 'trabajo';
+  return 'ambos';
+}
+function enfoqueDe(){
+  if(!P)return 'ambos';
+  // se recalcula del texto para que cambiarlo en Mis datos surta efecto
+  if(P.enfoque_es)return enfoqueClave(P.enfoque_es);
+  return P.enfoque||'ambos';   // alumnos de antes: las dos cosas
+}
+// El parrafo que se le manda al cerebro en CADA peticion. Es el que hace
+// que dos alumnos del mismo nivel no reciban lo mismo.
+function quienEs(){
+  if(!P)return '';
+  var e=enfoqueDe();
+  var g=[P.gusto_es,P.gusto_otra].filter(Boolean).join(', ');
+  var m=[P.meta_es,P.meta_otra].filter(Boolean).join(', ');
+  var p='ALUMNO: '+(P.nombre||'')+', nivel '+(P.nivel||'Pre-A1')+'.';
+  if(P.trabajo_es) p+=' Trabaja de '+P.trabajo_es+(P.lugar_es?' en '+P.lugar_es:'')+'.';
+  if(g) p+=' Le gusta: '+g+'.';
+  if(m) p+=' Quiere el ingles '+m+'.';
+  if(e==='vida')
+    p+=' ENFOQUE: ingles de la VIDA DIARIA. Usa situaciones de su casa, su gente, '+
+       'viajes, compras, salud, series, comida y amigos. NO uses juntas, reportes, '+
+       'clientes corporativos ni correos de oficina.';
+  else if(e==='trabajo')
+    p+=' ENFOQUE: ingles de TRABAJO. Usa situaciones de su chamba: '+
+       (P.trabajo_es||'su puesto')+', companeros, clientes, telefono y correo.';
+  else
+    p+=' ENFOQUE: mitad vida diaria y mitad trabajo. Alterna: si el ultimo ejemplo '+
+       'fue de oficina, el siguiente que sea de su vida.';
+  p+=' Todo lo que inventes debe sonar a SU mundo, no a un libro de negocios.';
+  return p;
+}
+
 function hayIA(){return !!IA_ENDPOINT;}
 function pedirIA(accion,datos,ok,falla){
   if(!hayIA()){falla&&falla();return;}
@@ -7978,6 +8305,8 @@ function evaluarConIA(rec,cb){
   pedirIA('evaluar',{
     nombre:rec.nombre, nivel:(rec.perfil&&rec.perfil.nivel)||'',
     trabajo:(rec.perfil&&rec.perfil.trabajo_es)||'',
+    alumno:quienEs(), enfoque:enfoqueDe(),
+    gusto:(rec.perfil&&rec.perfil.gusto_es)||'',
     sesion:rec.titulo,
     intentos:(rec.intentos||[]).map(function(a){
       return {tipo:a.tipo, meta:a.meta, dijo:a.oido, pct:a.pct};
@@ -7986,7 +8315,8 @@ function evaluarConIA(rec,cb){
 }
 function repreguntarConIA(perfil,dicho,cb){
   if(!hayIA()){cb&&cb(null);return;}
-  pedirIA('repreguntar',{nivel:perfil.nivel||'',trabajo:perfil.trabajo_es||'',dijo:dicho},
+  pedirIA('repreguntar',{nivel:perfil.nivel||'',trabajo:perfil.trabajo_es||'',
+    alumno:quienEs(), enfoque:enfoqueDe(), gusto:perfil.gusto_es||'', dijo:dicho},
     function(res){cb&&cb(res);},function(){cb&&cb(null);});
 }
 // la repregunta llega después, sin trabar la pantalla
@@ -7996,7 +8326,9 @@ function roleplayConIA(x,dicho,cb){
   if(!hayIA()){cb&&cb(null);return;}
   pedirIA('roleplay',{
     quien:x.quien||'', ctx:x.ctx||'', nivel:(P&&P.nivel)||'A1',
-    trabajo:(P&&P.trabajo_es)||'', dijo:dicho, turnos:RP_TURNOS.slice(-6)
+    trabajo:(P&&P.trabajo_es)||'',
+    alumno:quienEs(), enfoque:enfoqueDe(), gusto:(P&&P.gusto_es)||'',
+    dijo:dicho, turnos:(x.turnos||RP_TURNOS).slice(-6)
   }, function(res){cb&&cb(res);}, function(){cb&&cb(null);});
 }
 function seguirRoleplay(x,dicho){
@@ -8044,6 +8376,566 @@ function pedirSeguimiento(dicho){
     caja.insertBefore(d,caja.firstChild);
     say(res.pregunta,'en-US');
   });
+}
+
+
+/* ═══════════ el examen de cada nivel ═══════════ */
+// La parada 14 y la 28 no son material nuevo: son prueba.
+// La 28 es la final, la que cierra el nivel.
+// Tres partes dentro de UNA sola sesion:
+//   1. gramatica y vocabulario  (sale de lo que ya practico en este nivel)
+//   2. listening                 (lo mismo, pero de oido)
+//   3. conversacion en dos fases (yo pregunto / el pregunta)
+// La conversacion pasa entera en UNA SOLA PANTALLA: el chat crece hacia
+// abajo y nunca se cambia de tarjeta. Eso lo pidio Brian explicitamente.
+var EXAMENES=[14,28];
+function esExamen(n){ return EXAMENES.indexOf(+n)>=0; }
+function esExamenFinal(n){ return +n===PARADAS; }
+
+function nivelTexto(){ return (P&&P.nivel)||'Pre-A1'; }
+function nivelNum(){ var n=(P&&P.nivel_n); return (n===0||n)?n:0; }
+
+// Cuantos turnos aguanta cada nivel y que tan larga se le pide la respuesta.
+// Abajo: poquitas y cortas. Arriba: conversacion de verdad.
+function planCharla(){
+  var n=nivelNum();
+  if(n<=0)  return {p1:4,p2:3,min:2,largo:'con 3 o 4 palabras basta'};
+  if(n===1) return {p1:4,p2:3,min:3,largo:'una frase completa'};
+  if(n===2) return {p1:5,p2:4,min:4,largo:'una o dos frases'};
+  if(n===3) return {p1:5,p2:4,min:6,largo:'dos o tres frases, y di por que'};
+  if(n===4) return {p1:6,p2:5,min:8,largo:'unas tres frases, con tus razones'};
+  if(n===5) return {p1:6,p2:5,min:9,largo:'desarrollalo, con ejemplos'};
+  return              {p1:6,p2:5,min:10,largo:'lo que haga falta, cuidando el tono'};
+}
+
+// Las preguntas de respaldo, por si el cerebro no contesta. No son de
+// relleno: son las que de verdad se preguntan en un examen oral de ese
+// nivel, y la mitad NO son de trabajo. Eso tambien lo pidio Brian: el
+// programa venia demasiado cargado a business por lo de Olan.
+function bancoPreguntas(){
+  var g=(P&&P.gusto_es)||'', t=(P&&P.trabajo_es)||'';
+  var porNivel={
+    0:['What is your name?','Where are you from?','What do you do?',
+       'Do you have children?','Do you like music?','What do you do on Sunday?'],
+    1:['Tell me about your family.','Where do you live?',
+       'What did you do yesterday?','What do you do in your free time?',
+       'What is your favourite food?','Do you like your job? Why?'],
+    2:['Tell me about a normal week for you.','What did you do last weekend?',
+       'What are your plans for this year?','Tell me about someone you like a lot.',
+       'What do you do when something goes wrong at work?',
+       'Where would you like to travel?'],
+    3:['Tell me about something you are good at.',
+       'What is the best thing about where you live?',
+       'Tell me about a time something did not go as planned.',
+       'What would you change about your job?',
+       'How do you usually spend your money?',
+       'What do you think about social media?'],
+    4:['What is a decision you are glad you made?',
+       'How has your work changed in the last five years?',
+       'Some people say we work too much. What do you think?',
+       'Tell me about a problem you had to solve with other people.',
+       'What is something people get wrong about your country?',
+       'If you had a free year, what would you do with it?'],
+    5:['What is a belief you have changed your mind about?',
+       'How do you handle someone who disagrees with you?',
+       'What is the hardest part of leading other people?',
+       'Is technology making us better at our jobs, or worse?',
+       'Tell me about a moment that changed how you see your career.',
+       'What advice would you give someone starting out in your field?'],
+    6:['How would you describe the difference between being right and being persuasive?',
+       'What is something your culture does that outsiders misread?',
+       'Tell me about a time you had to deliver bad news well.',
+       'Where do you think your industry will be in ten years?',
+       'What do you find genuinely funny, and why do you think that is?',
+       'If you could rewrite one rule about how people work together, what would it be?']
+  };
+  var base=(porNivel[nivelNum()]||porNivel[0]).slice();
+  var e=enfoqueDe();
+  // si su ingles es de vida, fuera las de oficina; si es de trabajo, al reves
+  if(e==='vida') base=base.filter(function(q){ return !/\b(work|job|career|industry|field)\b/i.test(q); });
+  if(e==='trabajo') base=base.filter(function(q){ return !/\b(family|children|food|music|weekend|sunday)\b/i.test(q); });
+  if(base.length<3) base=(porNivel[nivelNum()]||porNivel[0]).slice();
+  // una pregunta hecha a la medida: de lo que le gusta, no de su chamba
+  if(g) base.splice(Math.min(3,base.length),0,
+        'Tell me about '+((P&&P.gusto_en)||g).replace(/^I like /i,'')+'.');
+  if(t && nivelNum()>=2 && e!=='vida')
+    base.push('Tell me what a good day at work looks like for you.');
+  return base;
+}
+
+// Lo que el alumno puede usar para preguntar en la fase 2.
+// En los niveles bajos se le dan los arranques; arriba no hace falta.
+function arranquesPregunta(){
+  var n=nivelNum();
+  if(n<=0) return ['What is...?','Where...?','Do you...?','How old...?'];
+  if(n===1) return ['What do you...?','Where do you...?','Do you like...?','How many...?'];
+  if(n===2) return ['What did you...?','Have you ever...?','Why do you...?','Would you...?'];
+  return [];
+}
+
+/* ── armar el examen ── */
+// Las partes 1 y 2 salen del material de SU nivel: es su propio curso el que
+// lo examina. Si su nivel todavia usa el generador viejo (que solo produce
+// model, ask y free), se fabrican los reactivos a partir de sus frases.
+function materialExamen(final){
+  if(!MAT||!MAT.length){ try{ MAT=materialDe(P); }catch(e){} }
+  var todos=[];
+  (MAT||[]).forEach(function(S){ (S.items||[]).forEach(function(z){ todos.push(z); }); });
+
+  // Sin esto salia el mismo reactivo dos veces: hay frases que se repiten
+  // entre lecciones a proposito, y al barajar caian juntas.
+  var yaVisto={};
+  function nuevo(z){
+    var f=z.k+'|'+(z.en||z.frase||z.audio||z.bien||'')+'|'+(z.a||'')+'|'+
+          (z.antes||'')+'|'+((z.piezas||[]).join(' '));
+    if(yaVisto[f])return false;
+    yaVisto[f]=1; return true;
+  }
+  function de(kinds,cuantos){
+    var v=todos.filter(function(z){ return kinds.indexOf(z.k)>=0 && nuevo(z); });
+    return mezclar(v).slice(0,cuantos);
+  }
+  var gram=de(['hueco','cazar','ordenar','transf','palabra','deletreo','idiom','phrasal'], final?6:4);
+  var oir =de(['idea','detalle','dosc','segm','pares'], final?4:3);
+
+  // Relleno para los niveles cuyo material todavia no trae esos tipos.
+  // Se fabrican de sus propias frases, pero solo de las que sirven: de una
+  // sola oracion y ni tan cortas que se armen solas ni tan largas que sean
+  // un rompecabezas de quince piezas.
+  var frases=todos.filter(function(z){
+    if(z.k!=='model'||!z.en)return false;
+    var t=z.en.trim();
+    if(/[.?!]\s+\S/.test(t))return false;          // trae mas de una oracion
+    var n=t.replace(/[.?!]$/,'').split(/\s+/).length;
+    return n>=3 && n<=9;
+  });
+  frases=mezclar(frases.slice());
+  var fi=0;
+  while(gram.length<(final?6:4) && fi<frases.length){
+    var f=frases[fi++];
+    var pz=f.en.trim().replace(/[.?!]$/,'').split(/\s+/);
+    if(!nuevo({k:'ordenar',piezas:pz}))continue;
+    gram.push({k:'ordenar', piezas:pz, es:f.es||''});
+  }
+  while(oir.length<(final?4:3) && fi<frases.length){
+    var g=frases[fi++];
+    var otra=variarFrase(g.en);
+    // si no se le pudo cambiar ninguna palabra, ese par no ensena nada
+    if(!otra || otra===g.en || otra===g.en.replace(/\.$/,' too.'))continue;
+    if(!nuevo({k:'dosc',a:g.en}))continue;
+    var izq=Math.random()<0.5;
+    oir.push({k:'dosc', a:izq?g.en:otra, b:izq?otra:g.en,
+              bien:izq?'a':'b', es:g.es||''});
+  }
+
+  var items=gram.concat(oir);
+  items.push({k:'charla', final:!!final});
+
+  return {
+    t: final?'Examen final de '+nivelTexto():'Examen de medio camino',
+    hoy: final?'ponemos a prueba todo el nivel':'vemos como vas a la mitad',
+    obj: 'Contestar gramatica, entender de oido y sostener una conversacion.',
+    tip: 'No es para reprobarte. Es para ver que ya se te quedo y que hay que volver a ver.',
+    enc: final
+      ? 'Esta es la ultima parada del nivel. Tres partes: unas preguntas de gramatica, unas de oido, y al final una conversacion conmigo. La conversacion es la que mas pesa.'
+      : 'Vamos a la mitad del nivel. Tres partes cortas y al final platicamos un rato.',
+    esExamen:true, final:!!final,
+    items:items
+  };
+}
+
+// cambia una palabra de la frase para armar el par de "cual oiste"
+function variarFrase(en){
+  var cambios={'work':'walk','three':'free','live':'leave','fifteen':'fifty',
+    'thirteen':'thirty','sit':'seat','ship':'sheep','man':'men','this':'these',
+    'he':'she','at':'and','is':'was','has':'had','can':'can\'t'};
+  var p=String(en).split(/\s+/);
+  for(var i=0;i<p.length;i++){
+    var limpio=p[i].toLowerCase().replace(/[.,!?]/g,'');
+    if(cambios[limpio]){
+      var nueva=cambios[limpio], cola=p[i].replace(/^[A-Za-z']+/,'');
+      // si la original iba con mayuscula (principio de frase), la nueva tambien
+      if(/^[A-Z]/.test(p[i])) nueva=nueva.charAt(0).toUpperCase()+nueva.slice(1);
+      p[i]=nueva+cola;
+      return p.join(' ');
+    }
+  }
+  return String(en).replace(/\.$/,' too.');
+}
+
+function arrancarExamen(final){
+  if(!P){ try{personalizar();}catch(e){} return; }
+  var E=materialExamen(final);
+  if(!E||!E.items||E.items.length<2){
+    avisito('Todavia no hay material suficiente para el examen. Sigue con la parada normal.');
+    return;
+  }
+  MAT=MAT.concat([E]);
+  sIdx=MAT.length-1; it=0; attempts=[]; vistos={}; t0=Date.now();
+  say(final
+    ? 'Ultima parada del nivel. Es el examen. Tranquilo, es para ver como vas.'
+    : 'Vamos a la mitad del nivel. Examen corto.','es-MX');
+  correr();
+}
+
+// Una sola puerta para empezar la parada, desde el mapa 3D y desde el viejo.
+// Antes el boton del mapa 3D se brincaba los repasos.
+function arrancarParada(){
+  var c=progreso();
+  if(!yaPersonalizo()){ personalizar(); return; }
+  if(!MAT||!MAT.length){ try{ MAT=materialDe(P); }catch(e){} }
+  if(esExamen(c.parada)){ arrancarExamen(esExamenFinal(c.parada)); return; }
+  if(esRepaso(c.parada)){ arrancarRepaso(); return; }
+  sIdx=(contenidoDe(c.parada)-1)%MAT.length; it=0; attempts=[]; t0=Date.now();
+  correr();
+}
+
+/* ── la conversacion en dos fases ── */
+// Todo vive aqui adentro. paso() dibuja la tarjeta UNA vez y de ahi en
+// adelante solo se le cuelgan burbujas: la pantalla no se mueve.
+var CH=null;
+
+function chCaja(){ return document.getElementById('chcaja'); }
+function chBurbuja(de,txt,es,clase){
+  var c=chCaja(); if(!c)return null;
+  var d=document.createElement('div');
+  d.className='chb '+(de==='yo'?'yo':'ia')+(clase?' '+clase:'');
+  d.innerHTML='<span class="qui">'+esc(de==='yo'?'tú':'examinador')+'</span>'+
+    '<span class="txt">'+esc(txt)+'</span>'+(es?'<div class="pes">'+esc(es)+'</div>':'');
+  c.appendChild(d);
+  c.scrollTop=c.scrollHeight;
+  return d;
+}
+function chAvance(){
+  var b=document.getElementById('chbar'); if(!b||!CH)return;
+  var total=CH.plan.p1+CH.plan.p2;
+  var hechos=(CH.fase===1?CH.i:CH.plan.p1+CH.i);
+  b.style.width=Math.round(100*hechos/total)+'%';
+}
+function chMic(txt,prendido){
+  var m=document.getElementById('micchat'); if(!m)return;
+  m.disabled=!prendido;
+  m.innerHTML='<span class="ring2"></span> '+txt;
+}
+function chPie(txt){ var p=document.getElementById('chpie'); if(p)p.textContent=txt; }
+function chFase(txt){ var f=document.getElementById('chfase'); if(f)f.textContent=txt; }
+
+function arrancarCharla(x){
+  CH={fase:1,i:0,x:x,dichos:[],turnos:[],inicio:Date.now(),ocupado:false};
+  CH.plan=planCharla();
+  CH.banco=bancoPreguntas();
+  var c=chCaja(); if(c)c.innerHTML='';
+  chMic('Espera…',false);
+  chAvance();
+  var intro='Última parte. Yo te hago preguntas y tú me contestas hablando. '+
+            'Todo pasa aquí mismo, la pantalla no se mueve. '+CH.plan.largo+'.';
+  say(intro,'es-MX');
+  var m=document.getElementById('micchat');
+  if(m)m.onclick=function(){ chOir(m); };
+  var s=document.getElementById('chsalta');
+  if(s)s.onclick=function(){ chSaltar(); };
+  setTimeout(chPreguntar,2600);
+}
+
+function ctxExamen(){
+  var n=nivelTexto(), g=(P&&P.gusto_es)||'', t=(P&&P.trabajo_es)||'';
+  var e=enfoqueDe();
+  var deQue = e==='vida'
+    ? 'Preguntale de su vida: su gente, su casa, sus viajes, lo que le gusta. NADA de oficina.'
+    : e==='trabajo'
+    ? 'Preguntale de su trabajo y de como es su dia ahi.'
+    : 'Alterna: una de su vida, una de su trabajo, y asi.';
+  if(CH.fase===1){
+    return quienEs()+' '+deQue+' EXAMEN ORAL de ingles, nivel '+n+'. Eres un examinador amable. '+
+      'Haces UNA sola pregunta por turno, corta y del nivel '+n+'. '+
+      'No corrijas, no expliques, no des clase: reacciona en tres o cuatro palabras '+
+      'y haz la siguiente pregunta. Varia los temas: su vida diaria, su gente, '+
+      (g?'lo que le gusta ('+g+'), ':'')+'sus planes'+(t?' y su trabajo ('+t+')':'')+'. '+
+      'No preguntes solo de trabajo. Vas en la pregunta '+(CH.i+1)+' de '+CH.plan.p1+'. '+
+      'Cuando llegues a la '+CH.plan.p1+', despidete y pon fin en true.';
+  }
+  return quienEs()+' EXAMEN ORAL de ingles, nivel '+n+'. Ahora es al reves: el ALUMNO te pregunta a TI. '+
+    'Contesta su pregunta como una persona normal, en una o dos frases del nivel '+n+', '+
+    'y NO le devuelvas la pregunta ni le hagas otra. Si lo que dijo no fue una pregunta, '+
+    'dile nada mas "Ask me a question" y espera. Va la '+(CH.i+1)+' de '+CH.plan.p2+'.';
+}
+
+function chPreguntar(){
+  if(!CH)return;
+  if(CH.i>=CH.plan.p1){ chFase2(); return; }
+  CH.ocupado=true;
+  chMic('Espera…',false);
+  var esp=chBurbuja('ia','pensando…','','esp');
+  function suelta(q,es){
+    if(esp&&esp.remove)esp.remove();
+    CH.turnos.push({de:'personaje',txt:q});
+    chBurbuja('ia',q,es||'');
+    say(q,'en-US');
+    CH.ocupado=false;
+    chMic('Tocar y contestar',true);
+    chPie('Contesta hablando. '+CH.plan.largo+'.');
+  }
+  if(hayIA()){
+    var ultimo=CH.dichos.length?CH.dichos[CH.dichos.length-1].txt:'';
+    roleplayConIA({quien:'Examiner',ctx:ctxExamen(),turnos:CH.turnos},ultimo||'(empieza el examen)',function(res){
+      if(res&&res.dice) suelta(res.dice,res.es||'');
+      else suelta(CH.banco[CH.i%CH.banco.length],'');
+    });
+  }else{
+    setTimeout(function(){ suelta(CH.banco[CH.i%CH.banco.length],''); },500);
+  }
+}
+
+function chFase2(){
+  if(!CH)return;
+  CH.fase=2; CH.i=0;
+  chAvance();
+  chFase('Fase 2 de 2 · ahora tú preguntas');
+  chMic('Espera…',false);
+  var av='Ahora al revés. Tú me preguntas a mí. Hazme las preguntas que quieras, en inglés.';
+  chBurbuja('ia','Now you ask me. Go ahead.','Ahora pregúntame tú.');
+  say(av,'es-MX',function(){ say('Now you ask me. Go ahead.','en-US'); });
+  var ar=arranquesPregunta();
+  if(ar.length){
+    var caja=document.getElementById('chayuda');
+    if(caja){
+      caja.innerHTML='<b>Puedes empezar así</b>'+ar.map(function(a){
+        return '<span>'+esc(a)+'</span>'; }).join('');
+      caja.style.display='';
+    }
+  }
+  setTimeout(function(){
+    CH.ocupado=false;
+    chMic('Tocar y preguntar',true);
+    chPie('Hazme una pregunta en inglés. Van '+CH.plan.p2+'.');
+  },2600);
+}
+
+// El boton de "no se esta". No castiga: cuenta como turno no contestado
+// y sigue, porque trabarse en una pregunta no debe acabar el examen.
+function chSaltar(){
+  if(!CH||CH.ocupado)return;
+  callarTodo();
+  chBurbuja('yo','(no contest\u00f3 esta)','');
+  CH.dichos.push({fase:CH.fase,txt:'',trabado:false,saltada:true});
+  attempts.push({tipo:CH.fase===1?'examen-contesta':'examen-pregunta',
+                 meta:'',oido:'',pct:0});
+  CH.i++;
+  chAvance();
+  if(CH.fase===1){ chMic('Espera\u2026',false); setTimeout(chPreguntar,600); }
+  else if(CH.i>=CH.plan.p2){ setTimeout(chTerminar,600); }
+  else { chPie('Va la siguiente. Te quedan '+(CH.plan.p2-CH.i)+'.'); }
+}
+
+function chOir(b){
+  if(!CH||CH.ocupado)return;
+  callarTodo();
+  b.classList.add('rec'); b.disabled=true;
+  b.innerHTML='<span class="ring2"></span> Grabando…';
+  chPie('Te estoy oyendo. Habla sin prisa; no te voy a cortar.');
+  listen('en-US',function(t,conf,extra){
+    b.classList.remove('rec');
+    chRecibir(t,conf,extra);
+  },function(err){
+    b.classList.remove('rec'); b.disabled=false;
+    if(err==='no-speech'){
+      b.innerHTML='<span class="ring2"></span> No te oí · otra vez';
+      chPie('No te oí. Acércate al micrófono y toca otra vez.');
+      return;
+    }
+    b.innerHTML='<span class="ring2"></span> Otra vez';
+    chPie('El micrófono falló. Toca otra vez o salta esta.');
+  },{meta:''});
+}
+
+function chRecibir(t,conf,extra){
+  if(!CH)return;
+  t=String(t||'').trim();
+  if(!t){ chMic(CH.fase===1?'Tocar y contestar':'Tocar y preguntar',true); return; }
+  chBurbuja('yo',t,'');
+  CH.dichos.push({fase:CH.fase,txt:t,trabado:!!(extra&&extra.trabado)});
+  CH.turnos.push({de:'alumno',txt:t});
+  attempts.push({tipo:CH.fase===1?'examen-contesta':'examen-pregunta',
+                 meta:CH.fase===1?(CH.turnos.length>1?CH.turnos[CH.turnos.length-2].txt:''):'',
+                 oido:t,pct:null});
+  if(extra&&extra.trabado){
+    chPie('Se te trabó tantito. No pasa nada, eso cuenta igual.');
+  }
+  CH.i++;
+  chAvance();
+  if(CH.fase===1){
+    chMic('Espera…',false);
+    setTimeout(chPreguntar,900);
+  }else{
+    chResponder(t);
+  }
+}
+
+function chResponder(preg){
+  if(!CH)return;
+  CH.ocupado=true;
+  chMic('Espera…',false);
+  var esp=chBurbuja('ia','pensando…','','esp');
+  function suelta(r,es){
+    if(esp&&esp.remove)esp.remove();
+    CH.turnos.push({de:'personaje',txt:r});
+    chBurbuja('ia',r,es||'');
+    say(r,'en-US');
+    CH.ocupado=false;
+    if(CH.i>=CH.plan.p2){ setTimeout(chTerminar,2200); return; }
+    chMic('Tocar y preguntar',true);
+    chPie('Otra pregunta. Te quedan '+(CH.plan.p2-CH.i)+'.');
+  }
+  if(hayIA()){
+    roleplayConIA({quien:'Examiner',ctx:ctxExamen(),turnos:CH.turnos},preg,function(res){
+      if(res&&res.dice) suelta(res.dice,res.es||'');
+      else suelta(respuestaDeRespaldo(preg),'');
+    });
+  }else{
+    setTimeout(function(){ suelta(respuestaDeRespaldo(preg),''); },600);
+  }
+}
+
+// Sin cerebro, igual contesta algo con sentido segun con que empezo la
+// pregunta. Vale mas una respuesta sencilla que un silencio.
+function respuestaDeRespaldo(p){
+  var t=String(p||'').toLowerCase().trim();
+  if(!pareceP(t)) return 'Ask me a question. Any question.';
+  if(/^where/.test(t))            return 'I live in Mexico City. I like it here.';
+  if(/^when/.test(t))             return 'Usually in the morning, around seven.';
+  if(/^who/.test(t))              return 'My family, mostly. And a couple of good friends.';
+  if(/^why/.test(t))              return 'Because I enjoy it, and it keeps me busy.';
+  if(/^how (old|many|much|long)/.test(t)) return 'Not too many. Maybe four or five.';
+  if(/^how/.test(t))              return 'Pretty well, thank you. And you?';
+  if(/^what.*(name)/.test(t))     return 'My name is Sam. Nice to meet you.';
+  if(/^what.*(do|work|job)/.test(t)) return 'I am a teacher. I work with adults.';
+  if(/^what/.test(t))             return 'That is a good question. I would say coffee and a quiet morning.';
+  if(/^(do|does|did|are|is|was|were|have|has|can|could|will|would)\b/.test(t))
+                                  return 'Yes, I do. Quite often, actually.';
+  return 'Good question. Yes, I think so.';
+}
+
+function pareceP(t){
+  t=String(t||'').trim().toLowerCase();
+  if(!t)return false;
+  if(/\?\s*$/.test(t))return true;
+  return /^(what|where|when|who|whose|why|how|which|do|does|did|are|is|am|was|were|can|could|will|would|have|has|had|may|might|should|shall|tell me)\b/.test(t);
+}
+
+/* ── calificar ── */
+function chTerminar(){
+  if(!CH)return;
+  chMic('Conversación terminada',false);
+  chPie('Estoy viendo cómo te fue…');
+  var f=document.getElementById('chfase'); if(f)f.textContent='Ya acabó · revisando';
+  var caja=document.getElementById('chayuda'); if(caja)caja.style.display='none';
+  var b=document.getElementById('chbar'); if(b)b.style.width='100%';
+  var loc=calificarLocal();
+  var listo=false;
+  function pinta(res){
+    if(listo)return; listo=true;
+    pintarVeredicto(loc,res);
+  }
+  if(hayIA()){
+    pedirIA('evaluar',{
+      nombre:(P&&P.nombre)||'', nivel:nivelTexto(),
+      trabajo:(P&&P.trabajo_es)||'', gusto:(P&&P.gusto_es)||'',
+      sesion:'EXAMEN ORAL de nivel '+nivelTexto()+
+        ' - fase 1 el examinador pregunta, fase 2 el alumno pregunta',
+      intentos:CH.dichos.map(function(z,i){
+        return {tipo:(z.fase===1?'contesto':'pregunto'),meta:'',dijo:z.txt,pct:null};
+      })
+    },function(res){ pinta(res); },function(){ pinta(null); });
+    setTimeout(function(){ pinta(null); },14000);
+  }else{
+    setTimeout(function(){ pinta(null); },700);
+  }
+}
+
+function calificarLocal(){
+  var p=CH.plan, d=CH.dichos;
+  var contesto=d.filter(function(z){return z.fase===1&&z.txt;}).length;
+  var pregunto=d.filter(function(z){return z.fase===2&&pareceP(z.txt);}).length;
+  var largas=d.filter(function(z){return cuantasPalabras(z.txt)>=p.min;}).length;
+  var palabras=d.map(function(z){return z.txt;}).join(' ').trim().split(/\s+/).filter(Boolean).length;
+  var pct=Math.round(100*(
+    0.40*Math.min(1,contesto/p.p1)+
+    0.30*Math.min(1,pregunto/Math.max(1,p.p2))+
+    0.30*Math.min(1,largas/Math.max(1,d.length||1))
+  ));
+  // preguntar es la mitad del examen. Sin llegar a la mitad de la fase 2
+  // no se pasa, aunque haya contestado todo perfecto.
+  if(pregunto < Math.ceil(p.p2/2)) pct=Math.min(pct,55);
+  return {pct:pct,contesto:contesto,pregunto:pregunto,palabras:palabras,
+          deP1:p.p1,deP2:p.p2};
+}
+
+function pintarVeredicto(loc,res){
+  var caja=document.getElementById('res'); if(!caja)return;
+  // fuera los botones de la conversacion: ya acabo
+  ['micchat','chsalta'].forEach(function(id){
+    var b=document.getElementById(id); if(b&&b.remove)b.remove();
+  });
+  var _f=document.getElementById('chfase');
+  if(_f)_f.textContent='Ya acab\u00f3';
+  var _p=document.getElementById('chpie'); if(_p&&_p.remove)_p.remove();
+  var pasa=loc.pct>=60;
+  var final=!!(CH&&CH.x&&CH.x.final);
+  var titulo=pasa?(loc.pct>=85?'Muy bien':'Pasaste'):'Todavía no';
+  var cuerpo=
+    '<div class="chnota"><span class="gr">'+loc.pct+'%</span>'+
+    '<b>'+esc(titulo)+'</b><br>'+
+    'Contestaste '+loc.contesto+' de '+loc.deP1+' preguntas y me hiciste '+
+    loc.pregunto+' de '+loc.deP2+'. Dijiste '+loc.palabras+' palabras en inglés.'+
+    (res&&res.comentario?'<div class="pes" style="margin-top:8px">'+esc(res.comentario)+'</div>':'')+
+    ((res&&res.errores&&res.errores.length)
+      ? '<div style="margin-top:9px"><b style="font-size:12px">Lo que hay que volver a ver</b><br>'+
+        res.errores.slice(0,3).map(function(e){
+          return '· '+esc(typeof e==='string'?e:(e.frase||e.error||e.que||''));
+        }).join('<br>')+'</div>'
+      : '')+
+    '</div>';
+  if(!pasa){
+    cuerpo+='<p class="tiny">No es reprobar. Quiere decir que conviene repetir el nivel '+
+      'un poco más antes de subir. Yo te guardo lo que se te atoró.</p>';
+  }else if(final){
+    cuerpo+='<p class="tiny">Terminaste el nivel '+esc(nivelTexto())+'.</p>';
+  }
+  caja.innerHTML=cuerpo+'<button class="btn" id="chfin" style="margin-top:12px">'+
+    (final?'Cerrar el nivel':'Seguir')+'</button>';
+  var d=load();
+  d.examenes=d.examenes||[];
+  d.examenes.push({fecha:new Date().toISOString().slice(0,10),nivel:nivelTexto(),
+    final:final,pct:loc.pct,contesto:loc.contesto,pregunto:loc.pregunto,
+    palabras:loc.palabras,dichos:CH.dichos.slice()});
+  save(d); D=d;
+  say(pasa?'Pasaste. Buen trabajo.':'Todavía no, pero ya casi. Lo repasamos.','es-MX');
+  var bf=document.getElementById('chfin');
+  if(bf)bf.onclick=function(){
+    CH=null; it++; paso();          // esto dispara el cierre de la sesion
+    if(final&&pasa)setTimeout(ofrecerSubirNivel,0);   // y hasta despues, subir
+  };
+}
+
+// Al pasar el examen final, si el nivel de arriba ya tiene material, se le
+// ofrece. Si todavia no esta escrito, se le dice la verdad.
+function ofrecerSubirNivel(){
+  var orden=['Pre-A1','A1','A2','B1','B2','C1','C2'];
+  var i=nOrden(nivelTexto());
+  if(i>=orden.length-1)return;
+  var sig=orden[i+1];
+  if(typeof NIVELES_ABIERTOS!=='undefined' && NIVELES_ABIERTOS.indexOf(i+1)<0){
+    avisito('Terminaste '+nivelTexto()+'. '+sig+' todavía se está escribiendo.');
+    return;
+  }
+  try{
+    P.nivel=sig; P.nivel_n=i+1;
+    var d=load(); d.perfil=P;
+    d.camino=d.camino||{}; d.camino.parada=1; d.camino.maxima=1;
+    save(d); D=d;
+    MAT=materialDe(P);
+    avisito('Subiste a '+sig+'. Empiezas desde la parada 1.');
+  }catch(e){}
 }
 
 /* ═══════════ modo guiado ═══════════ */
@@ -8408,7 +9300,8 @@ var PASOS=[
   {id:'accion',lbl:'Tu día',q:'¿Qué haces en un día normal de trabajo?',sub:'Dos o tres cosas que repites casi siempre.',tipo:'libre',ph:'Ej: reviso pacientes, limpio dientes, hago radiografías'},
   {id:'hora',lbl:'Tu día',q:'¿A qué hora empiezas?',sub:'',tipo:'pick',ops:HORAS},
   {id:'gusto',lbl:'Tú',q:'¿Qué te gusta?',sub:'Puedes escoger varias. Si no está la tuya, escríbela.',tipo:'pick',ops:GUSTOS,multi:true,otra:'Otra cosa…',otraPh:'Ej: bailar, el box, mis plantas'},
-  {id:'meta',lbl:'Tú',q:'¿Para qué quieres el inglés?',sub:'Puedes escoger varias. No hay respuesta correcta.',tipo:'pick',ops:METAS,multi:true,otra:'Otra razón…',otraPh:'Ej: para irme a vivir a Canadá'}
+  {id:'meta',lbl:'Tú',q:'¿Para qué quieres el inglés?',sub:'Puedes escoger varias. No hay respuesta correcta.',tipo:'pick',ops:METAS,multi:true,otra:'Otra razón…',otraPh:'Ej: para irme a vivir a Canadá'},
+  {id:'enfoque',lbl:'Tú',q:'¿Qué inglés te sirve más?',sub:'Con esto decido de qué van tus frases, tus conversaciones y tus ejemplos.',tipo:'pick',ops:ENFOQUES,sinVoz:true}
 ];
 var epaso=0,edatos={};
 
@@ -8520,10 +9413,11 @@ function entrevista(){
         if(s.multi){
           var k=sel.indexOf(i);
           if(k>=0){sel.splice(k,1);b.classList.remove('sel');}
-          else{sel.push(i);b.classList.add('sel');say(s.ops[i][1],'en-US');}
+          else{sel.push(i);b.classList.add('sel');if(!s.sinVoz)say(s.ops[i][1],'en-US');}
         }else{
           APP.querySelectorAll('#pk button').forEach(function(x){x.classList.remove('sel');});
-          b.classList.add('sel');sel=[i];say(s.ops[i][1],'en-US');
+          b.classList.add('sel');sel=[i];
+          if(!s.sinVoz)say(s.ops[i][1],'en-US');
         }
         revisa();
       };
@@ -8538,7 +9432,7 @@ function entrevista(){
       }
       if(!es.length)return;
       edatos[s.id+'_es']=es.join(' y ');
-      edatos[s.id+'_en']=en.length?en.join(' and '):null;
+      edatos[s.id+'_en']=(s.sinVoz||!en.length)?null:en.join(' and ');
       avanzar();
     };
   }
@@ -8562,6 +9456,8 @@ function cerrarPerfil(){
      voz:(VOZ_EN?VOZ_EN.name+' ('+VOZ_EN.lang+')':'sin voz'),
      nivel:edatos.nivel,nivel_n:edatos.nivel_n,nivel_pts:edatos.nivel_pts,nivel_resp:edatos.nivel_resp,
      gusto_otra:edatos.gusto_otra||'',meta_otra:edatos.meta_otra||'',
+     enfoque_es:edatos.enfoque_es||'Las dos cosas',
+     enfoque:enfoqueClave(edatos.enfoque_es),
      creado:new Date().toISOString().slice(0,10)};
   if(edatos.trabajo_en_directo){
     P.trabajo_en=edatos.trabajo_en_directo;
@@ -8907,6 +9803,7 @@ function paso(){
     deletreo:'Te deletreo la palabra letra por letra en ingles. Escribela.',
     phrasal:'Un verbo con preposicion. Se aprende de a uno porque cambia de significado. Oyelo y usalo en la frase.',
     idiom:'Una expresion hecha. Palabra por palabra no tiene sentido. Adivina que significa.',
+    charla:'Es la parte de conversacion del examen. Primero yo te hago preguntas y tu contestas hablando; despues le das la vuelta y tu me preguntas a mi. Todo pasa en esta misma pantalla.',
   };
   var quedan=S.items.length-it-1;
   var h=atras()+marcaReloj()+ayuda(ayudas[x.k]||'Sigue las instrucciones de la tarjeta.',(quedan>0?'quedan '+quedan+' ejercicios':'el cierre de la sesión'))+'<div class="prog">'+S.items.map(function(_,i){return '<i class="'+(i<=it?'on':'')+'"></i>';}).join('')+'</div>'+navPaso(it>0, it<S.items.length-1)+'<div class="qcard">';
@@ -8946,7 +9843,7 @@ function paso(){
          'Pregúntame lo que sea</button>'+
        '<div id="dudacaja"></div>';
   }else if(x.k==='num'){
-    h+='<div class="qlbl">Números · el que más se confunde</div>'+
+    h+='<div class="qlbl">Números · '+esc(etiquetaNumero())+'</div>'+
        '<div class="qtxt">¿Cuál oíste?</div>'+
        bilingue('Listen and choose the number.','Escucha y escoge el número.')+
        '<button class="oirb full" id="oir" style="margin-bottom:12px">'+ico('bocina',16)+' Escuchar</button>'+
@@ -9146,6 +10043,18 @@ function paso(){
          }).join('')+
        '</div>'+
        '<div id="res"></div>';
+  }else if(x.k==='charla'){
+    var _pl=planCharla();
+    h+='<div class="qlbl">'+(x.final?'Examen final · conversación':'Examen · conversación')+'</div>'+
+       '<div class="chfase" id="chfase">Fase 1 de 2 · yo te pregunto</div>'+
+       '<div class="chbarra"><i id="chbar"></i></div>'+
+       '<div class="chayuda" id="chayuda" style="display:none"></div>'+
+       '<div class="chcaja" id="chcaja"></div>'+
+       '<div id="res"></div>'+
+       '<button class="mic-big" id="micchat" disabled><span class="ring2"></span> Espera…</button>'+
+       '<button class="btn ghost" id="chsalta" style="margin-top:10px">No sé esta · pasar</button>'+
+       '<p class="tiny" id="chpie">Primero te pregunto yo. '+esc(_pl.p1)+' preguntas. '+
+         'Luego me preguntas tú. Todo aquí mismo: la pantalla no cambia.</p>';
   }else if(x.k==='roleplay'){
     h+='<div class="qlbl">Situación · contéstale de verdad</div>'+
        '<div class="ctxbox">'+esc(x.ctx||'')+'</div>'+
@@ -9328,9 +10237,10 @@ function paso(){
   };
   if(!vistos[x.k]){
     vistos[x.k]=1;
-    if(x.k==='free'){say(guias.free,'es-MX');}
+    if(x.k==='charla'){/* la charla se presenta sola */}
+    else if(x.k==='free'){say(guias.free,'es-MX');}
     else{decirSeguido([[guias[x.k],'es-MX'],[x.k==='model'?x.en:x.q,'en-US']]);}
-  }else if(x.k!=='free'){
+  }else if(x.k!=='free'&&x.k!=='charla'){
     setTimeout(function(){say(x.k==='model'?x.en:x.q,'en-US');},300);
   }
 
@@ -9410,6 +10320,7 @@ function paso(){
       };
     });
   }
+  if(x.k==='charla'){ arrancarCharla(x); }
   if(x.k==='roleplay'){
     RP_TURNOS=[];   // conversacion nueva
     var _or=document.getElementById('oir');
@@ -9655,7 +10566,10 @@ function paso(){
         document.getElementById('res').innerHTML='<div class="heard">'+
           (bien?'<span class="ok2">Eso es. Era '+esc(x.bien.es)+' · '+esc(x.bien.en)+'.</span>'
                :'<span class="no2">Era '+esc(x.bien.es)+' · '+esc(x.bien.en)+'. Escúchalo otra vez.</span>')+
-          '</div><button class="btn" id="sig">Siguiente</button>';
+          '</div>'+
+          (x.nota?'<div class="ctxbox" style="margin-top:10px">'+esc(x.nota)+'</div>':'')+
+          '<button class="btn" id="sig">Siguiente</button>';
+        if(x.nota)setTimeout(function(){say(x.nota,'es-MX');},700);
         attempts.push({tipo:'numeros',meta:x.bien.en,oido:x.ops[+b.dataset.i].en,pct:bien?100:0});
         document.getElementById('sig').onclick=function(){it++;paso();};
       };
@@ -9681,10 +10595,10 @@ function paso(){
       'El audio se apagó para que solo se oiga tu voz.</small></div>';
     MI_GRABACION=null;
     if(x.k==='model'||x.k==='drill')empezarGrabacion();
-    listen('en-US',function(t){
+    listen('en-US',function(t,conf,extra){
       pararGrabacion();
       b.classList.remove('rec');b.disabled=false;b.innerHTML='<span class="ring2"></span> Otra vez';
-      registrar(x,t);
+      registrar(x,t,extra);
     },function(err){
       pararGrabacion();
       b.classList.remove('rec');b.disabled=false;
@@ -9809,9 +10723,13 @@ function escribir(x){
   };
 }
 
-function registrar(x,t){
+function registrar(x,t,extra){
+  extra=extra||{};
   var meta=(x.k==='model'||x.k==='drill')?x.en:'';
-  var cmp=meta?comparar(meta,t):null;
+  var cmp=meta?compararMejor(meta,t,extra.alternativas):null;
+  // Si la version que mejor embona no es la primera, esa es la que se le
+  // ensena: es la que de verdad dijo.
+  if(cmp&&cmp.dicho) t=cmp.dicho;
   attempts.push({tipo:x.k,meta:meta||x.q,oido:t,pct:cmp?cmp.pct:null});
   if(meta)registrarEnMemoria(meta,cmp?cmp.pct:null);
   if(x.k==='model'){var kk=clave(x.en);intentosDe[kk]=(intentosDe[kk]||0)+1;}
@@ -9820,6 +10738,13 @@ function registrar(x,t){
   if(x.k==='roleplay'&&hayIA())seguirRoleplay(x,t);
   var r=document.getElementById('res');
   var h='<div class="heard"><div class="hl">te entendí</div><div class="ht">'+esc(t)+'</div>';
+  // Trabarse no es equivocarse. Si se atoró y ademas le salio bajo, se le
+  // dice eso y no "mal": lo que necesita es volver a intentarlo, no una
+  // correccion de algo que no hizo mal.
+  if(extra.trabado&&cmp&&cmp.pct<80){
+    h+='<div class="fb" style="background:var(--verde-suave);border-color:var(--verde)">'+
+       'Se te trabó tantito. Eso le pasa a todos. Tócalo otra vez y va.</div>';
+  }
   if(cmp){
     h+='<div class="hl" style="margin-top:11px">contra la frase meta</div><div class="ht">'+pintar(meta,cmp)+'</div>'+
        '<div class="score"><div class="sbar"><i style="width:'+cmp.pct+'%"></i></div><span class="snum">'+cmp.pct+'%</span></div>';

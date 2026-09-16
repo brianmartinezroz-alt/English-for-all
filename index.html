@@ -1359,7 +1359,7 @@ if('serviceWorker' in navigator){
 <script>
 (function(){
 "use strict";
-var VERSION="v135 · 16 sep · tus temas: el nivel pone la gramática, tú pones de qué se habla";
+var VERSION="v136 · 16 sep · tus temas, ahora también en los ejemplos de phrasal verbs y modismos";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -5655,6 +5655,12 @@ function frasesDeSesion(S){
     else if(x.k==='detalle' && x.audio) out.push({i:i,c:'audio',en:x.audio,es:''});
     else if(x.k==='free' && x.q) out.push({i:i,c:'q',en:x.q,es:x.es||''});
     else if(x.k==='sit'  && x.q) out.push({i:i,c:'q',en:x.q,es:x.es||''});
+    // El phrasal verb y el modismo se quedan como estan: los pone el nivel.
+    // Lo que se personaliza es el EJEMPLO y el CUANDO SE DICE.
+    else if(x.k==='phrasal' && x.frase)
+      out.push({i:i,c:'frase',en:x.frase,es:x.frase_es||'',fija:x.en});
+    else if(x.k==='idiom' && x.cuando)
+      out.push({i:i,c:'cuando',en:x.cuando,es:'',espanol:true,sobre:x.en});
   });
   return out;
 }
@@ -5662,7 +5668,11 @@ function frasesDeSesion(S){
 function pedirAdaptacion(S,tema,nivel,cb){
   var fr=frasesDeSesion(S);
   if(!fr.length || !hayIA()){ cb&&cb(null); return; }
-  var lista=fr.map(function(f,n){ return n+'. '+f.en+(f.es?' | '+f.es:''); }).join('\n');
+  var lista=fr.map(function(f,n){
+    return n+'. '+(f.espanol?'[ES] ':'')+f.en+(f.es?' | '+f.es:'')+
+           (f.fija ?'   [tiene que seguir diciendo: '+f.fija+']':'')+
+           (f.sobre?'   [explica cuando se dice "'+f.sobre+'": sigue hablando de eso]':'');
+  }).join('\n');
   var q='TAREA TECNICA. Contesta SOLO con JSON, sin una palabra de explicacion.\n'+
     'Alumno de ingles, nivel '+nivel+'. El tema que le interesa es: "'+tema.es+
     (tema.en?' ('+tema.en+')':'')+'".\n'+
@@ -5671,6 +5681,12 @@ function pedirAdaptacion(S,tema,nivel,cb){
     'dificultad; largo parecido; vocabulario propio del tema, no generico. '+
     'Si una frase no se puede adaptar sin romper la gramatica, devuelvela igual. '+
     'Si una frase YA habla de ese alumno o de ese tema, devuelvela igual.\n'+
+    'Las que empiezan con [ES] estan en espanol y tienen que seguir en espanol.\n'+
+    'Las que traen [tiene que seguir diciendo: X] son ejemplos de una expresion '+
+    'que el alumno esta aprendiendo: la frase nueva TIENE que seguir usando X, '+
+    'tal cual, sin cambiarle nada. Si no cabe con el tema, devuelve la frase igual.\n'+
+    'Las que traen [explica cuando se dice ...] son explicaciones: pon un momento '+
+    'del tema del alumno en el que dirias esa expresion. No cambies lo que significa.\n'+
     'Formato exacto: {"f":[{"i":0,"en":"...","es":"..."}]}\n'+
     'FRASES:\n'+lista;
   pedirIA('ayuda',{pregunta:q, nombre:(P&&P.nombre)||'', nivel:nivel,
@@ -5691,22 +5707,28 @@ function pedirAdaptacion(S,tema,nivel,cb){
     function(){ cb&&cb(null); });
 }
 
+// donde vive la traduccion de cada campo. null = no tiene, o ya esta en español.
+var PAREJA={en:'es', q:'es', audio:null, frase:'frase_es', cuando:null};
 function aplicarAdaptacion(S,mapa){
   if(!mapa)return false;
   var n=0;
   (S.items||[]).forEach(function(x,i){
-    ['en','q','audio'].forEach(function(c){
+    for(var c in PAREJA){
       var v=mapa[i+'|'+c];
-      if(v && x[c]!==undefined && x[c]!==null){
-        if(x['_orig_'+c]===undefined) x['_orig_'+c]=x[c];
-        x[c]=v.en;
-        if(v.es && x.es!==undefined && (c==='q'||c==='en')){
-          if(x._orig_es===undefined) x._orig_es=x.es;
-          x.es=v.es;
-        }
-        n++;
+      if(!v || x[c]===undefined || x[c]===null) continue;
+      // Red de seguridad. El ejemplo de un phrasal verb existe para enseñar ESE
+      // phrasal verb: si la frase nueva ya no lo trae, se tira y se queda la vieja.
+      if(c==='frase' && x.en &&
+         String(v.en).toLowerCase().indexOf(String(x.en).toLowerCase())<0) continue;
+      if(x['_orig_'+c]===undefined) x['_orig_'+c]=x[c];
+      x[c]=v.en;
+      var par=PAREJA[c];
+      if(v.es && par && x[par]!==undefined && x[par]!==null){
+        if(x['_orig_'+par]===undefined) x['_orig_'+par]=x[par];
+        x[par]=v.es;
       }
-    });
+      n++;
+    }
   });
   if(n) S.tema=true;
   return n>0;
@@ -5716,7 +5738,7 @@ function aplicarAdaptacion(S,mapa){
 // para la proxima. Nunca se detiene la leccion esperando al cerebro.
 function devolverOriginal(S){
   (S.items||[]).forEach(function(x){
-    ['en','q','audio','es'].forEach(function(c){
+    ['en','q','audio','es','frase','frase_es','cuando'].forEach(function(c){
       if(x['_orig_'+c]!==undefined){ x[c]=x['_orig_'+c]; }
     });
   });

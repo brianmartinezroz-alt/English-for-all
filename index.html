@@ -691,6 +691,31 @@
     background:var(--papel);color:var(--tinta);cursor:pointer;font-family:var(--body)}
   .actrow button.p{background:var(--verde);color:#fff;border-color:var(--verde)}
   .why{font-size:11.5px;color:var(--tenue);margin-top:9px;line-height:1.6}
+  /* ── Mis temas ── */
+  .tema-int{font-size:13px;color:var(--tinta-2);line-height:1.55;margin-bottom:16px}
+  .tema-hoy{background:var(--crema);border:1px solid var(--linea);border-radius:12px;
+    padding:13px 14px;margin-bottom:16px}
+  .tema-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  .tema-chips .chip{cursor:pointer;font-family:var(--body)}
+  .chip.on{background:var(--verde,#1D9E75);border-color:var(--verde,#1D9E75);color:#fff;font-weight:600}
+  .tema-lista{margin-bottom:18px}
+  .tema-fila{display:flex;align-items:center;gap:10px;border:1px solid var(--linea);
+    border-radius:10px;padding:9px 11px;margin-bottom:7px;background:var(--papel)}
+  .tema-fila.apagado{opacity:.5}
+  .tema-sw{width:26px;height:26px;flex:0 0 26px;border-radius:7px;border:1px solid var(--linea);
+    background:var(--crema);color:var(--verde,#1D9E75);font-size:14px;line-height:1;cursor:pointer}
+  .tema-fila:not(.apagado) .tema-sw{background:var(--verde,#1D9E75);border-color:var(--verde,#1D9E75);color:#fff}
+  .tema-nom{flex:1;font-family:var(--display);font-size:15px;color:var(--tinta);line-height:1.25}
+  .tema-nom small{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--tenue);margin-top:3px}
+  .tema-x{width:26px;height:26px;flex:0 0 26px;border:0;background:none;color:var(--tenue);
+    font-size:19px;line-height:1;cursor:pointer}
+  .tema-nuevo{margin-bottom:14px}
+  .temaviso{background:#EAF4F1;border:1px solid var(--linea);border-radius:10px;padding:10px 13px;
+    margin-bottom:14px;font-size:13px;color:var(--tinta-2);line-height:1.5}
+  .temaviso b{font-family:var(--display);color:var(--tinta)}
+  .temaliga{border:0;background:none;padding:0;font-size:12.5px;font-weight:600;cursor:pointer;
+    color:var(--verde,#1D9E75);text-decoration:underline;font-family:var(--body)}
 </style>
 <style>
   .cargando-audio{position:relative;opacity:.75}
@@ -1334,7 +1359,7 @@ if('serviceWorker' in navigator){
 <script>
 (function(){
 "use strict";
-var VERSION="v134 · 15 sep · examen final por nivel, con conversación en dos fases";
+var VERSION="v135 · 16 sep · tus temas: el nivel pone la gramática, tú pones de qué se habla";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -5410,6 +5435,7 @@ function pintarCajon(){
       else if(a==='voz')pantallaVoz();
       else if(a==='metodo')pantallaMetodo();
       else if(a==='perfil')pantallaDatos();
+      else if(a==='temas')pantallaTemas();
     };
   });
 }
@@ -5544,6 +5570,273 @@ function pantallaPerfil(){
 }
 
 // ── Más: lo que quedaba en el menú de las tres líneas ──
+
+/* ═══════════ los temas del alumno ═══════════ */
+// Hasta ahora el alta preguntaba que le gusta y esa respuesta no llegaba al
+// material: las frases estaban escritas a mano y hablaban de una fabrica.
+// Aqui el nivel sigue poniendo LA GRAMATICA y la funcion; el alumno pone
+// DE QUE se habla. Y lo puede cambiar cuando quiera: hoy viaje, mañana
+// trabajo, pasado su familia.
+
+function temas(){
+  var d=load();
+  if(d.temas && d.temas.length) return d.temas;
+  var t=sembrarTemas(P);
+  if(P){ d.temas=t; save(d); D=d; }   // sin perfil no se guarda: seria basura
+  return t;
+}
+function guardarTemas(t){ var d=load(); d.temas=t; save(d); D=d; }
+
+function idTema(s){
+  return String(s||'').toLowerCase()
+    .replace(/[áàä]/g,'a').replace(/[éèë]/g,'e').replace(/[íìï]/g,'i')
+    .replace(/[óòö]/g,'o').replace(/[úùü]/g,'u').replace(/ñ/g,'n')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40) || 't'+Date.now();
+}
+
+// Del alta salen los primeros temas: lo que le gusta (uno por uno), su
+// trabajo y para que quiere el ingles.
+function sembrarTemas(p){
+  var t=[], vistos={};
+  function meter(es,en,origen,activo){
+    es=String(es||'').trim(); if(!es)return;
+    var id=idTema(es); if(vistos[id])return; vistos[id]=1;
+    t.push({id:id, es:es, en:String(en||'').trim(), activo:activo!==false, origen:origen});
+  }
+  if(p){
+    String(p.gusto_es||'').split(/\s+y\s+|,\s*/).forEach(function(g){ meter(g,'','gusto'); });
+    if(p.gusto_otra) meter(p.gusto_otra,'','gusto');
+    if(p.trabajo_es) meter(limpiarOficio(p.trabajo_es)||p.trabajo_es, p.trabajo_en,'trabajo');
+    if(p.meta_es)    meter(String(p.meta_es).replace(/^\s*(para (poder )?|por )/i,''),'','meta');
+  }
+  if(!t.length) meter('mi vida diaria','','gusto');
+  return t;
+}
+function temasActivos(){ return temas().filter(function(z){return z.activo;}); }
+
+// Cual toca hoy: el que el alumno fijo, o va rotando por parada
+function temaDeHoy(){
+  var d=load(), act=temasActivos();
+  if(!act.length) return null;
+  if(d.temaFijo){
+    var f=act.filter(function(z){return z.id===d.temaFijo;})[0];
+    if(f) return f;
+  }
+  var c; try{ c=progreso(); }catch(e){ c={parada:1}; }
+  return act[(c.parada||1) % act.length];
+}
+function fijarTema(id){ var d=load(); d.temaFijo=id||''; save(d); D=d; }
+function temaFijado(){ return (load().temaFijo)||''; }
+
+/* ── adaptar las frases al tema, con el cerebro ── */
+// Una sola peticion por sesion y tema, y se guarda para siempre en el
+// telefono. La gramatica NO se toca: solo de que habla la frase.
+function bancoTemas(){ var d=load(); return d.bancoTemas||{}; }
+function guardarBancoTemas(b){ var d=load(); d.bancoTemas=b; save(d); D=d; }
+function claveSesion(S,tema,nivel){
+  // Antes esto se recortaba a 40 letras y dos sesiones de titulo largo
+  // terminaban con la misma llave: una se comia el material de la otra.
+  var crudo=nivel+'|'+tema+'|'+(S.t||'')+'|'+(S.items||[]).length+'|'+
+            ((S.items||[]).map(function(x){return x.k;}).join(''));
+  var h=5381;
+  for(var i=0;i<crudo.length;i++){ h=((h*33)^crudo.charCodeAt(i))>>>0; }
+  return idTema(nivel+'-'+tema).slice(0,24)+'-'+h.toString(36);
+}
+
+// que campos de cada tipo se pueden reescribir sin romper el ejercicio
+function frasesDeSesion(S){
+  var out=[];
+  (S.items||[]).forEach(function(x,i){
+    if(x.k==='model' && x.en) out.push({i:i,c:'en',en:x.en,es:x.es||''});
+    else if(x.k==='ask' && x.q) out.push({i:i,c:'q',en:x.q,es:x.es||''});
+    else if(x.k==='roleplay' && x.q) out.push({i:i,c:'q',en:x.q,es:x.ctx||''});
+    else if(x.k==='recuento' && (x.audio||x.en)) out.push({i:i,c:x.audio?'audio':'en',en:x.audio||x.en,es:x.es||''});
+    else if(x.k==='idea' && x.audio) out.push({i:i,c:'audio',en:x.audio,es:''});
+    else if(x.k==='detalle' && x.audio) out.push({i:i,c:'audio',en:x.audio,es:''});
+    else if(x.k==='free' && x.q) out.push({i:i,c:'q',en:x.q,es:x.es||''});
+    else if(x.k==='sit'  && x.q) out.push({i:i,c:'q',en:x.q,es:x.es||''});
+  });
+  return out;
+}
+
+function pedirAdaptacion(S,tema,nivel,cb){
+  var fr=frasesDeSesion(S);
+  if(!fr.length || !hayIA()){ cb&&cb(null); return; }
+  var lista=fr.map(function(f,n){ return n+'. '+f.en+(f.es?' | '+f.es:''); }).join('\n');
+  var q='TAREA TECNICA. Contesta SOLO con JSON, sin una palabra de explicacion.\n'+
+    'Alumno de ingles, nivel '+nivel+'. El tema que le interesa es: "'+tema.es+
+    (tema.en?' ('+tema.en+')':'')+'".\n'+
+    'Abajo van frases de practica. Reescribe cada una para que hable de ESE tema.\n'+
+    'REGLAS: no cambies el tiempo verbal ni la estructura gramatical; no subas la '+
+    'dificultad; largo parecido; vocabulario propio del tema, no generico. '+
+    'Si una frase no se puede adaptar sin romper la gramatica, devuelvela igual. '+
+    'Si una frase YA habla de ese alumno o de ese tema, devuelvela igual.\n'+
+    'Formato exacto: {"f":[{"i":0,"en":"...","es":"..."}]}\n'+
+    'FRASES:\n'+lista;
+  pedirIA('ayuda',{pregunta:q, nombre:(P&&P.nombre)||'', nivel:nivel,
+                   parada:0, total:PARADAS, pantalla:'otra', botones:''},
+    function(res){
+      var txt=(res&&res.respuesta)||'';
+      var m=txt.match(/\{[\s\S]*\}/);
+      if(!m){ cb&&cb(null); return; }
+      var j=null; try{ j=JSON.parse(m[0]); }catch(e){}
+      if(!j||!j.f){ cb&&cb(null); return; }
+      var mapa={};
+      j.f.forEach(function(z){
+        var n=+z.i; if(isNaN(n)||!fr[n]||!z.en) return;
+        mapa[fr[n].i+'|'+fr[n].c]={en:String(z.en).trim(), es:String(z.es||'').trim()};
+      });
+      cb&&cb(mapa);
+    },
+    function(){ cb&&cb(null); });
+}
+
+function aplicarAdaptacion(S,mapa){
+  if(!mapa)return false;
+  var n=0;
+  (S.items||[]).forEach(function(x,i){
+    ['en','q','audio'].forEach(function(c){
+      var v=mapa[i+'|'+c];
+      if(v && x[c]!==undefined && x[c]!==null){
+        if(x['_orig_'+c]===undefined) x['_orig_'+c]=x[c];
+        x[c]=v.en;
+        if(v.es && x.es!==undefined && (c==='q'||c==='en')){
+          if(x._orig_es===undefined) x._orig_es=x.es;
+          x.es=v.es;
+        }
+        n++;
+      }
+    });
+  });
+  if(n) S.tema=true;
+  return n>0;
+}
+
+// Se aplica lo que YA este guardado (instantaneo) y, si no hay nada, se pide
+// para la proxima. Nunca se detiene la leccion esperando al cerebro.
+function devolverOriginal(S){
+  (S.items||[]).forEach(function(x){
+    ['en','q','audio','es'].forEach(function(c){
+      if(x['_orig_'+c]!==undefined){ x[c]=x['_orig_'+c]; }
+    });
+  });
+  S.tema=false; S.temaNombre=''; S._clave='';
+}
+function personalizarSesion(S){
+  if(!S||S.esExamen) return;
+  var tema=temaDeHoy(); if(!tema){ devolverOriginal(S); return; }
+  var nivel=(P&&P.nivel)||'Pre-A1';
+  var k=claveSesion(S,tema.id,nivel);
+  if(S._clave===k) return;              // ya esta, no se vuelve a tocar
+  devolverOriginal(S);                  // por si venia de otro tema
+  var b=bancoTemas();
+  if(b[k]){ aplicarAdaptacion(S,b[k]); S.temaNombre=tema.es; S._clave=k; return; }
+  pedirAdaptacion(S,tema,nivel,function(mapa){
+    if(!mapa)return;
+    var bb=bancoTemas(); bb[k]=mapa; guardarBancoTemas(bb);
+  });
+}
+
+// Desde el mapa se prepara en silencio la sesion que sigue, para que cuando
+// el alumno entre ya este lista.
+function prepararSiguiente(){
+  try{
+    if(!P||!MAT||!MAT.length)return;
+    var c=progreso();
+    if(esExamen(c.parada)||esRepaso(c.parada))return;
+    var S=MAT[(contenidoDe(c.parada)-1)%MAT.length];
+    if(!S)return;
+    var tema=temaDeHoy(); if(!tema)return;
+    var k=claveSesion(S,tema.id,(P&&P.nivel)||'Pre-A1');
+    if(bancoTemas()[k])return;
+    pedirAdaptacion(S,tema,(P&&P.nivel)||'Pre-A1',function(mapa){
+      if(!mapa)return;
+      var bb=bancoTemas(); bb[k]=mapa; guardarBancoTemas(bb);
+    });
+  }catch(e){}
+}
+
+/* ── la pantalla: Mis temas ── */
+function pantallaTemas(){
+  soltarMapa(); callarTodo();
+  var t=temas(), fij=temaFijado();
+  APP.innerHTML=atras()+
+   '<div class="card">'+
+    '<div class="qlbl">De qué quieres que hablemos</div>'+
+    '<h2 class="met-t">Mis temas</h2>'+
+    '<p class="tema-int">El nivel pone la gramática. Tú pones de qué se habla. '+
+      'Puedes cambiarlo cuando quieras: hoy viaje, mañana tu trabajo.</p>'+
+
+    '<div class="tema-hoy">'+
+      '<span class="plbl">Hoy quiero practicar</span>'+
+      '<div class="tema-chips">'+
+        '<button class="chip'+(fij?'':' on')+'" data-fijo="">Lo que toque</button>'+
+        t.filter(function(z){return z.activo;}).map(function(z){
+          return '<button class="chip'+(fij===z.id?' on':'')+'" data-fijo="'+esc(z.id)+'">'+esc(z.es)+'</button>';
+        }).join('')+
+      '</div>'+
+    '</div>'+
+
+    '<div class="tema-lista">'+
+      t.map(function(z){
+        return '<div class="tema-fila'+(z.activo?'':' apagado')+'" data-id="'+esc(z.id)+'">'+
+          '<button class="tema-sw" data-sw="'+esc(z.id)+'" aria-label="Prender o apagar">'+
+            (z.activo?'&#10003;':'')+'</button>'+
+          '<span class="tema-nom">'+esc(z.es)+
+            '<small>'+(z.origen==='trabajo'?'tu trabajo':z.origen==='meta'?'para qué lo quieres':'te gusta')+'</small></span>'+
+          '<button class="tema-x" data-x="'+esc(z.id)+'" aria-label="Quitar">&times;</button>'+
+        '</div>';
+      }).join('')+
+    '</div>'+
+
+    '<div class="tema-nuevo">'+
+      '<span class="plbl">Agregar un tema</span>'+
+      '<input class="typebox" id="temanuevo" placeholder="Ej: la natación, mis juntas con padres, cocinar" '+
+        'autocomplete="off">'+
+      '<button class="btn" id="temaadd" style="margin-top:8px">Agregar</button>'+
+    '</div>'+
+    '<p class="tiny">Lo que escribas aquí cambia el vocabulario de tus próximas lecciones. '+
+      'La gramática del nivel no se mueve.</p>'+
+   '</div>';
+
+  ligarAtras(function(){ pantallaMas(); });
+
+  APP.querySelectorAll('[data-fijo]').forEach(function(b){
+    b.onclick=function(){ fijarTema(b.dataset.fijo); pantallaTemas();
+      avisito(b.dataset.fijo?'Va, hoy practicamos eso.':'Va, voy rotando tus temas.'); };
+  });
+  APP.querySelectorAll('[data-sw]').forEach(function(b){
+    b.onclick=function(){
+      var t2=temas(); t2.forEach(function(z){ if(z.id===b.dataset.sw) z.activo=!z.activo; });
+      if(!t2.filter(function(z){return z.activo;}).length){
+        avisito('Deja al menos uno prendido.'); return; }
+      guardarTemas(t2); pantallaTemas();
+    };
+  });
+  APP.querySelectorAll('[data-x]').forEach(function(b){
+    b.onclick=function(){
+      var t2=temas().filter(function(z){ return z.id!==b.dataset.x; });
+      if(!t2.length){ avisito('Necesitas al menos un tema.'); return; }
+      guardarTemas(t2);
+      if(temaFijado()===b.dataset.x) fijarTema('');
+      pantallaTemas();
+    };
+  });
+  var add=document.getElementById('temaadd'), caja=document.getElementById('temanuevo');
+  function agregar(){
+    var v=(caja&&caja.value||'').trim();
+    if(!v){ avisito('Escribe el tema primero.'); return; }
+    var t2=temas();
+    if(t2.filter(function(z){return z.id===idTema(v);}).length){ avisito('Ese ya está.'); return; }
+    t2.push({id:idTema(v), es:v, en:'', activo:true, origen:'gusto'});
+    guardarTemas(t2); pantallaTemas();
+    avisito('Listo. Ya va a salir en tus lecciones.');
+  }
+  if(add)add.onclick=agregar;
+  if(caja)caja.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); agregar(); } };
+}
+
+
 function pantallaMas(){
   soltarMapa();
   callarTodo();
@@ -5551,6 +5844,7 @@ function pantallaMas(){
     ['leccion',   '\u{1F4D8}','La lección de hoy',      'Seguir donde te quedaste'],
     ['tareas',    '\u{1F4E8}','Lo que mandó tu maestro','Correcciones y paquetes'],
     ['oirme',     '\u{1F3A7}','Oírme hablar',           'Tus grabaciones'],
+    ['temas',     '\u{1F3AF}','Mis temas',             'De qué quieres que hablemos'],
     ['personalizar','\u{270F}','Mis frases',            'Cambiar las frases de tu trabajo'],
     ['voz',       '\u{1F5E3}','Voz y acento',           'Hombre o mujer, cuatro acentos'],
     ['aspecto',   '\u{1F3A8}','Cómo se ve',             'Colores y tamaño de letra'],
@@ -5576,6 +5870,7 @@ function pantallaMas(){
         if(m==='leccion')        correr();
         else if(m==='tareas')    pantallaTareas();
         else if(m==='oirme')     pantallaOirme();
+        else if(m==='temas')     pantallaTemas();
         else if(m==='personalizar')pantallaDatos();
         else if(m==='voz')       pantallaVoz();
         else if(m==='aspecto')   pantallaAspecto();
@@ -6791,6 +7086,7 @@ function mapa(){
   pintarColorDelNivel();
   avisoDeVisita();
   mostrarAyudaSiToca('mapa');
+  setTimeout(function(){ try{ prepararSiguiente(); }catch(e){} },1800);
   if(mapa3DoViejo())return;
   mapaViejo();
 }
@@ -9470,7 +9766,9 @@ function cerrarPerfil(){
   }else{
     P=interpretar(P);
   }
-  D.perfil=P;save(D);
+  D.perfil=P;
+  try{ D.temas=sembrarTemas(P); D.temaFijo=''; }catch(e){}
+  save(D);
   mandarPerfil();
   bienvenida();
 }
@@ -9673,6 +9971,9 @@ function portadaSesion(){
     '<div class="qsub">Hola '+esc((P&&P.nombre)||'')+'. '+esc(S.enc||'')+'</div>'+
 
     '<div class="objx"><span>Al terminar vas a poder</span>'+esc(S.obj||'')+'</div>'+
+    (S.tema&&S.temaNombre
+      ? '<div class="temaviso">Hoy las frases hablan de <b>'+esc(S.temaNombre)+'</b>. '+
+        '<button class="temaliga" id="vertemas">Cambiar tema</button></div>' : '')+
     (S.hilo?'<div class="hilox"><span>Cómo se amarra todo hoy</span>'+esc(S.hilo)+'</div>':'')+
     loQueViene(S)+
     planDeHoy(S)+
@@ -9743,6 +10044,8 @@ function portadaSesion(){
   })();
   document.getElementById('go').onclick=function(){t0=Date.now();vistos={};arrancarReloj();paso();};
   document.getElementById('atras').onclick=function(){speechSynthesis&&speechSynthesis.cancel();sIdx=null;router();};
+  var vt=document.getElementById('vertemas');
+  if(vt)vt.onclick=function(){ callarTodo(); pantallaTemas(); };
 }
 
 function correr(){
@@ -9752,6 +10055,7 @@ function correr(){
     if(!MAT||!MAT.length){ avisito('No hay material para este nivel.'); return; }
   }
   if(sIdx==null||sIdx<0||sIdx>=MAT.length)sIdx=0;
+  try{ personalizarSesion(MAT[sIdx]); }catch(e){}
   if(it===0&&!attempts.length){portadaSesion();return;}
   paso();
 }

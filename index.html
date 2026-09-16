@@ -711,6 +711,8 @@
   .tema-x{width:26px;height:26px;flex:0 0 26px;border:0;background:none;color:var(--tenue);
     font-size:19px;line-height:1;cursor:pointer}
   .tema-nuevo{margin-bottom:14px}
+  .vvpens{padding:12px 14px;border-radius:10px;background:var(--crema);border:1px solid var(--linea);
+    color:var(--tenue);font-size:13px;font-style:italic;margin-top:10px}
   .temaviso{background:#EAF4F1;border:1px solid var(--linea);border-radius:10px;padding:10px 13px;
     margin-bottom:14px;font-size:13px;color:var(--tinta-2);line-height:1.5}
   .temaviso b{font-family:var(--display);color:var(--tinta)}
@@ -1359,7 +1361,7 @@ if('serviceWorker' in navigator){
 <script>
 (function(){
 "use strict";
-var VERSION="v136 · 16 sep · tus temas, ahora también en los ejemplos de phrasal verbs y modismos";
+var VERSION="v137 · 16 sep · escuchar gente real: un video de YouTube de tu tema, y lo cuentas hablando";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -3646,6 +3648,9 @@ function afinarPorNivel(mat,p){
     }
     // Un numero cada dos sesiones, del tipo que toca a su nivel
     if(nums.length && si%2===1) S.items.push(nums[ni++ % nums.length]);
+    // Un video real, una de cada tres sesiones, de B1 para arriba. Abajo de
+    // ahi el ingles de la calle va demasiado rapido y desanima en vez de ensenar.
+    if(n>=3 && si%3===2) S.items.push({area:'oir', k:'vervideo'});
   });
   return mat;
 }
@@ -8543,24 +8548,161 @@ function videoDeFrase(frase,pista,cb){
   if(typeof pista==='function'){cb=pista;pista='';}
   var k=clave(frase)+'|'+(pista||'');
   var t=videosGuardados();
-  if(t[k]!==undefined){cb(t[k]||null);return;}
-  if(!VIDEO_ENDPOINT){cb(null);return;}
+  if(t[k]!==undefined){
+    var g=t[k];
+    // Lo guardado antes era solo el codigo. Lo nuevo trae tambien el titulo.
+    if(g && typeof g==='object') cb(g.i||null,{titulo:g.t||'',canal:g.c||''});
+    else cb(g||null,{titulo:'',canal:''});
+    return;
+  }
+  if(!VIDEO_ENDPOINT){cb(null,{});return;}
   var listo=false;
   // Si el servidor tarda demasiado no se deja al alumno esperando.
-  var reloj=setTimeout(function(){if(!listo){listo=true;cb(null);}},9000);
+  var reloj=setTimeout(function(){if(!listo){listo=true;cb(null,{});}},9000);
   fetch(VIDEO_ENDPOINT+'?frase='+encodeURIComponent(frase)+
         (pista?'&extra='+encodeURIComponent(pista):''))
     .then(function(r){return r.json();})
     .then(function(d){
       if(listo)return;listo=true;clearTimeout(reloj);
-      var id=null;
-      if(d&&d.ok&&d.resultados&&d.resultados[0])id=d.resultados[0].id||null;
+      var id=null, uno=(d&&d.ok&&d.resultados&&d.resultados[0])||null;
+      if(uno)id=uno.id||null;
+      var info={titulo:(uno&&uno.titulo)||'',canal:(uno&&uno.canal)||''};
       // Solo se guarda cuando el servidor contesto bien. Si estaba caido,
       // no se guarda nada y la proxima vez se vuelve a intentar.
-      if(d&&d.ok)guardarVideo(k,id||0);
-      cb(id);
+      if(d&&d.ok)guardarVideo(k, id?{i:id,t:info.titulo,c:info.canal}:0);
+      cb(id,info);
     })
-    .catch(function(){if(listo)return;listo=true;clearTimeout(reloj);cb(null);});
+    .catch(function(){if(listo)return;listo=true;clearTimeout(reloj);cb(null,{});});
+}
+
+
+/* ═══════════ ver un video de verdad y contarlo ═══════════ */
+// El recuento de siempre usa audio que nosotros generamos: limpio, lento y
+// sin ruido. Sirve para empezar, pero no se parece a oir a una persona.
+// Aqui el alumno ve un video real de YouTube -- sobre SU tema -- y luego
+// cuenta lo que entendio. Es lo mas cerca que puede estar de la calle sin
+// salir de la app.
+//
+// Dos cosas que hay que tener claras:
+//   1. La app NO oye el video. Solo sabe el titulo y el canal. Por eso no se
+//      le pregunta "de que trato" con opciones (el titulo regalaria la
+//      respuesta) sino que lo CUENTE hablando, y se le contesta como oyente,
+//      no como juez de un contenido que no conocemos.
+//   2. Si no hay video, o el servidor no contesta, la parada NO se atora:
+//      el ejercicio se quita solo y sigue la leccion.
+
+var VIDEO_SEGS=90;          // cuanto se ve, como maximo
+var VV=null;                // el video de este ejercicio
+
+// De que va a ser el video: del tema que el alumno trae activo, en ingles.
+function temaEnIngles(cb){
+  var t=null; try{ t=temaDeHoy(); }catch(e){}
+  if(!t){ cb((P&&P.gusto_en)||(P&&P.trabajo_en)||'everyday life'); return; }
+  if(t.en){ cb(limpiarConsulta(t.en)); return; }
+  // Nunca se ha traducido: se pregunta UNA vez y se guarda para siempre.
+  if(!hayIA()){ cb(limpiarConsulta((P&&P.gusto_en)||'everyday life')); return; }
+  pedirIA('ayuda',{pregunta:'Traduce al ingles, en dos o tres palabras y nada mas, '+
+      'sin comillas ni punto, este tema: "'+t.es+'". Solo las palabras.',
+      nombre:'',nivel:(P&&P.nivel)||'',parada:0,total:PARADAS,pantalla:'otra',botones:''},
+    function(res){
+      var w=String((res&&res.respuesta)||'').split('\n')[0].replace(/["'.]/g,'').trim();
+      if(w && w.length<40){
+        var lista=temas();
+        lista.forEach(function(z){ if(z.id===t.id) z.en=w; });
+        guardarTemas(lista);
+        cb(limpiarConsulta(w));
+      }else cb(limpiarConsulta((P&&P.gusto_en)||'everyday life'));
+    },
+    function(){ cb(limpiarConsulta((P&&P.gusto_en)||'everyday life')); });
+}
+// "I am a swimming coach" no sirve como busqueda. "swimming coach" si.
+function limpiarConsulta(s){
+  return String(s||'').replace(/^\s*(i am|i'm|i work|i like|i study)\s+(a|an|as a|in|at)?\s*/i,'')
+    .replace(/[.!?]+$/,'').trim() || 'everyday life';
+}
+
+function cajaVideoOir(){
+  return '<div class="vidmarco" id="vvmarco">'+
+      '<div class="vidcargando">Buscando un video de tu tema…</div></div>';
+}
+
+function pintarVideoOir(x){
+  VV={id:null,titulo:'',canal:'',listo:false};
+  var m=document.getElementById('vvmarco'); if(!m)return;
+  temaEnIngles(function(consulta){
+    videoDeFrase(consulta,'real people talking conversation listening practice',
+      function(id,info){
+        var mm=document.getElementById('vvmarco');
+        VV.listo=true; VV.id=id||null;
+        VV.titulo=(info&&info.titulo)||''; VV.canal=(info&&info.canal)||'';
+        VV.consulta=consulta;
+        if(!id){ saltarVideo(x); return; }
+        if(!mm)return;
+        mm.innerHTML='<div class="vidplayer"><iframe src="https://www.youtube-nocookie.com/embed/'+
+          id+'?rel=0&modestbranding=1&playsinline=1&cc_load_policy=0&end='+VIDEO_SEGS+'" '+
+          'title="Video para escuchar" allow="accelerometer; encrypted-media; picture-in-picture" '+
+          'allowfullscreen loading="lazy"></iframe></div>'+
+          '<div class="vidpie">Sobre <b>'+esc(VV.consulta)+'</b>. '+
+          'Con el primer minuto y medio basta. Véelo las veces que quieras.</div>';
+        var mic=document.getElementById('mic');
+        if(mic){ mic.disabled=false; mic.innerHTML='<span class="ring2"></span> Ya lo vi · contármelo'; }
+      });
+  });
+}
+
+// Sin video no hay ejercicio: se quita y sigue la leccion. Nunca se atora.
+function saltarVideo(x){
+  var m=document.getElementById('vvmarco');
+  if(m)m.innerHTML='<div class="vidcargando">No encontré un video de tu tema ahorita. '+
+    'Seguimos con lo que sigue.</div>';
+  setTimeout(function(){ it++; paso(); },1800);
+}
+
+/* ── lo que se le contesta cuando ya contó ── */
+// El cerebro NO vio el video. Se le dice clarito, para que no invente que al
+// alumno "le falto la parte de X". Lo que si puede hacer es lo que hace un
+// maestro cuando alguien le cuenta algo: entenderle, corregirle UNA cosa del
+// ingles, y preguntarle una mas.
+function revisarVideo(x,t){
+  attempts.push({tipo:'vervideo', meta:'video: '+(VV&&VV.titulo||VV&&VV.consulta||''),
+                 oido:t, pct:null});
+  var r=document.getElementById('res'); if(!r)return;
+  r.innerHTML='<div class="heard"><div class="hl">te entendí</div>'+
+    '<div class="ht">'+esc(t)+'</div></div>'+
+    '<div id="vvfb" class="vvpens">Déjame oírte bien…</div>'+
+    '<button class="btn" id="sig" style="margin-top:10px">Siguiente</button>';
+  var sg=document.getElementById('sig'); if(sg)sg.onclick=function(){ it++; paso(); };
+
+  if(!hayIA()){ vvRespaldo(t); return; }
+  var q='Un alumno mexicano de ingles, nivel '+((P&&P.nivel)||'B1')+', acaba de ver un '+
+    'video en YouTube y me esta contando lo que entendio.\n'+
+    'TU NO VISTE EL VIDEO. Lo unico que sabemos es el titulo: "'+(VV&&VV.titulo||'(sin titulo)')+
+    '" del canal "'+(VV&&VV.canal||'?')+'".\n'+
+    'NO inventes lo que decia el video. NO le digas que le falto algo: no puedes saberlo.\n'+
+    'El alumno dijo: "'+t+'"\n'+
+    'Contestale en espanol, calido y corto, en TRES renglones exactos:\n'+
+    '1) Repitele con tus palabras lo que entendiste de lo que dijo, para que vea que se dio a entender.\n'+
+    '2) UNA sola cosa de su ingles que arreglar, con la frase ya corregida.\n'+
+    '3) Una pregunta corta EN INGLES sobre el video, para que conteste hablando.\n'+
+    'Nada de listas ni titulos. Tres renglones y ya.';
+  pedirIA('ayuda',{pregunta:q,nombre:(P&&P.nombre)||'',nivel:(P&&P.nivel)||'',
+                   parada:0,total:PARADAS,pantalla:'otra',botones:''},
+    function(res){
+      var txt=(res&&res.respuesta)||'';
+      if(!txt){ vvRespaldo(t); return; }
+      var c=document.getElementById('vvfb');
+      if(c){ c.className='fb'; c.innerHTML=esc(txt).replace(/\n/g,'<br>'); }
+      say(txt.split('\n')[0]||'','es-MX');
+    },
+    function(){ vvRespaldo(t); });
+}
+function vvRespaldo(t){
+  var c=document.getElementById('vvfb'); if(!c)return;
+  var palabras=String(t||'').trim().split(/\s+/).filter(Boolean).length;
+  c.className='fb';
+  c.textContent = palabras>=12
+    ? 'Bien: te soltaste y dijiste varias cosas seguidas. Eso es justo lo que se entrena aquí.'
+    : 'Va. La próxima intenta tres frases en vez de una: qué viste, quién hablaba y una cosa que dijo.';
 }
 
 
@@ -9918,7 +10060,8 @@ function loQueViene(S){
     segm:'separar palabras en habla rápida',
     dicto:'escribir lo que oigas',
     acento:'la misma frase en cuatro países distintos',
-    recuento:'oír una historia y contarla con tus palabras'
+    recuento:'oír una historia y contarla con tus palabras',
+    vervideo:'entender a gente real hablando de lo tuyo, a velocidad normal'
   };
 
   it.forEach(function(x){
@@ -10124,6 +10267,7 @@ function paso(){
     acento:'La misma frase dicha por gente de distintos paises. Tocalas todas y dime cual te costo mas.',
     roleplay:'Es una situacion de tu trabajo. Alguien te habla y tu le contestas hablando, como si estuviera enfrente.',
     recuento:'Oyes una historia corta y luego la cuentas tu, con tus palabras. No tiene que ser igual.',
+    vervideo:'Un video de YouTube sobre tu tema. Velocidad normal, gente de verdad. Veelo las veces que quieras y luego cuentame lo que entendiste, hablando. No hace falta entender todo.',
     pares:'Dos palabras que cambian en un solo sonido. Escucha con cuidado cual dije.',
     palabra:'Una palabra de tu trabajo. Escoge en cual frase va bien.',
     deletreo:'Te deletreo la palabra letra por letra en ingles. Escribela.',
@@ -10408,6 +10552,20 @@ function paso(){
        '<div id="res"></div>'+
        '<button class="mic-big" id="mic"><span class="ring2"></span> Tocar y contarlo</button>'+
        '<button class="btn ghost" id="skip" style="margin-top:10px">Ya dije lo que pude</button>';
+  }else if(x.k==='vervideo'){
+    h+='<div class="qlbl">Gente de verdad · tu tema</div>'+
+       '<div class="qsub">Un video real, no audio nuestro. Nadie habla despacio para ti: '+
+       'esto es para acostumbrar el oído. No entiendes todo y está bien.</div>'+
+       cajaVideoOir()+
+       '<div class="aplista"><div class="hl">Cuando termines, cuéntame</div>'+
+         '<div class="apoyofila">'+
+           '<span class="apoyow">de qué hablaban</span>'+
+           '<span class="apoyow">quién hablaba</span>'+
+           '<span class="apoyow">una cosa que dijeron</span>'+
+         '</div></div>'+
+       '<div id="res"></div>'+
+       '<button class="mic-big" id="mic" disabled><span class="ring2"></span> Espera el video…</button>'+
+       '<button class="btn ghost" id="skip" style="margin-top:10px">Este no · siguiente</button>';
   }else if(x.k==='pares'){
     h+='<div class="qlbl">Dos sonidos parecidos</div>'+
        '<div class="qsub">Cambian en un solo sonido. Escucha cuál dije.</div>'+
@@ -10653,6 +10811,7 @@ function paso(){
     if(_or)_or.onclick=function(){say(x.q||'','en-US');};
     setTimeout(function(){say(x.q||'','en-US');},400);
   }
+  if(x.k==='vervideo'){ pintarVideoOir(x); }
   if(x.k==='recuento'){
     var _oh=document.getElementById('oir');
     if(_oh)_oh.onclick=function(){
@@ -11060,6 +11219,7 @@ function registrar(x,t,extra){
   if(meta)registrarEnMemoria(meta,cmp?cmp.pct:null);
   if(x.k==='model'){var kk=clave(x.en);intentosDe[kk]=(intentosDe[kk]||0)+1;}
   // en la producción libre el tutor repregunta sobre lo que acaba de decir
+  if(x.k==='vervideo'){ revisarVideo(x,t); return; }
   if(x.k==='free')pedirSeguimiento(t);
   if(x.k==='roleplay'&&hayIA())seguirRoleplay(x,t);
   var r=document.getElementById('res');

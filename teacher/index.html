@@ -23,6 +23,63 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--crema);color:va
 .top .sync{margin-left:auto;font-size:12px;color:var(--verde);display:flex;align-items:center;gap:6px}
 .wrap{max-width:920px;margin:0 auto;padding:18px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:13px}
+/* ── programas: English For All / HCM ── */
+.progs{display:flex;gap:4px;background:var(--crema);border-radius:11px;padding:4px;margin-left:14px}
+.progs button{border:0;background:none;font-family:inherit;font-size:13px;font-weight:600;
+  color:var(--tenue);padding:7px 14px;border-radius:8px;cursor:pointer;white-space:nowrap}
+.progs button.on{background:var(--papel);color:var(--tinta);box-shadow:var(--sombra)}
+/* ── cadetes ── */
+.gpo{margin-bottom:22px}
+.gpo-h{display:flex;align-items:baseline;gap:10px;margin-bottom:9px;
+  padding-bottom:7px;border-bottom:1px solid var(--linea)}
+.gpo-h b{font-family:'Fraunces',serif;font-size:18px;font-weight:600}
+.gpo-h span{font-size:12px;color:var(--tenue)}
+.cad{display:flex;align-items:center;gap:11px;background:var(--papel);border:1px solid var(--linea);
+  border-radius:12px;padding:11px 13px;margin-bottom:7px}
+.cad .av{width:36px;height:36px;font-size:14px}
+.cad-n{flex:1;min-width:0}
+.cad-n b{display:block;font-size:14.5px;font-weight:600;line-height:1.2;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cad-n small{font-size:11px;color:var(--tenue)}
+.carril{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+  border-radius:20px;padding:3px 9px;white-space:nowrap}
+.carril.basico{background:#FBEEE7;color:var(--coral)}
+.carril.medio{background:#FDF4E3;color:#8A6210}
+.carril.alto{background:#E7F3EE;color:var(--verde)}
+.cad-num{text-align:center;min-width:44px}
+.cad-num b{display:block;font-family:'Fraunces',serif;font-size:17px;font-weight:600;line-height:1}
+.cad-num span{font-size:9.5px;color:var(--tenue);text-transform:uppercase;letter-spacing:.06em}
+.cad-baja b{color:var(--coral)}
+/* En celular no caben las cuatro columnas. Se dejan las dos que de verdad
+   se miran a diario — lección y participación — y se esconden las otras dos.
+   Ojo: nth-of-type cuenta TODOS los div hermanos, no solo los .cad-num; por
+   eso el corte va en n+5 y no en n+3. Con n+3 se borraban las cuatro. */
+@media(max-width:560px){
+  /* La barra de arriba tiene cuatro cosas (titulo, programas, estado y el
+     boton de avisos) y en un telefono no caben en un renglon: el boton se
+     salia de la pantalla y hacia que toda la pagina se moviera de lado.
+     Aqui se deja que baje al siguiente renglon. */
+  .top{flex-wrap:wrap;row-gap:10px;padding:12px 14px}
+  .top .progs{margin-left:0;order:3;width:100%}
+  .top .progs button{flex:1}
+  .top .sync{margin-left:auto;font-size:11.5px}
+  .top .avbtn{order:4}
+  .cad{gap:8px;padding:10px 11px}
+  .cad .av{width:32px;height:32px;font-size:13px}
+  .cad-num{min-width:38px}
+  .cad-num:nth-of-type(n+5){display:none}
+  .carril{padding:3px 7px;font-size:10px}
+  .wrap{padding:14px 12px}
+}
+.hcm-cerrojo{background:var(--papel);border:1px solid var(--linea);border-radius:16px;
+  padding:22px;text-align:center;max-width:380px;margin:30px auto;box-shadow:var(--sombra)}
+.hcm-cerrojo h3{font-family:'Fraunces',serif;font-size:19px;margin-bottom:6px}
+.hcm-cerrojo p{font-size:13px;color:var(--tenue);line-height:1.5;margin-bottom:14px}
+.hcm-cerrojo input{width:100%;padding:11px 13px;border:1px solid var(--linea);border-radius:10px;
+  font-family:inherit;font-size:15px;margin-bottom:10px;background:var(--crema)}
+.hcm-cerrojo button{width:100%;padding:11px;border:0;border-radius:10px;background:var(--verde);
+  color:#fff;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer}
+.hcm-mal{color:var(--coral);font-size:12.5px;margin-top:9px;min-height:16px}
 .card{background:var(--papel);border:1px solid var(--linea);border-radius:16px;padding:15px;
   box-shadow:var(--sombra);cursor:pointer;transition:transform .12s,box-shadow .12s;text-align:left;width:100%}
 .card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(40,36,30,.11)}
@@ -217,13 +274,21 @@ body.trabado{overflow:hidden}
     // con pase guardado se entra directo; si el servidor lo rechaza,
     // cargar() vuelve a pedir la clave sola
     if(window.pasePanel()) window.abrirPanel();
+    var pr=document.getElementById('progs');
+    if(pr) pr.querySelectorAll('button').forEach(function(b){
+      b.onclick=function(){ cambiarPrograma(b.getAttribute('data-p')); };
+    });
   });
 })();
 </script>
 
 
 <div class="top">
-  <div><h1>Teacher</h1><div class="sub">English For All · Brian Martínez</div></div>
+  <div><h1>Teacher</h1><div class="sub" id="subtitulo">English For All · Brian Martínez</div></div>
+  <div class="progs" id="progs">
+    <button data-p="efa" class="on">English For All</button>
+    <button data-p="hcm">HCM</button>
+  </div>
   <div class="sync" id="sync">conectado</div>
 </div>
 <div class="wrap">
@@ -233,6 +298,7 @@ body.trabado{overflow:hidden}
       <p>Cuando tus alumnos practiquen, aparecerán aquí con su avance.</p></div>
   </div>
   <div class="ficha" id="ficha"></div>
+  <div id="hcm" style="display:none"></div>
 </div>
 <div class="aviso" id="aviso"></div>
 <script>
@@ -329,6 +395,12 @@ var EJEMPLO=[
 </script>
 
 <script>
+// El Colegio tiene su propio servidor y su propia hoja, a proposito: son datos
+// de una institucion, no de la escuela particular. Nunca se mezclan.
+var HCM_ENDPOINT='https://script.google.com/macros/s/AKfycbypVtZ3xzUURmChQzMsYM3rE-kiRt5e9NXLJ3QfBg8R7VpJx_0vtitQM1eb7i-wzTr1xA/exec';
+var LLAVE_HCM='efa_panel_pase_hcm';
+var PROGRAMA='efa';
+var CADETES=[], GRUPOS_HCM=[];
 var ALUMNOS=[];
 
 function iniciales(n){return n.split(/\s+/).map(function(x){return x[0];}).slice(0,2).join('').toUpperCase();}
@@ -396,6 +468,155 @@ function mostrarFalla(msg){
     'No es que no haya alumnos: el servidor contestó con un error, así que no se pudo leer nada.'+
     '<div style="font-family:monospace;font-size:11.5px;color:var(--tenue);margin-top:8px;'+
     'word-break:break-word">'+String(msg).replace(/[&<>]/g,function(x){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[x];})+'</div>';
+}
+
+
+/* ═══════════ el Colegio Militar ═══════════ */
+// Los cadetes no tienen nivel CEFR: van por semanas, todos con el mismo
+// temario, y lo que cambia es el CARRIL, que es su nivel de ingles dentro
+// del mismo programa. Por eso esta vista no se parece a la de los alumnos
+// particulares y son dos tablas distintas, no una lista revuelta.
+
+function pasHCM(){ try{ return localStorage.getItem(LLAVE_HCM)||''; }catch(e){ return ''; } }
+function guardaPasHCM(p){ try{ localStorage.setItem(LLAVE_HCM,p); }catch(e){} }
+function borraPasHCM(){ try{ localStorage.removeItem(LLAVE_HCM); }catch(e){} }
+
+function cambiarPrograma(cual){
+  PROGRAMA=cual;
+  $('#progs').querySelectorAll('button').forEach(function(b){
+    b.classList.toggle('on', b.getAttribute('data-p')===cual);
+  });
+  $('#subtitulo').textContent = cual==='hcm'
+    ? 'Heroico Colegio Militar · Idioma Extranjero'
+    : 'English For All · Brian Martínez';
+  var esHCM = cual==='hcm';
+  $('#lista').style.display = esHCM?'none':'';
+  $('#ficha').style.display = esHCM?'none':'';
+  $('#hcm').style.display   = esHCM?'':'none';
+  if(esHCM) cargarHCM(); else { $('#sync').textContent='cargando…'; cargar(); }
+}
+
+function pedirClaveHCM(msg){
+  $('#sync').textContent='';
+  $('#hcm').innerHTML=
+    '<div class="hcm-cerrojo">'+
+      '<h3>Colegio Militar</h3>'+
+      '<p>Los datos de los cadetes van aparte, con su propia clave. '+
+      'No es la misma que la de tus alumnos.</p>'+
+      '<input type="password" id="clavehcm" placeholder="Clave del Colegio" autocomplete="off">'+
+      '<button id="entrahcm">Entrar</button>'+
+      '<div class="hcm-mal" id="malhcm">'+(msg?esc(msg):'')+'</div>'+
+    '</div>';
+  var i=$('#clavehcm'), b=$('#entrahcm');
+  function va(){
+    var v=(i&&i.value)||'';
+    if(!v){ $('#malhcm').textContent='Escribe la clave.'; return; }
+    b.disabled=true; b.textContent='Revisando…';
+    fetch(HCM_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({accion:'entrar',clave:v})})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(d&&d.ok&&d.pase){ guardaPasHCM(d.pase); cargarHCM(); return; }
+        b.disabled=false; b.textContent='Entrar';
+        $('#malhcm').textContent=(d&&d.mensaje)||'Esa no es la clave.';
+        i.value=''; i.focus();
+      })
+      .catch(function(){
+        b.disabled=false; b.textContent='Entrar';
+        $('#malhcm').textContent='No me pude conectar al servidor del Colegio.';
+      });
+  }
+  if(b)b.onclick=va;
+  if(i){ try{i.focus();}catch(e){} i.addEventListener('keydown',function(e){ if(e.key==='Enter')va(); }); }
+}
+
+function cargarHCM(){
+  if(!pasHCM()){ pedirClaveHCM(''); return; }
+  $('#sync').textContent='cargando…';
+  $('#hcm').innerHTML='<div class="vacio">Trayendo a los cadetes…</div>';
+  fetch(HCM_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({accion:'panel_maestro', pase:pasHCM()})})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(d){
+      if(!d){ $('#sync').textContent='el servidor del Colegio no contestó';
+              $('#sync').style.color='var(--coral)'; $('#hcm').innerHTML=''; return; }
+      if(!d.ok && (d.error==='sin_permiso'||d.error==='sin_configurar')){
+        borraPasHCM();
+        pedirClaveHCM(d.error==='sin_configurar'
+          ? 'Falta configurar el acceso en el servidor del Colegio.'
+          : 'Tu pase venció. Escribe la clave otra vez.');
+        return;
+      }
+      if(!d.ok){ $('#sync').textContent='el servidor del Colegio contestó con error';
+                 $('#sync').style.color='var(--coral)';
+                 $('#hcm').innerHTML='<div class="vacio"><h2>No se pudo leer</h2><p>'+
+                   esc(String(d.error||'sin detalle'))+'</p></div>'; return; }
+      CADETES=d.cadetes||[];
+      GRUPOS_HCM=d.grupos||[];
+      $('#sync').style.color='var(--verde)';
+      $('#sync').textContent='conectado · '+CADETES.length+
+        (CADETES.length===1?' cadete':' cadetes');
+      pintarCadetes();
+    })
+    .catch(function(){
+      $('#sync').textContent='sin conexión con el Colegio';
+      $('#sync').style.color='var(--coral)'; $('#hcm').innerHTML='';
+    });
+}
+
+function claseCarril(c){
+  // Ojo con los acentos: "basico" no aparece dentro de "básico". Sin quitarle
+  // el acento primero, el carril bajo se pintaba del color del de en medio.
+  var t=String(c||'').toLowerCase()
+    .replace(/[áàä]/g,'a').replace(/[éèë]/g,'e').replace(/[íìï]/g,'i')
+    .replace(/[óòö]/g,'o').replace(/[úùü]/g,'u');
+  if(t.indexOf('bas')>=0 || t.indexOf('baj')>=0) return 'basico';
+  if(t.indexOf('alt')>=0 || t.indexOf('avanz')>=0) return 'alto';
+  return 'medio';
+}
+// Ultima sesion viene como texto largo del servidor. Aqui solo se acorta.
+function diaCorto(t){
+  var s=String(t||'').trim();
+  if(!s) return '—';
+  var m=s.match(/^(\d{1,2})\/(\d{1,2})/);
+  return m ? (m[1]+'/'+m[2]) : s.slice(0,10);
+}
+
+function pintarCadetes(){
+  if(!CADETES.length){
+    $('#hcm').innerHTML='<div class="vacio"><h2>Todavía no hay cadetes</h2>'+
+      '<p>Cuando empiecen a practicar, aparecen aquí por grupo.</p></div>';
+    return;
+  }
+  // los grupos que el servidor conoce, mas cualquiera que aparezca en los datos
+  var orden = (GRUPOS_HCM && GRUPOS_HCM.length) ? GRUPOS_HCM.slice() : [];
+  CADETES.forEach(function(c){
+    var g=String(c.grupo||'sin grupo');
+    if(orden.indexOf(g)<0) orden.push(g);
+  });
+  var html='';
+  orden.forEach(function(g){
+    var delGrupo=CADETES.filter(function(c){ return String(c.grupo||'sin grupo')===String(g); });
+    if(!delGrupo.length) return;   // grupo sin cadetes: no se enseña vacio
+    delGrupo.sort(function(a,b){ return String(a.nombre||'') < String(b.nombre||'') ? -1 : 1; });
+    html+='<div class="gpo"><div class="gpo-h"><b>Grupo '+esc(g)+'</b>'+
+          '<span>'+delGrupo.length+(delGrupo.length===1?' cadete':' cadetes')+'</span></div>'+
+      delGrupo.map(function(c){
+        var part=Number(c.particip||0), extra=Number(c.extraclase||0);
+        return '<div class="cad">'+
+          '<div class="av">'+iniciales(c.nombre)+'</div>'+
+          '<div class="cad-n"><b>'+esc(c.nombre||'—')+'</b>'+
+            '<small>'+esc(c.num||'sin número')+' · '+(c.sesiones||0)+' sesiones · '+
+            Math.round((c.minutos||0)/6)/10+' h</small></div>'+
+          '<span class="carril '+claseCarril(c.carril)+'">'+esc(c.carril||'—')+'</span>'+
+          '<div class="cad-num"><b>'+(c.leccion||0)+'</b><span>lección</span></div>'+
+          '<div class="cad-num'+(part<70?' cad-baja':'')+'"><b>'+part+'%</b><span>partic.</span></div>'+
+          '<div class="cad-num'+(extra<50?' cad-baja':'')+'"><b>'+extra+'%</b><span>extra</span></div>'+
+          '<div class="cad-num"><b>'+esc(diaCorto(c.ultima))+'</b><span>última</span></div>'+
+        '</div>';
+      }).join('')+'</div>';
+  });
+  $('#hcm').innerHTML=html;
 }
 
 function pintarLista(){

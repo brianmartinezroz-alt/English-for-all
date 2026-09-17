@@ -1,0 +1,18 @@
+{
+  "id": "/English-for-all/teacher/",
+  "name": "English For All · Teacher",
+  "short_name": "EFA Teacher",
+  "description": "Cómo va cada alumno: avance, errores y grabaciones.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F5F1E8",
+  "theme_color": "#15140F",
+  "lang": "es-MX",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

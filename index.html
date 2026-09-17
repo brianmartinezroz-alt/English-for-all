@@ -11,6 +11,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="EFA">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- avisos al celular; si no hay App ID puesto, no hace nada -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -711,6 +713,9 @@
   .tema-x{width:26px;height:26px;flex:0 0 26px;border:0;background:none;color:var(--tenue);
     font-size:19px;line-height:1;cursor:pointer}
   .tema-nuevo{margin-bottom:14px}
+  .avpasos{margin:10px 0 2px 18px;font-size:13.5px;color:var(--tinta-2);line-height:1.6}
+  .avpasos li{margin-bottom:5px}
+  .avpasos b{font-family:var(--display);color:var(--tinta)}
   .vvpens{padding:12px 14px;border-radius:10px;background:var(--crema);border:1px solid var(--linea);
     color:var(--tenue);font-size:13px;font-style:italic;margin-top:10px}
   .temaviso{background:#EAF4F1;border:1px solid var(--linea);border-radius:10px;padding:10px 13px;
@@ -1361,7 +1366,7 @@ if('serviceWorker' in navigator){
 <script>
 (function(){
 "use strict";
-var VERSION="v137 · 16 sep · escuchar gente real: un video de YouTube de tu tema, y lo cuentas hablando";
+var VERSION="v138 · 17 sep · avisos al celular: recordatorio diario y aviso al maestro";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -5784,6 +5789,159 @@ function prepararSiguiente(){
 }
 
 /* ── la pantalla: Mis temas ── */
+/* ═══════════ avisos al celular ═══════════ */
+// Tres cosas que hay que saber, porque explican por qué esto está escrito así:
+//
+// 1. No existe forma de que la app se despierte sola a una hora. Chrome lo
+//    intentó (Notification Triggers) y lo abandonó. Entonces el aviso SIEMPRE
+//    lo manda el servidor. Aquí solo se pide permiso y se dice quién es quién.
+// 2. En iPhone los avisos solo funcionan si la app está INSTALADA en la
+//    pantalla de inicio. En Safari, dentro del navegador, no llega nada.
+//    Por eso si detectamos iPhone sin instalar, no se enseña un botón muerto:
+//    se enseñan las instrucciones para instalarla.
+// 3. El permiso tiene que salir de un TOQUE del alumno. Si se pide solo al
+//    abrir, iOS lo ignora. Por eso hay pantalla con botón y no un pop-up.
+
+var AVISOS_APP_ID='5083353d-3760-4530-adc5-92c22d5deaf9';   // App ID de OneSignal (es publico)
+
+var AVISOS_LISTO=false;
+
+// Este identificador tiene que salir IGUAL que el del servidor (idDe_ en
+// Avisos.gs). Si no, el empujón se le manda a un alumno que no existe.
+function idAlumno(n){
+  return String(n||'').toLowerCase()
+    .replace(/[áàä]/g,'a').replace(/[éèë]/g,'e').replace(/[íìï]/g,'i')
+    .replace(/[óòö]/g,'o').replace(/[úùü]/g,'u').replace(/ñ/g,'n')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+}
+
+function esIPhone(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+         (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+}
+function estaInstalada(){
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.navigator.standalone===true;
+}
+// Donde de plano no se puede: iPhone en el navegador.
+function avisosImposibles(){ return esIPhone() && !estaInstalada(); }
+
+function avisosPrendidos(){
+  try{ return window.OneSignal && OneSignal.Notifications &&
+              OneSignal.Notifications.permission===true; }catch(e){ return false; }
+}
+
+// Arranca el SDK y dice quién es este alumno. No pide permiso: eso es del botón.
+function arrancarAvisos(){
+  if(!AVISOS_APP_ID || AVISOS_LISTO) return;
+  if(!('serviceWorker' in navigator)) return;
+  AVISOS_LISTO=true;
+  window.OneSignalDeferred=window.OneSignalDeferred||[];
+  window.OneSignalDeferred.push(async function(OneSignal){
+    try{
+      await OneSignal.init({
+        appId: AVISOS_APP_ID,
+        // GitHub Pages sirve el sitio en una subcarpeta: si no se le dice
+        // dónde está su worker, OneSignal lo busca en la raíz del dominio
+        // y no lo encuentra nunca.
+        serviceWorkerPath:'English-for-all/push/onesignal/OneSignalSDKWorker.js',
+        serviceWorkerParam:{scope:'/English-for-all/push/onesignal/'},
+        autoResubscribe:true
+      });
+      await identificarme(OneSignal);
+    }catch(e){}
+  });
+}
+
+async function identificarme(OneSignal){
+  if(!P||!P.nombre)return;
+  try{
+    await OneSignal.login(idAlumno(P.nombre));
+    var c; try{ c=progreso(); }catch(e){ c={parada:1}; }
+    await OneSignal.User.addTags({
+      rol:'alumno',
+      nombre:String(P.nombre).slice(0,40),
+      nivel:(P&&P.nivel)||'',
+      parada:String(c.parada||1)
+    });
+  }catch(e){}
+}
+
+// Que el maestro sepa que alguien acaba de entrar. Se manda al servidor de
+// datos, que es quien puede mandar notificaciones. Si falla, ni se nota.
+var YA_AVISE_QUE_ENTRE=0;
+function avisarQueEntre(){
+  try{
+    if(!DATOS_ENDPOINT||!P||!P.nombre)return;
+    var ahora=Date.now();
+    if(ahora-YA_AVISE_QUE_ENTRE < 1800000)return;   // máximo uno cada media hora
+    YA_AVISE_QUE_ENTRE=ahora;
+    var c; try{ c=progreso(); }catch(e){ c={parada:1}; }
+    fetch(DATOS_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({accion:'entro',nombre:P.nombre,
+                           nivel:(P&&P.nivel)||'',parada:c.parada||1})}).catch(function(){});
+  }catch(e){}
+}
+
+/* ── la pantalla ── */
+function pantallaAvisos(){
+  soltarMapa(); callarTodo();
+  var cuerpo;
+
+  if(!AVISOS_APP_ID){
+    cuerpo='<p class="tema-int">Los avisos todavía no están encendidos en esta app. '+
+      'Pregúntale a tu maestro.</p>';
+  }else if(avisosImposibles()){
+    cuerpo='<div class="tema-hoy">'+
+      '<span class="plbl">Primero instálala</span>'+
+      '<p class="tema-int" style="margin:8px 0 0">En iPhone los avisos solo llegan si la app '+
+      'está en tu pantalla de inicio. Es un minuto:</p>'+
+      '<ol class="avpasos">'+
+        '<li>Abajo en Safari, toca el cuadrito con la flecha hacia arriba.</li>'+
+        '<li>Baja y toca <b>Agregar a inicio</b>.</li>'+
+        '<li>Cierra Safari y abre la app desde el ícono nuevo.</li>'+
+        '<li>Vuelve aquí y préndelos.</li>'+
+      '</ol></div>';
+  }else if(avisosPrendidos()){
+    cuerpo='<div class="fb ok">Ya están prendidos. Te vamos a avisar cuando te toque '+
+      'practicar, y si se te pasan unos días.</div>'+
+      '<p class="tiny">Si ya no los quieres, se apagan desde los ajustes de tu celular, '+
+      'en la parte de notificaciones.</p>';
+  }else{
+    cuerpo='<p class="tema-int">Un recordatorio al día, nada más. Para que no se te pase '+
+      'y para que no tengas que acordarte tú.</p>'+
+      '<button class="btn" id="prender">Prender los avisos</button>'+
+      '<p class="tiny">Los puedes apagar cuando quieras.</p>';
+  }
+
+  APP.innerHTML=atras()+
+    '<div class="card">'+
+      '<div class="qlbl">Que no se te pase</div>'+
+      '<h2 class="met-t">Avisos</h2>'+ cuerpo +
+    '</div>';
+  ligarAtras(function(){ pantallaMas(); });
+
+  var b=document.getElementById('prender');
+  if(b)b.onclick=function(){
+    b.disabled=true; b.textContent='Un momento…';
+    window.OneSignalDeferred=window.OneSignalDeferred||[];
+    window.OneSignalDeferred.push(async function(OneSignal){
+      try{
+        // Tiene que ir dentro del toque: si se pide en otro momento, iOS lo tira.
+        await OneSignal.Notifications.requestPermission();
+        await identificarme(OneSignal);
+      }catch(e){}
+      setTimeout(function(){
+        if(avisosPrendidos()) avisito('Listo. Ya te vamos a avisar.');
+        else avisito('No se prendieron. Puede que tu celular los tenga bloqueados.');
+        pantallaAvisos();
+      },600);
+    });
+    if(!AVISOS_LISTO) arrancarAvisos();
+  };
+}
+
+
 function pantallaTemas(){
   soltarMapa(); callarTodo();
   var t=temas(), fij=temaFijado();
@@ -5871,6 +6029,7 @@ function pantallaMas(){
     ['leccion',   '\u{1F4D8}','La lección de hoy',      'Seguir donde te quedaste'],
     ['tareas',    '\u{1F4E8}','Lo que mandó tu maestro','Correcciones y paquetes'],
     ['oirme',     '\u{1F3A7}','Oírme hablar',           'Tus grabaciones'],
+    ['avisos',    '\u{1F514}','Avisos',                'Que no se te pase la práctica'],
     ['temas',     '\u{1F3AF}','Mis temas',             'De qué quieres que hablemos'],
     ['personalizar','\u{270F}','Mis frases',            'Cambiar las frases de tu trabajo'],
     ['voz',       '\u{1F5E3}','Voz y acento',           'Hombre o mujer, cuatro acentos'],
@@ -5897,6 +6056,7 @@ function pantallaMas(){
         if(m==='leccion')        correr();
         else if(m==='tareas')    pantallaTareas();
         else if(m==='oirme')     pantallaOirme();
+        else if(m==='avisos')    pantallaAvisos();
         else if(m==='temas')     pantallaTemas();
         else if(m==='personalizar')pantallaDatos();
         else if(m==='voz')       pantallaVoz();
@@ -7113,6 +7273,7 @@ function mapa(){
   pintarColorDelNivel();
   avisoDeVisita();
   mostrarAyudaSiToca('mapa');
+  try{ arrancarAvisos(); }catch(e){}
   setTimeout(function(){ try{ prepararSiguiente(); }catch(e){} },1800);
   if(mapa3DoViejo())return;
   mapaViejo();
@@ -9044,6 +9205,7 @@ function arrancarParada(){
   var c=progreso();
   if(!yaPersonalizo()){ personalizar(); return; }
   if(!MAT||!MAT.length){ try{ MAT=materialDe(P); }catch(e){} }
+  try{ avisarQueEntre(); }catch(e){}
   if(esExamen(c.parada)){ arrancarExamen(esExamenFinal(c.parada)); return; }
   if(esRepaso(c.parada)){ arrancarRepaso(); return; }
   sIdx=(contenidoDe(c.parada)-1)%MAT.length; it=0; attempts=[]; t0=Date.now();

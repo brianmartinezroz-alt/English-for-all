@@ -148,42 +148,75 @@ body.trabado{overflow:hidden}
 </div>
 
 <script>
-/* =====================================================================
-   TU CLAVE VA AQUÍ ABAJO.
-   Cambia la palabra   cambiame   por la que tú quieras.
-   Déjala entre las comillas. Ejemplo:  var CLAVE_PANEL = 'perro2026';
-   ===================================================================== */
-var CLAVE_PANEL = 'i3tzbrian';
-/* ===================================================================== */
+/* ═══ la puerta ═══
+   La clave YA NO VIVE AQUI. Antes estaba escrita en este archivo, asi que
+   cualquiera que abriera "ver codigo fuente" la leia. Y peor: no protegia
+   nada, porque el servidor le contestaba a quien fuera que le preguntara.
+
+   Ahora la clave vive en el servidor. El panel la manda una sola vez, el
+   servidor la revisa y devuelve un pase firmado que dura 12 horas. De ahi
+   en adelante el panel manda el pase. Sin pase, el servidor no suelta ni
+   un nombre, se entre por donde se entre. */
 
 (function(){
-  var RECUERDA='efa_panel_ok';
-  function abrir(){
+  var LLAVE='efa_panel_pase';
+  window.pasePanel  = function(){ try{ return localStorage.getItem(LLAVE)||''; }catch(e){ return ''; } };
+  window.borrarPase = function(){ try{ localStorage.removeItem(LLAVE); }catch(e){} };
+
+  window.abrirPanel = function(){
     var c=document.getElementById('cerrojo');
-    if(c)c.remove();
+    if(c)c.style.display='none';
     document.body.classList.remove('trabado');
+  };
+  window.pedirClave = function(msg){
+    var c=document.getElementById('cerrojo');
+    if(c)c.style.display='';
+    document.body.classList.add('trabado');
+    var m=document.getElementById('malmsg');
+    if(m&&msg)m.textContent=msg;
+    var i=document.getElementById('clave');
+    if(i){ i.value=''; try{i.focus();}catch(e){} }
+  };
+
+  function entrar(){
+    var i=document.getElementById('clave');
+    var v=(i&&i.value)||'';
+    var b=document.getElementById('entrar');
+    var m=document.getElementById('malmsg');
+    if(!v){ if(m)m.textContent='Escribe tu clave.'; return; }
+    if(b){ b.disabled=true; b.textContent='Revisando…'; }
+    if(m)m.textContent='';
+    fetch(DATOS_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({accion:'entrar',clave:v})})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(b){ b.disabled=false; b.textContent='Entrar'; }
+        if(d&&d.ok&&d.pase){
+          try{ localStorage.setItem(LLAVE,d.pase); }catch(e){}
+          window.abrirPanel();
+          if(typeof cargar==='function')cargar();
+          return;
+        }
+        if(m)m.textContent=(d&&d.mensaje)||'Esa no es. Inténtalo otra vez.';
+        if(i){ i.value=''; i.focus(); }
+      })
+      .catch(function(){
+        if(b){ b.disabled=false; b.textContent='Entrar'; }
+        if(m)m.textContent='No me pude conectar al servidor.';
+      });
   }
-  try{ if(sessionStorage.getItem(RECUERDA)==='1'){abrir();return;} }catch(e){}
-  function probar(){
-    var v=(document.getElementById('clave')||{}).value||'';
-    if(v===CLAVE_PANEL){
-      try{ sessionStorage.setItem(RECUERDA,'1'); }catch(e){}
-      abrir();
-    }else{
-      var m=document.getElementById('malmsg');
-      if(m)m.textContent='Esa no es. Inténtalo otra vez.';
-      var i=document.getElementById('clave');
-      if(i){i.value='';i.focus();}
-    }
-  }
+
   document.addEventListener('DOMContentLoaded',function(){
     var b=document.getElementById('entrar');
-    if(b)b.onclick=probar;
+    if(b)b.onclick=entrar;
     var i=document.getElementById('clave');
     if(i){
-      i.focus();
-      i.addEventListener('keydown',function(e){if(e.key==='Enter')probar();});
+      try{i.focus();}catch(e){}
+      i.addEventListener('keydown',function(e){ if(e.key==='Enter')entrar(); });
     }
+    // con pase guardado se entra directo; si el servidor lo rechaza,
+    // cargar() vuelve a pedir la clave sola
+    if(window.pasePanel()) window.abrirPanel();
   });
 })();
 </script>
@@ -309,7 +342,7 @@ function cargar(){
   }
   $('#sync').textContent='cargando…';
   fetch(DATOS_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify({accion:'panel'})})
+    body:JSON.stringify({accion:'panel', pase:(window.pasePanel?window.pasePanel():'')})})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){
       // El servidor puede contestar perfectamente y aun asi venir con error
@@ -321,6 +354,15 @@ function cargar(){
         $('#sync').textContent='el servidor no contestó';
         $('#sync').style.color='var(--coral)';
         ALUMNOS=[]; pintarLista(); return;
+      }
+      if(!d.ok && (d.error==='sin_permiso' || d.error==='sin_configurar')){
+        if(window.borrarPase)window.borrarPase();
+        $('#sync').textContent='';
+        ALUMNOS=[];
+        window.pedirClave(d.error==='sin_configurar'
+          ? 'Falta configurar el acceso en el servidor.'
+          : 'Tu pase venció. Escribe la clave otra vez.');
+        return;
       }
       if(!d.ok){
         $('#sync').textContent='el servidor contestó con error';

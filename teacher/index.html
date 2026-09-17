@@ -312,14 +312,48 @@ function cargar(){
     body:JSON.stringify({accion:'panel'})})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){
-      ALUMNOS=(d&&d.ok&&d.alumnos)||[];
-      $('#sync').textContent='conectado · '+ALUMNOS.length+' alumnos';
+      // El servidor puede contestar perfectamente y aun asi venir con error
+      // adentro: si la hoja no existe, por ejemplo. Antes se decia "conectado"
+      // de todos modos y la lista salia vacia, asi que un servidor roto se
+      // veia igual que un grupo sin alumnos. Estuvo roto una semana sin que
+      // nadie lo notara. Ahora lo dice.
+      if(!d){
+        $('#sync').textContent='el servidor no contestó';
+        $('#sync').style.color='var(--coral)';
+        ALUMNOS=[]; pintarLista(); return;
+      }
+      if(!d.ok){
+        $('#sync').textContent='el servidor contestó con error';
+        $('#sync').style.color='var(--coral)';
+        $('#sync').title=String(d.error||'sin detalle');
+        ALUMNOS=[]; pintarLista();
+        mostrarFalla(d.error||'El servidor de datos contestó con un error.');
+        return;
+      }
+      ALUMNOS=d.alumnos||[];
+      $('#sync').textContent='conectado · '+ALUMNOS.length+
+        (ALUMNOS.length===1?' alumno':' alumnos');
+      $('#sync').style.color='var(--verde)';
       pintarLista();
     })
     .catch(function(){
       $('#sync').textContent='sin conexión';$('#sync').style.color='var(--coral)';
       ALUMNOS=EJEMPLO;pintarLista();
     });
+}
+
+// Cuando el servidor falla, el panel lo dice con todas sus letras y con el
+// error tal cual, que es lo que hace falta para arreglarlo.
+function mostrarFalla(msg){
+  var c=document.querySelector('.wrap'); if(!c)return;
+  var d=document.getElementById('fallabox');
+  if(!d){ d=document.createElement('div'); d.id='fallabox'; c.insertBefore(d,c.firstChild); }
+  d.style.cssText='background:#FBEEE7;border:1px solid var(--coral);border-radius:14px;'+
+    'padding:14px 16px;margin-bottom:16px;font-size:13.5px;line-height:1.55;color:var(--tinta)';
+  d.innerHTML='<b style="display:block;margin-bottom:5px">El servidor de datos falló</b>'+
+    'No es que no haya alumnos: el servidor contestó con un error, así que no se pudo leer nada.'+
+    '<div style="font-family:monospace;font-size:11.5px;color:var(--tenue);margin-top:8px;'+
+    'word-break:break-word">'+String(msg).replace(/[&<>]/g,function(x){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[x];})+'</div>';
 }
 
 function pintarLista(){

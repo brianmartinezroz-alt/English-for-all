@@ -4,6 +4,7 @@
 <title>English For All · Teacher</title>
 <!-- para instalarlo como app en el celular -->
 <link rel="manifest" href="manifest.json">
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <meta name="theme-color" content="#15140F">
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -606,7 +607,87 @@ function enviar(paquete,a){
 }
 
 cargar();
-</script><script>
+</script><style>
+  .avbtn{margin-left:8px;background:var(--verde);color:#fff;border:0;border-radius:9px;
+    padding:7px 12px;font-size:12.5px;font-weight:600;font-family:inherit;cursor:pointer}
+  .avbtn[disabled]{opacity:.5}
+  .avnota{font-size:12px;color:var(--tenue);padding:0 18px 12px;line-height:1.5}
+</style>
+<script>
+/* ═══ avisos al celular ═══
+   Igual que en la app del alumno: el aviso lo manda el servidor de datos,
+   aquí solo se pide permiso y se dice que este aparato es el del maestro.
+   En iPhone solo llega si el panel está instalado en la pantalla de inicio. */
+var AVISOS_APP_ID='5083353d-3760-4530-adc5-92c22d5deaf9';   // App ID de OneSignal (es publico)
+
+function panelEsIPhone(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+         (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+}
+function panelInstalado(){
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.navigator.standalone===true;
+}
+function panelAvisosPrendidos(){
+  try{ return window.OneSignal && OneSignal.Notifications &&
+              OneSignal.Notifications.permission===true; }catch(e){ return false; }
+}
+function panelArrancarAvisos(){
+  if(!AVISOS_APP_ID || !('serviceWorker' in navigator)) return;
+  window.OneSignalDeferred=window.OneSignalDeferred||[];
+  window.OneSignalDeferred.push(async function(OneSignal){
+    try{
+      await OneSignal.init({
+        appId: AVISOS_APP_ID,
+        serviceWorkerPath:'English-for-all/push/onesignal/OneSignalSDKWorker.js',
+        serviceWorkerParam:{scope:'/English-for-all/push/onesignal/'},
+        autoResubscribe:true
+      });
+      // 'maestro' es el mismo nombre que usa Avisos.gs en la constante YO.
+      await OneSignal.login('maestro');
+      await OneSignal.User.addTags({rol:'maestro'});
+      panelPintarBoton();
+    }catch(e){}
+  });
+}
+function panelPintarBoton(){
+  var caja=document.querySelector('.top'); if(!caja)return;
+  var b=document.getElementById('avbtn');
+  if(!AVISOS_APP_ID){ if(b)b.remove(); return; }
+  if(panelAvisosPrendidos()){ if(b)b.remove(); return; }
+  if(!b){
+    b=document.createElement('button');
+    b.id='avbtn'; b.className='avbtn';
+    caja.appendChild(b);
+    b.onclick=function(){
+      b.disabled=true; b.textContent='…';
+      window.OneSignalDeferred=window.OneSignalDeferred||[];
+      window.OneSignalDeferred.push(async function(OneSignal){
+        try{
+          await OneSignal.Notifications.requestPermission();
+          await OneSignal.login('maestro');
+          await OneSignal.User.addTags({rol:'maestro'});
+        }catch(e){}
+        setTimeout(panelPintarBoton,600);
+      });
+    };
+  }
+  b.disabled=false;
+  if(panelEsIPhone() && !panelInstalado()){
+    b.textContent='Instálalo para recibir avisos';
+    b.onclick=function(){
+      alert('En iPhone los avisos solo llegan si el panel está en tu pantalla de inicio.\n\n'+
+            '1. Toca el cuadrito con la flecha, abajo en Safari.\n'+
+            '2. Agregar a inicio.\n'+
+            '3. Abre el panel desde el ícono nuevo y vuelve a tocar este botón.');
+    };
+  }else{
+    b.textContent='Prender avisos';
+  }
+}
+window.addEventListener('load',function(){ panelArrancarAvisos(); setTimeout(panelPintarBoton,1200); });
+</script>
+<script>
 /* Si falla, no pasa nada: el panel sigue funcionando desde el navegador. */
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){

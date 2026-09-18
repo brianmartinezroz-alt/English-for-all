@@ -284,6 +284,11 @@
     pointer-events:none;background:linear-gradient(180deg,var(--crema),transparent);
     display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
   .cab3d .niveles{pointer-events:auto;display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+  /* Los mismos botones, pero en el tablero de respaldo: ahi hay ancho de
+     sobra, asi que van centrados y un poco mas grandes para el dedo. */
+  .nivfila{margin:10px 0 2px}
+  .nivfila .niveles{display:flex;gap:5px;flex-wrap:wrap;justify-content:center}
+  .nivfila .nivb{font-size:10px;padding:6px 9px}
   .nivb{background:var(--papel);border:1px solid var(--linea);color:var(--tinta);
     border-radius:6px;padding:4px 7px;font-family:var(--mono);font-size:9px;
     cursor:pointer;line-height:1.1}
@@ -1366,7 +1371,7 @@ if('serviceWorker' in navigator){
 <script>
 (function(){
 "use strict";
-var VERSION="v139 · 18 sep · gana la profesion que dijiste primero (arquitecto, no albañil) + alta del alumno al entrar";
+var VERSION="v140 · 18 sep · botones de nivel en el tablero de respaldo y salida en el ejercicio de ordenar";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -7561,15 +7566,7 @@ function mapa3DoViejo(){
         '<div class="cab3d-niv">'+esc(nivAhora)+'</div>'+
         '<div class="cab3d-par">Parada '+c.parada+' de '+PARADAS+'</div>'+
       '</div>'+
-      '<div class="niveles">'+
-        ['Pre-A1','A1','A2','B1','B2','C1','C2'].map(function(nv){
-          // Ya no hay niveles cerrados: los de arriba se pueden mirar.
-          // Se marcan en gris claro para que se note que son de asomarse.
-          var cerrado=(nOrden(nv)>nOrden(nivAhora)) && !SOY_JEFE;
-          return '<button class="nivb'+(nv===nivAhora?' on':'')+(cerrado?' cerrado':'')+
-                 '" data-niv="'+nv+'">'+esc(nv)+'</button>';
-        }).join('')+
-      '</div>'+
+      botonesNivelHTML()+
     '</div>'+
     '<button class="btn3d" id="ir3d">Empezar la parada '+c.parada+'</button>';
 
@@ -7597,6 +7594,32 @@ function mapa3DoViejo(){
     }
   }
 
+  ligarBotonesNivel();
+  marcarTab('mapa');
+  return true;
+}
+
+/* ── los botones de nivel ──
+   Vivian sueltos dentro del mapa 3D. Quien se quedaba con el tablero de
+   respaldo (navegador viejo, tarjeta grafica floja) no tenia forma de cambiar
+   de nivel ni de asomarse a los de arriba: se quedaba encerrado en el suyo.
+   Ahora los dos mapas usan estos mismos. */
+function botonesNivelHTML(){
+  var SOY_JEFE=(typeof JEFE_LIBRE!=='undefined'&&JEFE_LIBRE)||
+               (typeof MODO_JEFE!=='undefined'&&MODO_JEFE);
+  var nivAhora=(P&&P.nivel)||'Pre-A1';
+  return '<div class="niveles">'+
+    ['Pre-A1','A1','A2','B1','B2','C1','C2'].map(function(nv){
+      // Ya no hay niveles cerrados: los de arriba se pueden mirar.
+      // Se marcan en gris claro para que se note que son de asomarse.
+      var cerrado=(nOrden(nv)>nOrden(nivAhora)) && !SOY_JEFE;
+      return '<button class="nivb'+(nv===nivAhora?' on':'')+(cerrado?' cerrado':'')+
+             '" data-niv="'+nv+'">'+esc(nv)+'</button>';
+    }).join('')+
+  '</div>';
+}
+function ligarBotonesNivel(){
+  if(!APP)return;
   APP.querySelectorAll('.nivb').forEach(function(bt){
     bt.onclick=function(){
       var nv=bt.dataset.niv;
@@ -7622,8 +7645,6 @@ function mapa3DoViejo(){
       mapa();
     };
   });
-  marcarTab('mapa');
-  return true;
 }
 
 function mapaViejo(){
@@ -7641,6 +7662,8 @@ function mapaViejo(){
       '<div class="mapdato"><b>'+puntosLibres()+'</b><span>puntos</span></div>'+
       '<div class="mapdato"><b>'+diasSeguidos(c.dias)+'</b><span>días seguidos</span></div>'+
     '</div></div>';
+
+  h+='<div class="nivfila">'+botonesNivelHTML()+'</div>';
 
   h+='<div class="tabwrap">'+t.svg+
      '<div class="aqui-pill">Aquí vas · '+c.parada+'</div></div>';
@@ -7663,6 +7686,7 @@ function mapaViejo(){
   };
   var mp=document.getElementById('miperfil');
   if(mp)mp.onclick=perfilAlumno;
+  ligarBotonesNivel();
 
   // No se regresa. Lo que se le atoró vuelve solo, en las casillas de repaso.
   APP.querySelectorAll('.lo').forEach(function(g){
@@ -10593,7 +10617,10 @@ function paso(){
        '<div id="res"></div>'+
        '<div class="oirfila" style="margin-top:8px">'+
          '<button class="oirb alt" id="borrar">Borrar y empezar</button>'+
-       '</div>';
+       '</div>'+
+       // Sin esto, el que no daba con el orden se quedaba atorado ahi: era el
+       // unico ejercicio sin puerta de salida.
+       '<button class="btn ghost" id="pista" style="margin-top:10px">No sé · enséñame el orden</button>';
   }else if(x.k==='transf'){
     h+='<div class="qlbl">Cambia la frase · dilo hablando</div>'+
        '<div class="qtxt">'+esc(x.origen||'')+'</div>'+
@@ -11248,9 +11275,11 @@ function paso(){
   }
   var pb=document.getElementById('pista');
   if(pb)pb.onclick=function(){
-    document.getElementById('res').innerHTML='<div class="heard"><div class="hl">di esto</div><div class="ht">'+esc(x.pista)+'</div></div>';
-    say(x.pista,'en-US');
-    attempts.push({tipo:'pista',meta:x.pista,oido:'',pct:null});
+    // 'ordenar' no trae pista escrita: la pista ES la frase en su orden.
+    var pista = x.pista || (x.k==='ordenar' ? (x.piezas||[]).join(' ') : '');
+    document.getElementById('res').innerHTML='<div class="heard"><div class="hl">di esto</div><div class="ht">'+esc(pista)+'</div></div>';
+    say(pista,'en-US');
+    attempts.push({tipo:'pista',meta:pista,oido:'',pct:null});
     pb.remove();
   };
 

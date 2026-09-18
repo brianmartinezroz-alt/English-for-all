@@ -990,9 +990,30 @@ function panelInstalado(){
   return window.matchMedia('(display-mode: standalone)').matches ||
          window.navigator.standalone===true;
 }
-function panelAvisosPrendidos(){
+// OJO: el permiso del sistema NO basta. En iPhone puede quedar en "concedido"
+// y aun asi no haberse creado el token de push, y entonces OneSignal contesta
+// invalid_aliases aunque todo se vea bien. Lo unico que cuenta es que exista
+// una suscripcion con id. Antes escondiamos el boton con solo el permiso, y el
+// resultado era peor que no tenerlo: no quedaba forma de reintentar.
+function panelHaySuscripcion(){
+  try{
+    var s = window.OneSignal && OneSignal.User && OneSignal.User.PushSubscription;
+    return !!(s && s.id && s.optedIn === true);
+  }catch(e){ return false; }
+}
+function panelPermisoDado(){
   try{ return window.OneSignal && OneSignal.Notifications &&
               OneSignal.Notifications.permission===true; }catch(e){ return false; }
+}
+function panelAvisosPrendidos(){ return panelHaySuscripcion(); }
+
+// Pide permiso y, por separado, se suscribe. Son dos pasos distintos: el
+// segundo es el que consigue el token, y es el que fallaba en silencio.
+async function panelSuscribir(OneSignal){
+  try{ await OneSignal.Notifications.requestPermission(); }catch(e){}
+  try{ if(OneSignal.User.PushSubscription.optIn) await OneSignal.User.PushSubscription.optIn(); }catch(e){}
+  try{ await OneSignal.login('maestro'); }catch(e){}
+  try{ await OneSignal.User.addTags({rol:'maestro'}); }catch(e){}
 }
 function panelArrancarAvisos(){
   if(!AVISOS_APP_ID || !('serviceWorker' in navigator)) return;
@@ -1008,7 +1029,12 @@ function panelArrancarAvisos(){
       // 'maestro' es el mismo nombre que usa Avisos.gs en la constante YO.
       await OneSignal.login('maestro');
       await OneSignal.User.addTags({rol:'maestro'});
+      // Si el permiso ya estaba dado pero quedo sin token, se reintenta solo.
+      if(panelPermisoDado() && !panelHaySuscripcion()){
+        try{ if(OneSignal.User.PushSubscription.optIn) await OneSignal.User.PushSubscription.optIn(); }catch(e){}
+      }
       panelPintarBoton();
+      setTimeout(panelPintarBoton, 2500);
     }catch(e){}
   });
 }
@@ -1025,12 +1051,9 @@ function panelPintarBoton(){
       b.disabled=true; b.textContent='…';
       window.OneSignalDeferred=window.OneSignalDeferred||[];
       window.OneSignalDeferred.push(async function(OneSignal){
-        try{
-          await OneSignal.Notifications.requestPermission();
-          await OneSignal.login('maestro');
-          await OneSignal.User.addTags({rol:'maestro'});
-        }catch(e){}
-        setTimeout(panelPintarBoton,600);
+        await panelSuscribir(OneSignal);
+        setTimeout(panelPintarBoton,1200);
+        setTimeout(panelPintarBoton,4000);
       });
     };
   }
@@ -1043,6 +1066,10 @@ function panelPintarBoton(){
             '2. Agregar a inicio.\n'+
             '3. Abre el panel desde el ícono nuevo y vuelve a tocar este botón.');
     };
+  }else if(panelPermisoDado()){
+    // Permiso dado pero sin token: hay algo que reintentar, y el maestro tiene
+    // que poder verlo. Si no, cree que estan prendidos y no le llega nada.
+    b.textContent='Reintentar avisos';
   }else{
     b.textContent='Prender avisos';
   }

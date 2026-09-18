@@ -204,6 +204,12 @@ body.trabado{overflow:hidden}
 .avisomuestra{grid-column:1/-1;font-size:13px;color:var(--tenue);
   border:1px dashed var(--linea);border-radius:12px;padding:12px 14px;margin-bottom:4px}
 .gpo.gpo-muestra .gpo-h b{color:var(--miel)}
+
+.avdiag{position:fixed;left:8px;right:8px;bottom:8px;z-index:9999;background:#2A2724;color:#F5F1E8;
+  border-radius:12px;padding:10px 12px;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+  line-height:1.5;white-space:pre-wrap;word-break:break-word;max-height:45vh;overflow:auto}
+.avdiag b{color:#E8A93A}
+.avdiag .x{float:right;cursor:pointer;color:#8A837A;font-size:14px;padding:0 4px}
 </style></head><body class="trabado">
 
 <div id="cerrojo">
@@ -1009,11 +1015,46 @@ function panelAvisosPrendidos(){ return panelHaySuscripcion(); }
 
 // Pide permiso y, por separado, se suscribe. Son dos pasos distintos: el
 // segundo es el que consigue el token, y es el que fallaba en silencio.
+// Sin esto no hay forma de saber por que falla en un telefono ajeno: el error
+// se queda dentro del catch y nadie lo ve. Esto lo pone en pantalla.
+async function panelDiagnostico(nota){
+  var l = [];
+  function di(k,v){ l.push(k+': '+v); }
+  try{
+    di('permiso navegador', (typeof Notification!=='undefined') ? Notification.permission : 'no existe');
+    di('instalado', panelInstalado() ? 'si' : 'NO (en iPhone tiene que estarlo)');
+    di('SDK cargado', window.OneSignal ? 'si' : 'NO');
+    if(window.OneSignal){
+      try{ di('permiso OneSignal', String(OneSignal.Notifications.permission)); }catch(e){ di('permiso OneSignal','error '+e.message); }
+      try{
+        var ps = OneSignal.User.PushSubscription;
+        di('token (id)', ps.id ? String(ps.id).slice(0,12)+'…' : 'NO HAY');
+        di('optedIn', String(ps.optedIn));
+      }catch(e){ di('suscripcion','error '+e.message); }
+      try{ di('onesignal id', String(OneSignal.User.onesignalId||'-').slice(0,12)+'…'); }catch(e){}
+    }
+    try{
+      var rs = await navigator.serviceWorker.getRegistrations();
+      di('service workers', rs.length ? rs.map(function(r){ return r.scope.replace(location.origin,''); }).join(' | ') : 'ninguno');
+    }catch(e){ di('service workers','error '+e.message); }
+    if(nota) l.push('ultimo error: '+nota);
+  }catch(e){ l.push('fallo el diagnostico: '+e.message); }
+
+  var d = document.getElementById('avdiag');
+  if(!d){ d=document.createElement('div'); d.id='avdiag'; d.className='avdiag'; document.body.appendChild(d); }
+  d.innerHTML = '<span class="x">\u00d7</span><b>Diagnostico de avisos</b>\n' +
+    l.join('\n').replace(/[&<>]/g,function(x){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[x];});
+  d.querySelector('.x').onclick=function(){ d.remove(); };
+}
+
 async function panelSuscribir(OneSignal){
-  try{ await OneSignal.Notifications.requestPermission(); }catch(e){}
-  try{ if(OneSignal.User.PushSubscription.optIn) await OneSignal.User.PushSubscription.optIn(); }catch(e){}
-  try{ await OneSignal.login('maestro'); }catch(e){}
-  try{ await OneSignal.User.addTags({rol:'maestro'}); }catch(e){}
+  var falla = '';
+  try{ await OneSignal.Notifications.requestPermission(); }catch(e){ falla += 'permiso: '+e.message+'  '; }
+  try{ if(OneSignal.User.PushSubscription.optIn) await OneSignal.User.PushSubscription.optIn(); }
+  catch(e){ falla += 'optIn: '+e.message+'  '; }
+  try{ await OneSignal.login('maestro'); }catch(e){ falla += 'login: '+e.message+'  '; }
+  try{ await OneSignal.User.addTags({rol:'maestro'}); }catch(e){ falla += 'tags: '+e.message; }
+  setTimeout(function(){ panelDiagnostico(falla); }, 3000);
 }
 function panelArrancarAvisos(){
   if(!AVISOS_APP_ID || !('serviceWorker' in navigator)) return;
@@ -1035,7 +1076,7 @@ function panelArrancarAvisos(){
       }
       panelPintarBoton();
       setTimeout(panelPintarBoton, 2500);
-    }catch(e){}
+    }catch(e){ window.__avisoInitError = e && e.message; setTimeout(function(){ panelDiagnostico('init: '+(e&&e.message)); },1500); }
   });
 }
 function panelPintarBoton(){

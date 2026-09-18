@@ -286,6 +286,16 @@
   .cab3d .niveles{pointer-events:auto;display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
   /* Los mismos botones, pero en el tablero de respaldo: ahi hay ancho de
      sobra, asi que van centrados y un poco mas grandes para el dedo. */
+  /* la red de abajo: se parte la frase en pedazos */
+  .rescate{background:var(--crema);border:1px dashed var(--miel);border-radius:12px;
+    padding:12px 13px;margin:10px 0}
+  .rescate .hl{color:var(--miel)}
+  .resb{display:flex;align-items:center;gap:8px;width:100%;text-align:left;
+    background:var(--papel);border:1px solid var(--linea);border-radius:10px;
+    padding:9px 11px;margin-top:7px;font-size:15px;color:var(--tinta);cursor:pointer}
+  .resb i{margin-left:auto;font-style:normal;color:var(--tenue)}
+  .resn{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;
+    border-radius:50%;background:var(--miel);color:#fff;font-size:11px;flex:none}
   .nivfila{margin:10px 0 2px}
   .nivfila .niveles{display:flex;gap:5px;flex-wrap:wrap;justify-content:center}
   .nivfila .nivb{font-size:10px;padding:6px 9px}
@@ -1371,7 +1381,7 @@ if('serviceWorker' in navigator){
 <script>
 (function(){
 "use strict";
-var VERSION="v140 · 18 sep · botones de nivel en el tablero de respaldo y salida en el ejercicio de ordenar";
+var VERSION="v141 · 18 sep · red de rescate: si fallas dos veces, la frase se parte en pedazos";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -11453,12 +11463,15 @@ function registrar(x,t,extra){
   h+='</div>';
   if(meta)h+=bloqueComparar(meta);
   if(cmp&&cmp.pct>=80){
+    try{ delete FALLADAS[clave(meta||'')]; }catch(e){}   // le salio: borron y cuenta nueva
     h+='<div id="correccion"></div>'+bloqueShadow(meta)+'<button class="btn" id="sig">Bien · siguiente</button>';
     if(cmp.pct<97&&hayIA())pedirCorreccion(x,meta,t,cmp.pct,true);
     else say(['Muy bien.','Eso es.','Así se dice.'][Math.floor(Math.random()*3)],'es-MX');
   }
   else if(cmp){
+    var kf=clave(meta||''); FALLADAS[kf]=(FALLADAS[kf]||0)+1;
     h+='<div id="correccion"></div>'+
+       bloqueRescate(meta,FALLADAS[kf])+
        '<button class="btn ghost" id="otra" style="margin-bottom:8px">Intentar otra vez</button><button class="btn" id="sig">Seguir de todos modos</button>';
     if(hayIA())pedirCorreccion(x,meta,t,cmp.pct,false);
     else say('Casi. Escúchala otra vez y repítela sin prisa.','es-MX');
@@ -11468,7 +11481,65 @@ function registrar(x,t,extra){
   if(meta)setTimeout(function(){ligarComparar(meta);ligarShadow(meta);},60);
   var o=document.getElementById('otra');
   if(o)o.onclick=function(){say(meta,'en-US');r.innerHTML='';};
+  ligarRescate(r,meta);
   document.getElementById('sig').onclick=function(){it++;paso();};
+}
+
+/* ── la red de abajo ──
+   Fallar una vez es normal. Fallar tres veces contra la misma frase y que la
+   app te ofrezca exactamente lo mismo, no: ahi es donde el de pre-A1 cierra
+   la app y no vuelve. A la segunda se le parte la frase en pedazos, de corto
+   a completo. A la tercera se le deja salir sin castigo: la frase no se
+   pierde, vuelve sola en las casillas de repaso. */
+var FALLADAS={};
+// Palabras que no deben quedar al final de un pedazo: cortar en "the" o en
+// "to" deja al alumno colgado de media idea y suena raro al repetirlo.
+var COLGANTES=/^(the|a|an|to|of|and|or|in|on|at|for|with|my|your|his|her|our|their|is|are|was|were|be|do|does|did|can|will|would|that|this|if|when|while|because|before|after|than|but|so)$/i;
+function cortarBien(w,n){
+  n=Math.max(1,Math.min(n,w.length));
+  var g=0;
+  while(n<w.length && COLGANTES.test(w[n-1]) && g<3){ n++; g++; }
+  return n;
+}
+function pedazosDeRescate(frase){
+  var w=String(frase||'').replace(/[.!?]+$/,'').replace(/\s+/g,' ').trim().split(' ');
+  if(w.length<=3) return [w.join(' ')];
+  var corto=cortarBien(w,Math.max(2,Math.round(w.length*0.4)));
+  var medio=cortarBien(w,Math.max(corto+1,Math.round(w.length*0.7)));
+  var out=[w.slice(0,corto).join(' ')];
+  if(medio<w.length && medio>corto) out.push(w.slice(0,medio).join(' '));
+  out.push(w.join(' '));
+  return out;
+}
+function bloqueRescate(meta,veces){
+  if(!meta||veces<2)return '';
+  var ps=pedazosDeRescate(meta);
+  return '<div class="rescate">'+
+    '<div class="hl">Vamos por partes</div>'+
+    '<p class="tiny" style="margin:4px 0 2px">No es que no puedas: es larga. '+
+      'Tocala y repite cada pedazo, del corto al completo.</p>'+
+    ps.map(function(t,i){
+      return '<button class="resb" data-rt="'+esc(t)+'">'+
+             '<span class="resn">'+(i+1)+'</span>'+esc(t)+' <i>&#9654;</i></button>';
+    }).join('')+
+    (veces>=3
+      ? '<button class="btn ghost" id="dejarla" style="margin-top:9px">'+
+        'D\u00e9jala por hoy \u00b7 te la devuelvo m\u00e1s adelante</button>'
+      : '')+
+  '</div>';
+}
+function ligarRescate(caja,meta){
+  if(!caja)return;
+  caja.querySelectorAll('.resb').forEach(function(b){
+    b.onclick=function(){ sayLento(b.getAttribute('data-rt'),'en-US'); };
+  });
+  var d=caja.querySelector('#dejarla');
+  if(d)d.onclick=function(){
+    // Se apunta como fallada para que la memoria la traiga de vuelta sola.
+    try{ registrarEnMemoria(meta,0); }catch(e){}
+    attempts.push({tipo:'dejada',meta:meta,oido:'',pct:null});
+    it++; paso();
+  };
 }
 
 /* ═══════════ cierre y envío ═══════════ */

@@ -439,6 +439,7 @@ function cargar(){
     $('#sync').style.color='var(--miel)';
     pintarLista();return;
   }
+  quitarFalla();
   $('#sync').textContent='cargando…';
   fetch(DATOS_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify({accion:'panel', pase:(window.pasePanel?window.pasePanel():'')})})
@@ -485,6 +486,13 @@ function cargar(){
 
 // Cuando el servidor falla, el panel lo dice con todas sus letras y con el
 // error tal cual, que es lo que hace falta para arreglarlo.
+// El recuadro de falla se queda pegado si nadie lo quita. Se borra al empezar
+// cada carga: si el problema sigue, se vuelve a pintar; si ya se arreglo, se va.
+function quitarFalla(){
+  var d=document.getElementById('fallabox');
+  if(d && d.parentNode) d.parentNode.removeChild(d);
+}
+
 function mostrarFalla(msg){
   var c=document.querySelector('.wrap'); if(!c)return;
   var d=document.getElementById('fallabox');
@@ -509,6 +517,7 @@ function guardaPasHCM(p){ try{ localStorage.setItem(LLAVE_HCM,p); }catch(e){} }
 function borraPasHCM(){ try{ localStorage.removeItem(LLAVE_HCM); }catch(e){} }
 
 function cambiarPrograma(cual){
+  quitarFalla();
   PROGRAMA=cual;
   $('#progs').querySelectorAll('button').forEach(function(b){
     b.classList.toggle('on', b.getAttribute('data-p')===cual);
@@ -559,6 +568,7 @@ function pedirClaveHCM(msg){
 
 function cargarHCM(){
   if(!pasHCM()){ pedirClaveHCM(''); return; }
+  quitarFalla();
   $('#sync').textContent='cargando…';
   $('#hcm').innerHTML='<div class="vacio">Trayendo a los cadetes…</div>';
   fetch(HCM_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},

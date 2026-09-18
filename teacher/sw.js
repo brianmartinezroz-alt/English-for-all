@@ -7,7 +7,7 @@
    Los DATOS nunca se guardan aqui: siempre se piden frescos al servidor, si no
    Brian vería el avance de ayer creyendo que es el de hoy. */
 
-var CACHE='efa-teacher-v1';
+var CACHE='efa-teacher-v2';
 var CASCARON=['./','./index.html','./manifest.json','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',function(e){
@@ -29,8 +29,22 @@ self.addEventListener('fetch',function(e){
   var r=e.request;
   if(r.method!=='GET') return;                       // los POST al servidor, derechito
   if(r.url.indexOf('script.google.com')>=0) return;  // los datos, siempre frescos
+
+  // El cascaron se pide SIEMPRE fresco de internet cuando hay senal, sin pasar
+  // por el cache del navegador. Asi la app instalada en el celular se actualiza
+  // sola: nunca hay que reinstalarla para ver la version nueva.
+  var ruta = '';
+  try { ruta = new URL(r.url).pathname; } catch (e) {}
+  var esPagina = r.mode === 'navigate' || r.destination === 'document' ||
+                 /\/$|\.html$/.test(ruta);
+  var peticion = r;
+  if (esPagina) {
+    try { peticion = new Request(r.url, { cache: 'reload', credentials: 'same-origin' }); }
+    catch (e) { peticion = r; }
+  }
+
   e.respondWith(
-    fetch(r).then(function(res){
+    fetch(peticion).then(function(res){
       if(res && res.ok && r.url.indexOf(self.registration.scope)===0){
         var copia=res.clone();
         caches.open(CACHE).then(function(c){ c.put(r,copia); });

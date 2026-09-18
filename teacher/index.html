@@ -191,6 +191,19 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--crema);color:va
 #cerrojo .mal{color:var(--coral);font-size:13.5px;margin-top:11px;min-height:19px}
 #cerrojo .pie{font-size:11px;color:var(--tenue);margin-top:17px;line-height:1.45}
 body.trabado{overflow:hidden}
+
+/* ── MUESTRA ──
+   El alumno y el cadete de muestra se ven distintos a proposito: fondo rayado
+   y un sello. Si algun dia se confunden con datos reales, es un error grave. */
+.sello{display:inline-block;margin-top:8px;font-size:10px;letter-spacing:.09em;
+  text-transform:uppercase;font-weight:700;color:var(--miel);
+  border:1px solid var(--miel);border-radius:999px;padding:2px 8px}
+.card.esmuestra,.cad.esmuestra{background:
+  repeating-linear-gradient(135deg,rgba(232,169,58,.06) 0 8px,transparent 8px 16px);
+  border-style:dashed}
+.avisomuestra{grid-column:1/-1;font-size:13px;color:var(--tenue);
+  border:1px dashed var(--linea);border-radius:12px;padding:12px 14px;margin-bottom:4px}
+.gpo.gpo-muestra .gpo-h b{color:var(--miel)}
 </style></head><body class="trabado">
 
 <div id="cerrojo">
@@ -400,6 +413,20 @@ var EJEMPLO=[
 var HCM_ENDPOINT='https://script.google.com/macros/s/AKfycbypVtZ3xzUURmChQzMsYM3rE-kiRt5e9NXLJ3QfBg8R7VpJx_0vtitQM1eb7i-wzTr1xA/exec';
 var LLAVE_HCM='efa_panel_pase_hcm';
 var PROGRAMA='efa';
+/* ── MUESTRA SIEMPRE VISIBLE ──
+   En los dos paneles queda un registro de muestra, marcado como tal. Sirve
+   para dos cosas: que el panel nunca se vea vacio, y que puedas revisar cada
+   cambio de diseno sin esperar a que alguien practique. No cuenta en los
+   totales y no se le puede mandar material: no existe. */
+var MUESTRA_EFA = EJEMPLO[0];
+MUESTRA_EFA.muestra = true;
+
+var MUESTRA_HCM = {
+  nombre:'Cadete de muestra', num:'MUESTRA', grupo:'301', carril:'medio',
+  leccion:7, sesiones:9, minutos:126, particip:82, extraclase:61,
+  ultima:new Date().toISOString().slice(0,10), muestra:true
+};
+
 var CADETES=[], GRUPOS_HCM=[];
 var ALUMNOS=[];
 
@@ -582,51 +609,69 @@ function diaCorto(t){
   return m ? (m[1]+'/'+m[2]) : s.slice(0,10);
 }
 
+function filaCadete(c){
+  var part=Number(c.particip||0), extra=Number(c.extraclase||0);
+  return '<div class="cad'+(c.muestra?' esmuestra':'')+'">'+
+    '<div class="av">'+iniciales(c.nombre)+'</div>'+
+    '<div class="cad-n"><b>'+esc(c.nombre||'—')+'</b>'+
+      '<small>'+esc(c.num||'sin número')+' · '+(c.sesiones||0)+' sesiones · '+
+      Math.round((c.minutos||0)/6)/10+' h</small></div>'+
+    '<span class="carril '+claseCarril(c.carril)+'">'+esc(c.carril||'—')+'</span>'+
+    '<div class="cad-num"><b>'+(c.leccion||0)+'</b><span>lección</span></div>'+
+    '<div class="cad-num'+(part<70?' cad-baja':'')+'"><b>'+part+'%</b><span>partic.</span></div>'+
+    '<div class="cad-num'+(extra<50?' cad-baja':'')+'"><b>'+extra+'%</b><span>extra</span></div>'+
+    '<div class="cad-num"><b>'+esc(diaCorto(c.ultima))+'</b><span>última</span></div>'+
+  '</div>';
+}
+
+// El bloque de muestra va aparte, nunca dentro de un grupo real, para que no
+// ensucie las cuentas de "X cadetes".
+function bloqueMuestraHCM(){
+  return '<div class="gpo gpo-muestra"><div class="gpo-h"><b>Muestra</b>'+
+    '<span>no es un cadete real</span></div>'+filaCadete(MUESTRA_HCM)+'</div>';
+}
+
 function pintarCadetes(){
-  if(!CADETES.length){
-    $('#hcm').innerHTML='<div class="vacio"><h2>Todavía no hay cadetes</h2>'+
-      '<p>Cuando empiecen a practicar, aparecen aquí por grupo.</p></div>';
-    return;
-  }
-  // los grupos que el servidor conoce, mas cualquiera que aparezca en los datos
-  var orden = (GRUPOS_HCM && GRUPOS_HCM.length) ? GRUPOS_HCM.slice() : [];
-  CADETES.forEach(function(c){
-    var g=String(c.grupo||'sin grupo');
-    if(orden.indexOf(g)<0) orden.push(g);
-  });
   var html='';
-  orden.forEach(function(g){
-    var delGrupo=CADETES.filter(function(c){ return String(c.grupo||'sin grupo')===String(g); });
-    if(!delGrupo.length) return;   // grupo sin cadetes: no se enseña vacio
-    delGrupo.sort(function(a,b){ return String(a.nombre||'') < String(b.nombre||'') ? -1 : 1; });
-    html+='<div class="gpo"><div class="gpo-h"><b>Grupo '+esc(g)+'</b>'+
-          '<span>'+delGrupo.length+(delGrupo.length===1?' cadete':' cadetes')+'</span></div>'+
-      delGrupo.map(function(c){
-        var part=Number(c.particip||0), extra=Number(c.extraclase||0);
-        return '<div class="cad">'+
-          '<div class="av">'+iniciales(c.nombre)+'</div>'+
-          '<div class="cad-n"><b>'+esc(c.nombre||'—')+'</b>'+
-            '<small>'+esc(c.num||'sin número')+' · '+(c.sesiones||0)+' sesiones · '+
-            Math.round((c.minutos||0)/6)/10+' h</small></div>'+
-          '<span class="carril '+claseCarril(c.carril)+'">'+esc(c.carril||'—')+'</span>'+
-          '<div class="cad-num"><b>'+(c.leccion||0)+'</b><span>lección</span></div>'+
-          '<div class="cad-num'+(part<70?' cad-baja':'')+'"><b>'+part+'%</b><span>partic.</span></div>'+
-          '<div class="cad-num'+(extra<50?' cad-baja':'')+'"><b>'+extra+'%</b><span>extra</span></div>'+
-          '<div class="cad-num"><b>'+esc(diaCorto(c.ultima))+'</b><span>última</span></div>'+
-        '</div>';
-      }).join('')+'</div>';
-  });
+  if(!CADETES.length){
+    html+='<div class="vacio"><h2>Todavía no hay cadetes</h2>'+
+      '<p>Cuando empiecen a practicar, aparecen aquí por grupo. '+
+      'Abajo queda un cadete de muestra para que veas cómo se ve.</p></div>';
+  } else {
+    // los grupos que el servidor conoce, mas cualquiera que aparezca en los datos
+    var orden = (GRUPOS_HCM && GRUPOS_HCM.length) ? GRUPOS_HCM.slice() : [];
+    CADETES.forEach(function(c){
+      var g=String(c.grupo||'sin grupo');
+      if(orden.indexOf(g)<0) orden.push(g);
+    });
+    orden.forEach(function(g){
+      var delGrupo=CADETES.filter(function(c){ return String(c.grupo||'sin grupo')===String(g); });
+      if(!delGrupo.length) return;   // grupo sin cadetes: no se enseña vacio
+      delGrupo.sort(function(a,b){ return String(a.nombre||'') < String(b.nombre||'') ? -1 : 1; });
+      html+='<div class="gpo"><div class="gpo-h"><b>Grupo '+esc(g)+'</b>'+
+            '<span>'+delGrupo.length+(delGrupo.length===1?' cadete':' cadetes')+'</span></div>'+
+        delGrupo.map(filaCadete).join('')+'</div>';
+    });
+  }
+  html += bloqueMuestraHCM();
   $('#hcm').innerHTML=html;
 }
+
+// VISTA es lo que de verdad esta pintado: los alumnos reales mas la muestra.
+// La ficha tiene que leer de aqui, no de ALUMNOS, o el indice se corre.
+var VISTA=[];
 
 function pintarLista(){
   $('#ficha').classList.remove('on');
   $('#lista').classList.remove('off');
-  if(!ALUMNOS.length){$('#vacio').style.display='block';$('#grid').innerHTML='';return;}
+  VISTA = ALUMNOS.concat([MUESTRA_EFA]);
   $('#vacio').style.display='none';
-  $('#grid').innerHTML=ALUMNOS.map(function(a,i){
+  $('#grid').innerHTML=
+    (ALUMNOS.length?'':'<div class="avisomuestra">Todav\u00eda no hay alumnos reales. '+
+      'Abajo queda el alumno de muestra, para que veas c\u00f3mo se ve el panel.</div>')+
+    VISTA.map(function(a,i){
     var pct=Math.round(a.parada/72*100);
-    return '<button class="card" data-i="'+i+'">'+
+    return '<button class="card'+(a.muestra?' esmuestra':'')+'" data-i="'+i+'">'+
       '<div class="fila1"><div class="av">'+iniciales(a.nombre)+'</div>'+
       '<div><div class="nom">'+esc(a.nombre)+'</div>'+
       '<div class="cod">'+esc(a.codigo)+' · '+esc(a.nivel)+'</div></div></div>'+
@@ -637,6 +682,7 @@ function pintarLista(){
       '<div class="mini" style="margin-top:5px"><span>últ.: '+esc(a.ultima)+'</span>'+
         '<span><b>'+a.dias+'</b> días seguidos</span></div>'+
       (a.porRevisar?'<div class="alerta">● '+a.porRevisar+' grabación'+(a.porRevisar>1?'es':'')+' por revisar</div>':'')+
+      (a.muestra?'<div class="sello">muestra</div>':'')+
     '</button>';
   }).join('');
   $('#grid').querySelectorAll('.card').forEach(function(b){
@@ -649,7 +695,8 @@ function pintarLista(){
 var ENVIAR=null;   // función que arma y manda el paquete del alumno actual
 
 function verFicha(i){
-  var a=ALUMNOS[i];
+  var a=VISTA[i];
+  if(!a) return;
   $('#lista').classList.add('off');
   var f=$('#ficha');f.classList.add('on');
   var pct=Math.round(a.parada/72*100);
@@ -721,12 +768,20 @@ function verFicha(i){
       if(caja)caja.style.display=abierto?'block':'none';
     };
   });
-  ligarArmador(a);
+  if(!a.muestra) ligarArmador(a);
 }
 </script>
 
 <script>
 function armador(a){
+  // A la muestra no se le manda nada: no existe, y el paquete acabaria escrito
+  // en tu hoja a nombre de un alumno inventado.
+  if(a.muestra){
+    return '<div class="secc"><h3>Mandarle material</h3>'+
+      '<p style="font-size:13px;color:var(--tenue);margin:0">Este es el alumno de '+
+      'muestra, as\u00ed que aqu\u00ed no hay nada que mandar. Con un alumno real, en '+
+      'este lugar aparecen las tres pesta\u00f1as: tarea, bonus y frase a corregir.</p></div>';
+  }
   return '<div class="secc"><h3>Mandarle material</h3>'+
     '<div class="tabs">'+
       '<button class="tab on" data-t="tarea">Tarea</button>'+

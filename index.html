@@ -1366,7 +1366,7 @@ if('serviceWorker' in navigator){
 <script>
 (function(){
 "use strict";
-var VERSION="v138 · 17 sep · avisos al celular: recordatorio diario y aviso al maestro";
+var VERSION="v139 · 18 sep · gana la profesion que dijiste primero (arquitecto, no albañil) + alta del alumno al entrar";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -2099,7 +2099,7 @@ var SIMBOLOS=[
   [/barista|coffee/i,'☕'],
   [/hairstylist|salon|nails/i,'💇'],
   [/tattoo/i,'🖊️'],
-  [/massage|spa/i,'💆'],
+  [/massage|\bspa\b/i,'💆'],
   [/security|guard|watch over/i,'🛡️'],
   [/police/i,'🚓'],
   [/firefighter/i,'🚒'],
@@ -5617,6 +5617,14 @@ function sembrarTemas(p){
     String(p.gusto_es||'').split(/\s+y\s+|,\s*/).forEach(function(g){ meter(g,'','gusto'); });
     if(p.gusto_otra) meter(p.gusto_otra,'','gusto');
     if(p.trabajo_es) meter(limpiarOficio(p.trabajo_es)||p.trabajo_es, p.trabajo_en,'trabajo');
+    // Si dijo mas de un oficio, los otros tambien le sirven: un arquitecto que
+    // trabaja en obra necesita las dos palabras, no solo una.
+    if(p.oficios_extra && p.oficios_extra.length){
+      p.oficios_extra.forEach(function(ex){
+        var limpio=String(ex||'').replace(/^an?\s+/i,'').trim();
+        if(limpio) meter(limpio, 'I am '+ex, 'trabajo');
+      });
+    }
     if(p.meta_es)    meter(String(p.meta_es).replace(/^\s*(para (poder )?|por )/i,''),'','meta');
   }
   if(!t.length) meter('mi vida diaria','','gusto');
@@ -8320,7 +8328,7 @@ var OFICIOS=[
   [/almacenista|surtidor|acomodador/i,'a stock clerk','en una tienda','at a store'],
   [/estilista|peluquer|barber|est[eé]tica/i,'a hairstylist','en una estética','at a salon'],
   [/manicur|u[ñn]as|pedicur/i,'a manicurist','en una estética','at a salon'],
-  [/masajist|spa|doy masaj|hago masaj/i,'a massage therapist','en un spa','at a spa'],
+  [/masajist|\bspa\b|doy masaj|hago masaj/i,'a massage therapist','en un spa','at a spa'],   // \b: si no, "espacios" contiene "spa"
   [/tatuador|tatuaj|perforac/i,'a tattoo artist','en un estudio','at a studio'],
   [/contad|contab|nómina|n[oó]mina|auditor/i,'an accountant','en una oficina','at an office'],
   [/recursos humanos|rh\b|reclutad|capital humano/i,'in human resources','en una oficina','at an office'],
@@ -8390,8 +8398,24 @@ var ACCIONES_MAP=[
 ];
 function interpretar(p){
   var t=(p.trabajo_es||'').toLowerCase();
-  var oficio=null;
-  for(var i=0;i<OFICIOS.length;i++){if(OFICIOS[i][0].test(t)){oficio=OFICIOS[i];break;}}
+  // Antes me quedaba con el PRIMER oficio de mi tabla que coincidiera, y eso
+  // estaba mal: alguien que escribe "soy arquitecto y me dedico a la
+  // construccion" salia como albanil, porque "construccion" esta antes en la
+  // tabla que "arquitecto". Ahora gana lo que la persona dijo primero, que es
+  // como la gente se presenta: la profesion va al frente.
+  var hallados=[];
+  for(var i=0;i<OFICIOS.length;i++){
+    var m=t.match(OFICIOS[i][0]);
+    if(m) hallados.push({of:OFICIOS[i], donde:m.index, largo:String(m[0]).length});
+  }
+  hallados.sort(function(a,b){
+    if(a.donde!==b.donde) return a.donde-b.donde;   // el que dijo primero
+    return b.largo-a.largo;                          // a igual lugar, el mas especifico
+  });
+  var oficio = hallados.length ? hallados[0].of : null;
+  // Los demas oficios que menciono tambien son suyos: se los enseñamos como
+  // palabras extra, en vez de tirarlos.
+  p.oficios_extra = hallados.slice(1).map(function(h){ return h.of[1]; });
   if(oficio){
     p.trabajo_en='I am '+oficio[1];
     p.trabajo_et=oficio[1];

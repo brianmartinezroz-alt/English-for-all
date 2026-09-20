@@ -1338,6 +1338,29 @@
 </style>
 
 
+<style id="cssciu">
+.ciuwrap{padding:0 0 18px}
+.ciucab{display:flex;justify-content:space-between;align-items:baseline;padding:10px 16px 4px;gap:10px}
+.ciuniv{font-weight:800;font-size:15px;letter-spacing:.4px}
+.ciupar{font-size:11px;color:#8A7A5C;letter-spacing:1px}
+.ciuchips{display:flex;flex-wrap:wrap;gap:5px;padding:6px 12px 2px;justify-content:center}
+.ciuchip{flex:0 1 auto;border:1px solid #DCCFB3;background:#FBF6EA;color:#1F1B16;border-radius:999px;padding:5px 10px;font-size:11px;font-weight:700;min-height:32px;max-width:48%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ciuchip.on{color:#fff}
+.ciumis{margin:8px 12px;padding:11px 14px;border-radius:14px;background:#1F1B16;color:#FBF6EA}
+.ciumis-t{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:10px;letter-spacing:1.1px;color:#E8C063}
+.ciumis-x{font-size:14px;line-height:1.35;margin-top:4px}
+.ciues{min-height:28px;padding:3px 10px;border-radius:999px;border:1px solid #5A5448;background:transparent;color:#CFC6B4;font-size:11px;font-weight:700;flex:0 0 auto}
+.ciumapa{position:relative;margin:4px auto;border-radius:18px;overflow:hidden;background:#E6DDC7;
+  width:min(calc(100% - 24px), calc((100vh - 478px) * 0.5967));aspect-ratio:358/600}
+.ciumapa>img{display:block;width:100%;height:100%;object-fit:cover}
+.ciumapa>svg{position:absolute;left:0;top:0;width:100%;height:100%;font-family:inherit}
+.ciumapa .pinciu svg{position:static}
+.ciuosm{position:absolute;left:7px;bottom:7px;background:rgba(255,255,255,.85);border-radius:7px;padding:1px 6px;font-size:8.5px;color:#6E624C}
+.ciubotones{padding:12px 16px 96px}
+@keyframes ciupulso{0%{opacity:.7;transform:scale(.6)}80%,100%{opacity:0;transform:scale(1.3)}}
+.ciumapa .pulso{transform-box:fill-box;transform-origin:center;animation:ciupulso 1.6s ease-out infinite}
+@media (prefers-reduced-motion: reduce){.ciumapa .pulso{animation:none}}
+</style>
 </head>
 <body>
 <div class="shell">
@@ -1382,7 +1405,7 @@ if('serviceWorker' in navigator){
 <script>
 (function(){
 "use strict";
-var VERSION="v143 · 20 sep · bitácora: cada ejercicio, intento y toque de la sesión va al panel";
+var VERSION="v144 · 20 sep · mapa nuevo: 28 ciudades reales, 7 paradas por ciudad";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -7307,6 +7330,7 @@ function mapa(){
   mostrarAyudaSiToca('mapa');
   try{ arrancarAvisos(); }catch(e){}
   setTimeout(function(){ try{ prepararSiguiente(); }catch(e){} },1800);
+  try{ if(mapaCiudades())return; }catch(e){ MAPA_CIU_APAGADO=true; }
   if(mapa3DoViejo())return;
   mapaViejo();
 }
@@ -7560,6 +7584,170 @@ function montarMapa3D(host,c){
     MAPA3D=null;
     return false;
   }
+}
+
+window.EFA_CIU={"Pre-A1":[{"k":"cdmx","n":"AEROPUERTO CDMX","t":"Quién eres","m":"Recoges a un visitante extranjero. Preséntate, dile quién eres y llévalo hasta el coche.","es":"","p":[["avion","Sala de llegadas",68,520],["persona","Tu letrero",266,462],["edificio","Mostrador",104,407],["dinero","Cambio de dinero",261,319],["cafe","Cafetería",107,264],["auto","Estacionamiento",238,205],["estrella","Bienvenido a México",165,117]]},{"k":"cancun","n":"CANCÚN","t":"Tu día","m":"Trabajas la temporada en un hotel. Un huésped quiere saber cómo es un día tuyo.","es":"","p":[["cama","Lobby",167,466],["ola","Alberca",245,422],["plato","Cocina",123,352],["sol","Playa",203,377],["bolsa","Tiendita",114,281],["cama","Tu cuarto",217,208],["estrella","Plática con el huésped",161,160]]},{"k":"loscabos","n":"LOS CABOS","t":"Tu trabajo","m":"Un cliente de fuera visita tu empresa. Explícale qué haces y cómo se hace.","es":"","p":[["edificio","Entrada",79,513],["persona","Tu área",237,414],["caja","Almacén",102,367],["edificio","Oficina",241,300],["plato","Comedor",105,255],["chat","Sala de juntas",259,193],["estrella","El recorrido",177,112]]},{"k":"tijuana","n":"TIJUANA","t":"Números y horas","m":"Cruzas la frontera por el día: horarios, precios, cuentas y regresar a tiempo.","es":"","p":[["bandera","Garita",97,517],["reloj","La fila",254,471],["auto","Taxi",104,397],["bolsa","Mercado",252,323],["cruz","Farmacia",100,254],["plato","Restaurante",288,206],["estrella","Regresar a tiempo",170,121]]}],"A1":[{"k":"losangeles","n":"LOS ANGELES","t":"Your people","m":"You join a new team downtown. Introduce yourself and get invited to the Saturday barbecue.","es":"Llegas a un equipo nuevo en el centro. Preséntate y logra que te inviten a la carne asada del sábado.","p":[["edificio","Front desk",74,515],["persona","Your desk",256,463],["cafe","Cafeteria",115,407],["auto","Parking lot",266,329],["bolsa","Market",102,255],["arbol","Grand Park",263,190],["estrella","The barbecue",179,113]]},{"k":"houston","n":"HOUSTON","t":"Places","m":"Your company sent you here for a week of training. Get around downtown on your own and on Friday present your work at the meeting.","es":"Tu empresa te mandó una semana de capacitación. Muévete solo por el centro y el viernes presenta tu trabajo en la junta.","p":[["cama","Hotel",271,512],["arbol","Discovery Green",76,487],["bolsa","Grocery store",262,390],["tren","METRORail",93,336],["plato","Restaurant",250,253],["edificio","The office",109,187],["estrella","The meeting",173,113]]},{"k":"chicago","n":"CHICAGO","t":"Asking and giving","m":"The airline lost your suitcase. Get what you need by asking, buying and negotiating.","es":"La aerolínea perdió tu maleta. Consigue lo que te falta pidiendo, comprando y negociando.","p":[["avion","Airline desk",69,493],["cruz","Pharmacy",255,464],["bolsa","Clothing store",107,391],["dinero","Bank",263,322],["persona","Your neighbor",103,269],["chat","Help desk",242,186],["estrella","Suitcase back",169,118]]},{"k":"newyork","n":"NEW YORK","t":"Then and now","m":"You meet an old friend. Tell them everything that happened on your trip.","es":"Te encuentras con un viejo amigo. Cuéntale todo lo que pasó en tu viaje.","p":[["cafe","Coffee shop",92,122],["tren","Subway",259,164],["edificio","Museum",118,248],["arbol","Central Park",296,303],["plato","Deli",102,376],["sol","Rooftop",255,446],["estrella","The goodbye",185,522]]}],"A2":[{"k":"vancouver","n":"VANCOUVER","t":"With customers","m":"You work at an outdoor gear store. Customers in a hurry, with questions and returns.","es":"Trabajas en una tienda de equipo de montaña. Clientes con prisa, con dudas y con cambios.","p":[["edificio","Counter",66,525],["persona","Fitting rooms",263,459],["caja","Stockroom",112,397],["dinero","Checkout",257,327],["chat","Returns",97,255],["llave","Repair shop",240,188],["estrella","The big sale",183,115]]},{"k":"calgary","n":"CALGARY","t":"On the phone","m":"You plan your boss’s visit to the Stampede, all by phone.","es":"Organizas la visita de tu jefe al Stampede, todo por teléfono.","p":[["cama","Hotel",82,511],["auto","Car rental",256,468],["plato","Restaurant",113,394],["boleto","Tickets",278,329],["tren","Transport",100,265],["persona","Your boss",252,208],["estrella","All confirmed",164,105]]},{"k":"toronto","n":"TORONTO","t":"When things go wrong","m":"Your flight is cancelled and the hotel lost your booking. Fix it and stay calm.","es":"Te cancelan el vuelo y el hotel perdió tu reserva. Arréglalo sin perder la calma.","p":[["tren","Union Station",73,377],["avion","Airline office",243,465],["cama","Hotel",133,384],["auto","Taxi",274,339],["cruz","Pharmacy",99,270],["telefono","Support line",263,201],["estrella","Sorted out",168,117]]},{"k":"montreal","n":"MONTREAL","t":"Making plans","m":"A weekend with bilingual coworkers. Agree on a plan everyone likes.","es":"Un fin de semana con compañeros bilingües. Pónganse de acuerdo en un plan que le guste a todos.","p":[["cafe","Café",93,524],["bolsa","Market",266,471],["edificio","Museum",112,395],["arbol","Park",278,340],["musica","Festival",87,271],["plato","Dinner",261,195],["estrella","The final plan",164,121]]}],"B1":[{"k":"london","n":"LONDON","t":"Explaining what you do","m":"First day at the London office. Everyone wants to know what you do and how.","es":"Primer día en la oficina de Londres. Todos quieren saber qué haces y cómo.","p":[["edificio","Reception",80,518],["persona","Your team",264,458],["cafe","Office kitchen",92,393],["vaso","Pub",259,335],["tren","The Tube",88,225],["chat","Your manager",261,195],["estrella","Your presentation",177,121]]},{"k":"manchester","n":"MANCHESTER","t":"Giving your opinion","m":"You join a customer panel. Share your views on products, services and the match.","es":"Entras a un panel de clientes. Opina de productos, servicios y del partido.","p":[["reloj","Waiting room",50,506],["chat","The panel",260,478],["cafe","Coffee break",98,403],["pelota","Sports bar",262,326],["vaso","Pub",84,257],["auto","Taxi",239,191],["estrella","Your opinion counts",147,97]]},{"k":"liverpool","n":"LIVERPOOL","t":"Reaching agreement","m":"You plan an event with another company. Nobody wants the same thing.","es":"Organizan un evento con otra empresa. Nadie quiere lo mismo.","p":[["barco","The docks",71,509],["edificio","Venue",264,459],["caja","Supplier",97,399],["plato","Catering",283,339],["musica","Music",99,231],["dinero","Budget",259,203],["estrella","The deal",195,126]]},{"k":"edinburgh","n":"EDINBURGH","t":"Telling what happened","m":"Something went wrong at the festival and you saw it all. Tell it clearly.","es":"Algo salió mal en el festival y tú lo viste todo. Cuéntalo claro.","p":[["castillo","Castle",40,221],["persona","Royal Mile",269,186],["musica","Stage",94,250],["escudo","Police",265,310],["cama","Hotel",103,368],["micro","Reporter",252,452],["estrella","Your side of the story",185,516]]}],"B2":[{"k":"limerick","n":"LIMERICK","t":"In meetings","m":"You join an international team at an office by the River Shannon. Meetings every day, and you have to speak up.","es":"Entras a un equipo internacional, en una oficina junto al río Shannon. Juntas todos los días, y tienes que hablar.","p":[["edificio","Office",87,541],["persona","Stand-up",253,475],["chat","Boardroom",108,388],["cafe","Coffee",260,332],["telefono","Video call",88,265],["vaso","Pub",242,194],["estrella","Your meeting",181,115]]},{"k":"cork","n":"CORK","t":"Persuading","m":"You want funding for your project. Win over whoever you need to.","es":"Quieres que financien tu proyecto. Convence a quien haga falta.","p":[["bolsa","English Market",145,279],["dinero","Investor",240,189],["chat","Committee",96,235],["barco","The quays",268,314],["micro","Local radio",113,368],["plato","Dinner",246,453],["estrella","The yes",166,532]]},{"k":"dublin","n":"DUBLIN","t":"Data and reports","m":"End of quarter. Explain the numbers, the charts and what they mean.","es":"Cierre de trimestre. Explica los números, las gráficas y lo que significan.","p":[["edificio","Office",71,515],["grafica","Spreadsheet",246,477],["persona","Your boss",149,396],["chat","Client",242,355],["lupa","Auditor",84,268],["libro","Report",250,187],["estrella","The close",162,107]]},{"k":"galway","n":"GALWAY","t":"Disagreeing","m":"A change at the university splits everyone. Argue without breaking anything.","es":"Un cambio en la universidad divide a todos. Discute sin romper nada.","p":[["libro","Campus",296,105],["libro","Library",98,171],["persona","Classroom",250,243],["cafe","Café",96,313],["chat","Council",270,407],["ola","Galway Bay",141,427],["estrella","Common ground",179,537]]}],"C1":[{"k":"mumbai","n":"MUMBAI","t":"Leading others","m":"You lead a team in another culture. Give instructions without sounding harsh.","es":"Diriges a un equipo de otra cultura. Da instrucciones sin sonar a regaño.","p":[["edificio","Office",94,522],["persona","Your team",242,360],["caja","Supplier",59,370],["tren","Train station",285,317],["llave","Warehouse",99,266],["cama","Hotel",238,197],["estrella","Your team delivers",179,111]]},{"k":"singapore","n":"SINGAPORE","t":"Nuance and tone","m":"A delicate negotiation: how you say it matters more than what you say.","es":"Una negociación delicada: importa más cómo lo dices que lo que dices.","p":[["cama","Hotel lobby",28,524],["edificio","Office tower",252,466],["plato","Business dinner",105,408],["carta","Email",273,369],["telefono","Call",104,261],["sol","Rooftop terrace",263,189],["estrella","The deal",186,118]]},{"k":"dubai","n":"DUBAI","t":"Public speaking","m":"You present your company at an international trade fair.","es":"Presentas a tu empresa en una feria internacional.","p":[["cama","Hotel",96,516],["edificio","Booth",248,500],["reloj","Rehearsal",78,456],["micro","Stage",234,298],["chat","Q&amp;A",127,266],["persona","Networking",256,200],["estrella","Your presentation",179,117]]},{"k":"hongkong","n":"HONG KONG","t":"Cultural differences","m":"Your local partner and your team don’t get each other. You are the bridge.","es":"Tu socio local y tu equipo no se entienden. Tú eres el puente.","p":[["edificio","Office",80,531],["cafe","Tea",254,452],["chat","Meeting",94,389],["barco","Star Ferry",243,324],["bolsa","Night market",83,257],["plato","Dinner",247,205],["estrella","Partners again",167,115]]}],"C2":[{"k":"geneva","n":"GENEVA","t":"The conference · Register","m":"A conference by the lake. From hallway small talk to the official speech, in one day.","es":"Una conferencia junto al lago. De la plática de pasillo al discurso oficial, el mismo día.","p":[["boleto","Registration",91,511],["persona","Hallway",254,489],["chat","Panel",100,386],["plato","Lunch by the lake",291,307],["micro","Press",118,251],["vaso","Gala dinner",247,194],["estrella","Your speech",156,106]]},{"k":"amsterdam","n":"AMSTERDAM","t":"The meeting · Humor","m":"A tense meeting in a canal house. The right joke at the right time changes everything.","es":"Una junta tensa en una casa del canal. El chiste correcto, dicho a tiempo, lo cambia todo.","p":[["reloj","Before it starts",84,511],["persona","Introductions",247,475],["lupa","The problem",104,407],["sonrisa","The joke",249,310],["pausa","The pause",114,253],["carta","The proposal",246,193],["estrella","Meeting saved",138,130]]},{"k":"oxford","n":"OXFORD","t":"The debate","m":"You defend a position in a public debate, with rebuttals.","es":"Defiendes una postura en un debate público, con réplica.","p":[["libro","Preparation",128,548],["bandera","Your position",257,471],["chat","Rebuttal",134,383],["grafica","Data",266,334],["persona","Audience",99,266],["micro","Moderator",260,191],["estrella","Your closing",208,125]]},{"k":"sydney","n":"SYDNEY","t":"The stage","m":"You tell your story on the big stage by the harbour. No notes.","es":"Cuentas tu historia en el escenario grande, junto a la bahía. Sin notas.","p":[["persona","Dressing room",82,547],["reloj","Rehearsal",177,386],["micro","Microphone",74,383],["libro","Your story",253,335],["pausa","The pauses",102,269],["sonrisa","The punchline",247,206],["estrella","The ovation",193,107]]}]};
+window.EFA_ICO={"avion":"<path d=\"M2 16l20-6-3 8H6z\"></path><path d=\"M6 12l-2-5 3 1 3 3\"></path>","cama":"<path d=\"M3 18V8M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5\"></path><circle cx=\"7\" cy=\"11\" r=\"2\"></circle>","plato":"<circle cx=\"12\" cy=\"12\" r=\"6\"></circle><path d=\"M3 4v6M5 4v6M3 10h2v10M19 4c-2 0-2 6 0 6v10\"></path>","tren":"<rect x=\"6\" y=\"3\" width=\"12\" height=\"13\" rx=\"3\"></rect><path d=\"M6 10h12M9 20l-2 2M15 20l2 2\"></path><circle cx=\"9\" cy=\"13\" r=\"0.8\"></circle><circle cx=\"15\" cy=\"13\" r=\"0.8\"></circle>","bolsa":"<path d=\"M5 8h14l-1 13H6z\"></path><path d=\"M9 8a3 3 0 0 1 6 0\"></path>","edificio":"<rect x=\"5\" y=\"3\" width=\"14\" height=\"18\"></rect><path d=\"M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2\"></path>","estrella":"<path d=\"M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.5 6.7 19.4l1.2-6L3.4 9.3l6-.7z\"></path>","persona":"<circle cx=\"12\" cy=\"8\" r=\"3.5\"></circle><path d=\"M5 21a7 7 0 0 1 14 0\"></path>","cafe":"<path d=\"M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z\"></path><path d=\"M17 11h1.5a2.5 2.5 0 0 1 0 5H17M8 3v3M12 3v3\"></path>","dinero":"<rect x=\"3\" y=\"6\" width=\"18\" height=\"12\" rx=\"2\"></rect><circle cx=\"12\" cy=\"12\" r=\"2.5\"></circle>","auto":"<path d=\"M4 16v-4l2-5h12l2 5v4z\"></path><circle cx=\"8\" cy=\"16\" r=\"1.8\"></circle><circle cx=\"16\" cy=\"16\" r=\"1.8\"></circle>","ola":"<path d=\"M3 10c3-3 6 3 9 0s6 3 9 0M3 16c3-3 6 3 9 0s6 3 9 0\"></path>","sol":"<circle cx=\"12\" cy=\"12\" r=\"4\"></circle><path d=\"M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4\"></path>","caja":"<path d=\"M3 8l9-4 9 4v9l-9 4-9-4z\"></path><path d=\"M3 8l9 4 9-4M12 12v9\"></path>","chat":"<path d=\"M4 5h16v11H9l-5 4z\"></path>","bandera":"<path d=\"M5 21V4M5 4h12l-2 4 2 4H5\"></path>","reloj":"<circle cx=\"12\" cy=\"12\" r=\"8\"></circle><path d=\"M12 7v5l3 2\"></path>","cruz":"<path d=\"M9 3h6v6h6v6h-6v6H9v-6H3V9h6z\"></path>","arbol":"<circle cx=\"12\" cy=\"9\" r=\"5\"></circle><path d=\"M12 14v7\"></path>","llave":"<path d=\"M14 7a4 4 0 1 0 1 4l6 6-2 2-2-2-2 2-2-2\"></path>","boleto":"<path d=\"M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4z\"></path><path d=\"M14 7v10\"></path>","telefono":"<rect x=\"7\" y=\"3\" width=\"10\" height=\"18\" rx=\"2\"></rect><path d=\"M11 18h2\"></path>","musica":"<path d=\"M9 18V5l11-2v13\"></path><circle cx=\"6.5\" cy=\"18\" r=\"2.5\"></circle><circle cx=\"17.5\" cy=\"16\" r=\"2.5\"></circle>","vaso":"<path d=\"M6 4h12l-1.5 16h-9z\"></path><path d=\"M6.5 9h11\"></path>","pelota":"<circle cx=\"12\" cy=\"12\" r=\"8\"></circle><path d=\"M12 4v4l-4 3 1.5 5h5l1.5-5-4-3\"></path>","barco":"<path d=\"M3 15h18l-3 5H6z\"></path><path d=\"M12 3v12M12 4l6 8h-6\"></path>","castillo":"<path d=\"M4 21V8h3v3h3V8h4v3h3V8h3v13z\"></path><path d=\"M10 21v-5h4v5\"></path>","escudo":"<path d=\"M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z\"></path>","micro":"<rect x=\"9\" y=\"3\" width=\"6\" height=\"11\" rx=\"3\"></rect><path d=\"M5 11a7 7 0 0 0 14 0M12 18v3\"></path>","grafica":"<path d=\"M4 20V4M4 20h16\"></path><path d=\"M8 16v-4M12 16V8M16 16v-6\"></path>","lupa":"<circle cx=\"10\" cy=\"10\" r=\"6\"></circle><path d=\"M15 15l6 6\"></path>","libro":"<path d=\"M4 19V5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z\"></path><path d=\"M8 7h6M8 11h6\"></path>","carta":"<rect x=\"3\" y=\"5\" width=\"18\" height=\"14\" rx=\"2\"></rect><path d=\"M3 7l9 6 9-6\"></path>","sonrisa":"<circle cx=\"12\" cy=\"12\" r=\"8\"></circle><path d=\"M8.5 14a4 4 0 0 0 7 0M9 10h.01M15 10h.01\"></path>","pausa":"<circle cx=\"12\" cy=\"12\" r=\"8\"></circle><path d=\"M10 9v6M14 9v6\"></path>"};
+
+/* ── Mapa de ciudades reales (OpenStreetMap) ──────────────────────────
+   Cada nivel es un país con 4 ciudades; cada ciudad son 7 paradas.
+   El fondo es una imagen del mapa real y los pines van encima, en SVG. */
+var CIUDAD_VISTA=null, MAPA_CIU_ES=false, MAPA_CIU_APAGADO=false;
+var CIU_COL={'Pre-A1':'#1F6E5A','A1':'#1F4E8C','A2':'#B23A48','B1':'#2B3A67','B2':'#2F7D4F','C1':'#8A5A1F','C2':'#5B3E8C'};
+
+function ciudadesDelNivel(){
+  try{
+    var d=window.EFA_CIU; if(!d)return null;
+    var nv=nivelDelMapa()||'Pre-A1';
+    return d[nv]||null;
+  }catch(e){ return null; }
+}
+function icoCiu(n,color,tam){
+  var p=(window.EFA_ICO||{})[n]||'';
+  return '<svg width="'+tam+'" height="'+tam+'" viewBox="0 0 24 24" fill="none" stroke="'+color+
+         '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';
+}
+function pinesCiuSVG(ciu,j,actual,col){
+  var h='', P7=ciu.p;
+  var pts=P7.map(function(p){ return p[2]+','+p[3]; }).join(' ');
+  h+='<polyline points="'+pts+'" fill="none" stroke="#1F1B16" stroke-width="2.4" stroke-dasharray="2 6" stroke-linecap="round" opacity="0.75"></polyline>';
+  var k=Math.max(0,Math.min(7,actual-7*j));
+  if(k>1){
+    h+='<polyline points="'+P7.slice(0,k).map(function(p){return p[2]+','+p[3];}).join(' ')+
+       '" fill="none" stroke="'+col+'" stroke-width="4" stroke-linecap="round"></polyline>';
+  }
+  var cajas=[];
+  P7.forEach(function(p,i){
+    var n=7*j+i+1;
+    var est=(n<actual)?'hecho':((n===actual)?'actual':((i===6)?'mision':'futuro'));
+    var a=p[2], b=p[3], top=b-30;
+    var relleno=(est==='hecho')?col:(est==='actual'?'#B23A48':(est==='mision'?'#1F1B16':'#FBF6EA'));
+    var cIco=(est==='futuro')?col:((est==='mision')?'#E8C063':'#FFFFFF');
+    var r=(est==='actual'||est==='mision')?17:14;
+    var g='<g class="pinciu" data-par="'+n+'" style="cursor:pointer">';
+    g+='<ellipse cx="'+a+'" cy="'+b+'" rx="9" ry="4" fill="#000" opacity="0.2"></ellipse>';
+    if(est==='actual')g+='<ellipse class="pulso" cx="'+a+'" cy="'+b+'" rx="22" ry="11" fill="none" stroke="#B23A48" stroke-width="2"></ellipse>';
+    g+='<path d="M'+a+' '+(b-2)+' L'+(a-7)+' '+(top+r-3)+' L'+(a+7)+' '+(top+r-3)+' Z" fill="'+relleno+'" stroke="'+((est==='futuro')?col:relleno)+'" stroke-width="1.5"></path>';
+    g+='<circle cx="'+a+'" cy="'+top+'" r="'+r+'" fill="'+relleno+'" stroke="'+((est==='futuro')?col:'#FFFFFF')+'" stroke-width="2"></circle>';
+    var sz=(r===17)?18:14;
+    g+='<g transform="translate('+(a-sz/2)+' '+(top-sz/2)+')">'+icoCiu(p[0],cIco,sz)+'</g>';
+    var txt=(i+1)+' · '+p[1], an=txt.length*6.1+14;
+    function choca(x0,yc){
+      var s=0;
+      for(var q=0;q<cajas.length;q++){
+        var c2=cajas[q];
+        var ix=Math.max(0,Math.min(x0+an,c2[2])-Math.max(x0,c2[0]));
+        var iy=Math.max(0,Math.min(yc+10,c2[3])-Math.max(yc-10,c2[1]));
+        s+=ix*iy;
+      }
+      if(x0<4||x0+an>354)s+=1000000;
+      return s;
+    }
+    var mejor=null;
+    [[a+r+4,top],[a-r-4-an,top],[a+r+4,top-24],[a-r-4-an,top-24],[a+r+4,top+24],[a-r-4-an,top+24]].forEach(function(o){
+      var costo=choca(o[0],o[1]);
+      if(mejor===null||costo<mejor[0])mejor=[costo,o[0],o[1]];
+    });
+    var x0=mejor[1], yc=mejor[2];
+    cajas.push([x0,yc-10,x0+an,yc+10]);
+    g+='<rect x="'+x0+'" y="'+(yc-10)+'" width="'+an.toFixed(0)+'" height="20" rx="10" fill="#FFFFFF" opacity="0.95"></rect>';
+    g+='<text x="'+(x0+7)+'" y="'+(yc+4)+'" font-size="11" font-weight="700" fill="#1F1B16">'+esc(txt)+'</text>';
+    g+='</g>';
+    h+=g;
+  });
+  P7.forEach(function(p,i){
+    var n=7*j+i+1, a=p[2], b=p[3];
+    h+='<circle class="pinciu" data-par="'+n+'" cx="'+a+'" cy="'+(b-30)+'" r="26" fill="transparent" style="cursor:pointer"></circle>';
+  });
+  return h;
+}
+
+function mapaCiudades(){
+  if(MAPA_CIU_APAGADO)return false;
+  var lista=ciudadesDelNivel();
+  if(!lista||lista.length<4)return false;
+  var c; try{ c=progreso(); }catch(e){ c={parada:1}; }
+  var nv=nivelDelMapa()||'Pre-A1';
+  var col=CIU_COL[nv]||'#1F4E8C';
+  var actual=Math.max(1,Math.min(PARADAS,c.parada||1));
+  var jAhora=Math.floor((actual-1)/7);
+  var j=(CIUDAD_VISTA===null)?jAhora:Math.max(0,Math.min(lista.length-1,CIUDAD_VISTA));
+  var ciu=lista[j];
+  var esp=(nv==='Pre-A1');
+  var mision=(esp||!MAPA_CIU_ES||!ciu.es)?ciu.m:ciu.es;
+
+  var tb=document.querySelector('.topbar'); if(tb)tb.style.display='none';
+
+  var chips=lista.map(function(x,i){
+    var hecho=(actual>7*(i+1)), aqui=(i===jAhora);
+    return '<button class="ciuchip'+(i===j?' on':'')+'" data-ciu="'+i+'" style="'+(i===j?('background:'+col+';border-color:'+col):'')+'">'+
+           esc(x.n)+(hecho?' ✓':(aqui?' •':''))+'</button>';
+  }).join('');
+
+  var h='<div class="ciuwrap">'+
+    '<div class="ciucab">'+
+      '<div class="ciuniv" style="color:'+col+'">'+esc(nv)+'</div>'+
+      '<div class="ciupar">'+esc(ciu.n)+' · '+(j+1)+(esp?' DE ':' OF ')+lista.length+'</div>'+
+    '</div>'+
+    '<div class="nivfila">'+botonesNivelHTML()+'</div>'+
+    '<div class="ciuchips">'+chips+'</div>'+
+    '<div class="ciumis">'+
+      '<div class="ciumis-t"><span>'+(esp?'TU MISIÓN EN ':'YOUR MISSION IN ')+esc(ciu.n)+' · '+esc(String(ciu.t).toUpperCase())+'</span>'+
+        (esp?'':'<button id="ciues" class="ciues">'+(MAPA_CIU_ES?'EN':'ES')+'</button>')+'</div>'+
+      '<div class="ciumis-x">'+esc(mision)+'</div>'+
+    '</div>'+
+    '<div class="ciumapa" id="ciumapa">'+
+      '<img id="ciuimg" alt="'+esc(ciu.n)+'" src="mapas/img/'+esc(ciu.k)+'.webp">'+
+      '<svg viewBox="0 0 358 600" preserveAspectRatio="xMidYMid meet" id="ciusvg">'+pinesCiuSVG(ciu,j,actual,col)+'</svg>'+
+      '<div class="ciuosm">Map data © OpenStreetMap contributors</div>'+
+    '</div>'+
+    '<div class="ciubotones">'+
+      '<button class="btn" id="ciuir">'+
+        (!yaPersonalizo()?'Empezar: cuéntame de ti'
+          :(j!==jAhora
+            ? (esp?'Volver a mi parada · '+esc(lista[jAhora].n):'Back to my stop · '+esc(lista[jAhora].n))
+            : (esp?'Practicar la parada '+actual:'Start stop '+actual)))+'</button>'+
+      (yaPersonalizo()?'<button class="btn ghost" id="ciuperfil" style="margin-top:8px">Mi avance y mi perfil</button>':'')+
+    '</div>'+
+  '</div>';
+
+  APP.innerHTML=h;
+
+  var img=document.getElementById('ciuimg');
+  if(img){
+    img.onerror=function(){
+      // si no bajó la imagen del mapa, nos regresamos al mapa de antes
+      MAPA_CIU_APAGADO=true;
+      try{ mapa(); }catch(e){}
+    };
+  }
+  var bes=document.getElementById('ciues');
+  if(bes)bes.onclick=function(e){ e.stopPropagation(); MAPA_CIU_ES=!MAPA_CIU_ES; mapa(); };
+
+  APP.querySelectorAll('.ciuchip').forEach(function(b){
+    b.onclick=function(){ CIUDAD_VISTA=+b.dataset.ciu; mapa(); };
+  });
+  APP.querySelectorAll('.pinciu').forEach(function(g){
+    g.onclick=function(){
+      var n=+g.dataset.par;
+      try{
+        if(typeof JEFE_LIBRE!=='undefined'&&JEFE_LIBRE){ irALeccionDe(n); return; }
+        asomarseALeccion(n,actual);
+      }catch(e){ avisito('Parada '+n); }
+    };
+  });
+  var b=document.getElementById('ciuir');
+  if(b){
+    if(!P){ b.onclick=function(){ try{ personalizar(); }catch(e){ avisito('No pude abrir el alta.'); } }; }
+    else if(j!==jAhora){ b.onclick=function(){ CIUDAD_VISTA=null; mapa(); }; }
+    else{ b.onclick=function(){ try{ arrancarParada(); }catch(e){ avisito('No pude abrir la lección: '+String(e).slice(0,60)); } }; }
+  }
+  var bp=document.getElementById('ciuperfil');
+  if(bp)bp.onclick=function(){ try{ pantallaPerfil(); }catch(e){} };
+
+  ligarBotonesNivel();
+  marcarTab('mapa');
+  return true;
 }
 
 function mapa3DoViejo(){
@@ -11885,71 +12073,6 @@ window.EFA_MAPA3D = { listo:false, api:null, error:null };
       window.EFA_MAPA3D.error=String(e);
       console.warn('mapa 3D no disponible:',e);
     });
-})();
-</script>
-
-<!-- AVISO_VERSION_NUEVA: avisa cuando hay una versión publicada más nueva que la que está abierta -->
-<script>
-(function(){
-  try{ if(window.top!==window.self) return; }catch(e){ return; }
-  var PREFIJO_CACHE = '';           // cajas propias de esta app que se pueden tirar
-  var CLAVE = 'aviso_ver_' + location.pathname;
-  var ultima = 0, mostrado = false;
-  function tamLocal(){
-    try{ var n = performance.getEntriesByType('navigation')[0]; return n && n.decodedBodySize ? n.decodedBodySize : 0; }catch(e){ return 0; }
-  }
-  function tamServidor(r){
-    var et = r.headers.get('etag') || '';
-    var m = et.match(/-([0-9a-f]+)"?$/i);
-    return m ? parseInt(m[1],16) : 0;
-  }
-  function revisar(){
-    if(mostrado || !navigator.onLine) return;
-    var ahora = Date.now(); if(ahora - ultima < 60000) return; ultima = ahora;
-    try{ if(+sessionStorage.getItem('aviso_callar') > ahora) return; }catch(e){}
-    fetch(location.pathname, {method:'HEAD', cache:'no-store'}).then(function(r){
-      if(!r.ok) return;
-      var srv = tamServidor(r); if(!srv) return;
-      var loc = tamLocal(), base = loc;
-      if(!base){
-        try{ base = +localStorage.getItem(CLAVE) || 0; if(!base){ localStorage.setItem(CLAVE, srv); return; } }catch(e){ return; }
-      }
-      if(srv !== base) pintar(srv);
-    }).catch(function(){});
-  }
-  function actualizar(srv){
-    try{ localStorage.setItem(CLAVE, srv); sessionStorage.setItem('aviso_callar', Date.now()+5*60000); }catch(e){}
-    var pasos = [];
-    if('serviceWorker' in navigator){
-      pasos.push(navigator.serviceWorker.getRegistrations().then(function(rs){ return Promise.all(rs.map(function(g){ return g.update().catch(function(){}); })); }).catch(function(){}));
-    }
-    if(PREFIJO_CACHE && window.caches){
-      pasos.push(caches.keys().then(function(ks){ return Promise.all(ks.filter(function(k){ return k.indexOf(PREFIJO_CACHE)===0; }).map(function(k){ return caches.delete(k); })); }).catch(function(){}));
-    }
-    pasos.push(fetch(location.href, {cache:'reload'}).catch(function(){}));
-    Promise.all(pasos).then(function(){ location.reload(); });
-    setTimeout(function(){ location.reload(); }, 4000);
-  }
-  function pintar(srv){
-    mostrado = true;
-    var b = document.createElement('div');
-    b.id = 'aviso-version';
-    b.setAttribute('role','status');
-    b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom));'+
-      'z-index:2147483000;display:flex;align-items:center;gap:12px;background:#0E2A5C;color:#F2F7FF;'+
-      'padding:10px 10px 10px 16px;border-radius:999px;box-shadow:0 8px 28px rgba(8,20,48,.35);'+
-      'font:500 14px/1.2 "DM Sans",system-ui,-apple-system,sans-serif;max-width:calc(100vw - 24px);white-space:nowrap';
-    b.innerHTML = '<span>Hay una versión nueva</span>'+
-      '<button type="button" style="font:inherit;font-weight:700;border:0;border-radius:999px;padding:8px 14px;background:#6FA0FF;color:#0A1D40;cursor:pointer">Actualizar</button>'+
-      '<button type="button" aria-label="Ahora no" style="font:inherit;border:0;background:none;color:#BCD3FF;font-size:18px;padding:0 6px;cursor:pointer">×</button>';
-    var bs = b.querySelectorAll('button');
-    bs[0].onclick = function(){ bs[0].textContent = 'Cargando…'; actualizar(srv); };
-    bs[1].onclick = function(){ b.remove(); mostrado = false; try{ sessionStorage.setItem('aviso_callar', Date.now()+30*60000); }catch(e){} };
-    document.body.appendChild(b);
-  }
-  setTimeout(revisar, 3000);
-  document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible') revisar(); });
-  window.addEventListener('focus', revisar);
 })();
 </script>
 

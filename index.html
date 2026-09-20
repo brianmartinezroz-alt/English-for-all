@@ -1382,7 +1382,7 @@ if('serviceWorker' in navigator){
 <script>
 (function(){
 "use strict";
-var VERSION="v142 · 20 sep · frases salvavidas para los que empiezan";
+var VERSION="v143 · 20 sep · bitácora: cada ejercicio, intento y toque de la sesión va al panel";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -10456,6 +10456,53 @@ function correr(){
 
 var vistos={},intentosDe={};
 var VECES_OIDO=0;
+/* ═══════════ BITÁCORA DE LA SESIÓN ═══════════
+   Brian quiere ver TODO, no solo los errores: cada ejercicio que salió,
+   cada botón que se tocó, cada intento con lo que dijo y su porcentaje,
+   y cuándo se salió de la app y cuándo regresó. Todo con el segundo exacto
+   desde que empezó la sesión. Se reinicia sola cuando empieza otra sesión
+   (cuando cambia t0) y viaja con la sesión al servidor. */
+var BITACORA=[], BIT_T0=0, BIT_VISTOS=0, BIT_FUERA=0, BIT_SALIO=0;
+function bitacora(ev,extra){
+  try{
+    if(!t0) return;
+    if(BIT_T0!==t0){ BITACORA=[]; BIT_T0=t0; BIT_VISTOS=0; BIT_FUERA=0; BIT_SALIO=0; }
+    // los intentos nuevos desde la ultima vez, con lo que dijo y cuanto saco
+    while(attempts && BIT_VISTOS<attempts.length){
+      var a=attempts[BIT_VISTOS++]||{};
+      BITACORA.push({s:Math.round((Date.now()-t0)/1000),ev:'intento',it:it,
+        tipo:a.tipo||'',dijo:String(a.oido||'').slice(0,160),
+        meta:String(a.meta||a.en||'').slice(0,120),
+        pct:(a.pct===null||a.pct===undefined)?null:a.pct});
+    }
+    if(!ev) return;
+    var o={s:Math.round((Date.now()-t0)/1000),ev:ev,it:it};
+    if(extra) for(var k in extra) o[k]=extra[k];
+    BITACORA.push(o);
+    if(BITACORA.length>700) BITACORA.splice(0,BITACORA.length-700);
+  }catch(e){}
+}
+// segundos que de verdad estuvo con la app abierta (sin contar cuando se salio)
+function segundosActivos(){
+  var tot=Math.round((Date.now()-t0)/1000);
+  var fuera=BIT_FUERA+(BIT_SALIO?Math.round((Date.now()-BIT_SALIO)/1000):0);
+  return Math.max(0,tot-fuera);
+}
+try{
+  document.addEventListener('click',function(e){
+    var b=e.target&&e.target.closest&&e.target.closest('button,a,[role=button],label,.op,.opt,.resb');
+    if(!b) return;
+    var txt=(b.getAttribute('aria-label')||b.title||b.innerText||b.textContent||'')
+      .replace(/\s+/g,' ').trim().slice(0,60);
+    bitacora('clic',{que:(b.id?('#'+b.id+' '):'')+txt});
+  },true);
+  document.addEventListener('visibilitychange',function(){
+    if(!t0) return;
+    if(document.hidden){ BIT_SALIO=Date.now(); bitacora('salio'); }
+    else { if(BIT_SALIO){ BIT_FUERA+=Math.round((Date.now()-BIT_SALIO)/1000); BIT_SALIO=0; } bitacora('regreso'); }
+  });
+}catch(e){}
+
 function paso(){
   callarTodo();
   aplicarIdiomaUI();
@@ -10469,6 +10516,8 @@ function paso(){
   if(it>=S.items.length){cierre();return;}
   avisarSiYaCasi();
   var x=S.items[it];
+  bitacora('ejercicio',{k:x.k||'',area:x.area||'',
+    frase:String(x.en||x.q||x.audio||x.frase||x.titulo||x.pide||'').slice(0,110)});
   var INS={
     model:{en:'Listen and say it out loud.',            es:'Escucha y dilo en voz alta.'},
     drill:{en:'Same sentence, one piece changed.',      es:'La misma frase, con una pieza cambiada.'},
@@ -11619,7 +11668,13 @@ function cierre(){
     perfil:P,intentos:attempts.slice(),promedio_repeticion:prom,
     dudas:DUDAS.slice(),observacion:''
   };
-  D.sesiones.push(rec);save(D);
+  bitacora('fin');
+  rec.activo=segundosActivos();
+  rec.bitacora=BITACORA.slice();
+  rec.items_total=(S.items||[]).length;
+  // en el telefono se guarda sin la bitacora, para no llenar la memoria
+  var recLocal={}; for(var kk in rec) if(kk!=='bitacora') recLocal[kk]=rec[kk];
+  D.sesiones.push(recLocal);save(D);
 
   // la IA propone los tres errores; Brian los valida. Sin IA, no pasa nada.
   if(hayIA()){

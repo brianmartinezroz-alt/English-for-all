@@ -290,6 +290,7 @@
   .rescate{background:var(--crema);border:1px dashed var(--miel);border-radius:12px;
     padding:12px 13px;margin:10px 0}
   .rescate .hl{color:var(--miel)}
+  .resb.salva small{display:block;font-size:11.5px;opacity:.7;font-weight:400}
   .resb{display:flex;align-items:center;gap:8px;width:100%;text-align:left;
     background:var(--papel);border:1px solid var(--linea);border-radius:10px;
     padding:9px 11px;margin-top:7px;font-size:15px;color:var(--tinta);cursor:pointer}
@@ -1381,7 +1382,7 @@ if('serviceWorker' in navigator){
 <script>
 (function(){
 "use strict";
-var VERSION="v141 · 18 sep · red de rescate: si fallas dos veces, la frase se parte en pedazos";
+var VERSION="v142 · 20 sep · frases salvavidas para los que empiezan";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -2350,6 +2351,10 @@ function moldePreA1(p){
       porque:'"Your" es de alguien, no una persona. Suenan casi igual pero no son lo mismo.'},
      {area:'hab',  k:'model', en:'Nice to meet you.', es:'Mucho gusto.'},
      {area:'hab',  k:'model', en:'See you tomorrow.', es:'Nos vemos manana.'},
+     // frase salvavidas: la primera que necesita alguien que empieza
+     {area:'hab',  k:'model', en:'Sorry, can you repeat that?', es:'Perdon, me lo repites?'},
+     {area:'hab',  k:'ask',   q:'I talk very fast and you do not understand. What do you say?',
+      es:'Te hablan muy rapido y no entiendes. Que dices?', pista:'Sorry, can you repeat that? Slowly, please.'},
      {area:'hab',  k:'ask',   q:'Someone says: Nice to meet you.', es:'Alguien te dice "mucho gusto". Contesta igual.',
       pista:'Nice to meet you too.'},
      {area:'voc',  k:'idiom', en:'Take it easy.',
@@ -2370,6 +2375,10 @@ function moldePreA1(p){
      {area:'gram', k:'cazar', frase:'I am from Mexico and I live in there.', mala:'in', buena:'(nada)',
       es:'Con "there" no se pone "in". Se dice "I live there".'},
      {area:'hab',  k:'model', en:'I am from Mexico.', es:'Soy de Mexico.'},
+     // frase salvavidas: cuando falta una palabra, se pregunta en ingles
+     {area:'hab',  k:'model', en:'How do you say "tienda" in English?', es:'Como se dice "tienda" en ingles?'},
+     {area:'hab',  k:'ask',   q:'You do not know a word. Ask me how to say it.',
+      es:'No sabes una palabra. Preguntame como se dice.', pista:'How do you say "trabajo" in English?'},
      {area:'hab',  k:'ask',   q:'Where are you from?', es:'De donde eres?', pista:'I am from Mexico.'},
      {area:'voc',  k:'pares', a:'live', b:'leave', bien:'a',
       nota:'"Live" es vivir. "Leave" es irse. Cambia la vocal y cambia todo.'},
@@ -11511,6 +11520,23 @@ function pedazosDeRescate(frase){
   out.push(w.join(' '));
   return out;
 }
+/* FRASES SALVAVIDAS: lo que dice alguien que empieza cuando se traba con una
+   persona de verdad. Salen en el rescate solo en Pre-A1, A1 y A2. */
+var SALVAVIDAS=[
+  ['Sorry, can you repeat that?','Perdón, ¿me lo repites?'],
+  ['Slowly, please.','Más despacio, por favor.'],
+  ['I don\'t understand.','No entiendo.'],
+  ['How do you say it in English?','¿Cómo se dice en inglés?']
+];
+function tiraSalvavidas(){
+  var n=(typeof nivelNum==='function')?nivelNum():0;
+  if(n>2) return '';
+  return '<div class="hl" style="margin-top:11px">Con una persona de verdad, esto te salva</div>'+
+    SALVAVIDAS.map(function(x){
+      return '<button class="resb salva" data-rt="'+esc(x[0])+'">'+esc(x[0])+
+        ' <small>'+esc(x[1])+'</small> <i>&#9654;</i></button>';
+    }).join('');
+}
 function bloqueRescate(meta,veces){
   if(!meta||veces<2)return '';
   var ps=pedazosDeRescate(meta);
@@ -11522,6 +11548,7 @@ function bloqueRescate(meta,veces){
       return '<button class="resb" data-rt="'+esc(t)+'">'+
              '<span class="resn">'+(i+1)+'</span>'+esc(t)+' <i>&#9654;</i></button>';
     }).join('')+
+    tiraSalvavidas()+
     (veces>=3
       ? '<button class="btn ghost" id="dejarla" style="margin-top:9px">'+
         'D\u00e9jala por hoy \u00b7 te la devuelvo m\u00e1s adelante</button>'

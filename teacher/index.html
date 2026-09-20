@@ -48,6 +48,38 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--crema);color:va
 .carril.alto{background:#E7F3EE;color:var(--verde)}
 .cad-num{text-align:center;min-width:44px}
 .cad[data-cad]{cursor:pointer}
+.tenue{color:var(--tenue);font-size:13.5px}
+.pf{display:flex;gap:10px;padding:7px 0;border-top:1px solid var(--linea);font-size:14px}
+.pf:first-of-type{border-top:0}
+.pf span{min-width:150px;max-width:45%;color:var(--tenue);font-size:13px}
+.pf b{font-weight:500;flex:1;min-width:0;overflow-wrap:anywhere}
+details.mas{margin-top:8px}
+details.mas summary{cursor:pointer;color:var(--verde);font-size:13.5px;font-weight:600;padding:6px 0}
+details.sesd{border-top:1px solid var(--linea)}
+details.sesd:first-of-type{border-top:0}
+details.sesd>summary{list-style:none;cursor:pointer;border-top:0}
+details.sesd>summary::-webkit-details-marker{display:none}
+details.sesd[open]>summary{background:var(--crema);border-radius:10px;padding-left:8px;padding-right:8px}
+.ses-cuerpo{padding:6px 0 14px}
+.bt-res{font-size:12.5px;color:var(--tenue);margin:4px 0 8px}
+.bt-caja{border-left:2px solid var(--linea);padding-left:10px}
+.ses-cuerpo,.bt-caja,.bt,.bt span,.bt b,.bt i{text-align:left}
+.bt b,.bt span{flex:1;min-width:0;margin:0}
+.bt em{margin-left:auto}
+.bt .bt-t{flex:0 0 42px;min-width:42px}
+.bt i{padding-left:51px}
+.bt{display:flex;gap:9px;align-items:baseline;font-size:13.5px;padding:3px 0;flex-wrap:wrap}
+.bt-t{font-family:'DM Mono',ui-monospace,monospace;font-size:11.5px;color:var(--tenue);min-width:38px}
+.bt span{flex:1;min-width:0;overflow-wrap:anywhere}
+.bt small{display:block;color:var(--tenue);font-size:11.5px}
+.bt i{display:block;width:100%;padding-left:47px;color:var(--tenue);font-size:12.5px}
+.bt em{font-style:normal;font-weight:700}
+.bt em.bien{color:var(--verde)} .bt em.mal{color:var(--coral)}
+.bt.ej{margin-top:8px}
+.bt.cl span{color:var(--tenue)}
+.bt.fu span{color:var(--miel);font-weight:600}
+.bt.fin b{color:var(--verde)}
+@media (max-width:520px){ .pf{flex-direction:column;gap:2px} .pf span{max-width:none;min-width:0} }
 .cad[data-cad]:hover{border-color:var(--verde)}
 .ses{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--linea)}
 .ses:first-of-type{border-top:0}
@@ -752,6 +784,154 @@ function pintarCadetes(){
 /* ── LAS SESIONES, UNA POR UNA ──
    Lo mismo para EFA y para el Colegio: fecha, qué practicó, cuánto tiempo,
    cuántas frases dijo y qué tan parecido le salió. */
+
+/* ══════════ VER TODO DE UN ALUMNO ══════════
+   Quién es (gustos, necesidad, trabajo), cuánto tiempo le ha dedicado,
+   y cada sesión abierta paso por paso: qué ejercicio le salió, qué dijo,
+   con qué porcentaje, qué botón tocó y cuándo se salió de la app. */
+var ETQ_PERFIL=[
+  ['nombre','Nombre'],['nivel','Nivel'],['grupo','Grupo'],['carril','Carril'],
+  ['trabajo_es','Trabajo'],['lugar_es','Dónde trabaja'],['accion_es','Qué hace en un día normal'],
+  ['hora_es','Hora de entrada'],['gusto_es','Le gusta'],['gustos','Gustos'],['gustos_es','Gustos'],
+  ['meta_es','Para qué quiere el inglés'],['enfoque_es','Qué inglés le sirve más'],
+  ['con_quien_es','Con quién habla inglés'],['quien_es','Con quién habla inglés'],
+  ['frecuencia_es','Qué tan seguido estudia'],['frecuencia','Qué tan seguido estudia'],
+  ['yo_puedo','Lo que dijo que sí puede'],['necesidad','Necesidad'],['necesidad_es','Necesidad'],
+  ['acento','Acento que eligió'],['voz','Voz'],['creado','Se dio de alta']
+];
+var OCULTOS_PERFIL=/^(foto|hechas|sesiones|parada|parada_actual|viendo|id|uid|version|_.*|trabajo_en|lugar_en|accion_en|accion_en2|gusto_en|meta_en|hora_en|nivel_n|puntos|camino|Actualizado)$/;
+function bonitoClave(k){ return String(k).replace(/_es$/,'').replace(/_/g,' ').replace(/^./,function(c){return c.toUpperCase();}); }
+function bloquePerfil(p){
+  if(!p) return '<div class="secc"><h3>Quién es</h3><div class="tenue">Todavía no llega su perfil. Sale en cuanto termine su próxima sesión.</div></div>';
+  var usados={}, filas=[];
+  ETQ_PERFIL.forEach(function(e){
+    var v=p[e[0]]; if(v===undefined||v===null||String(v).trim()===''||usados[e[1]]) return;
+    usados[e[1]]=1; usados['k:'+e[0]]=1;
+    filas.push('<div class="pf"><span>'+esc(e[1])+'</span><b>'+esc(v)+'</b></div>');
+  });
+  var mas=Object.keys(p).filter(function(k){
+    return !usados['k:'+k] && !OCULTOS_PERFIL.test(k) && String(p[k]).trim()!=='' && String(p[k]).length<300;
+  }).map(function(k){ return '<div class="pf"><span>'+esc(bonitoClave(k))+'</span><b>'+esc(p[k])+'</b></div>'; });
+  return '<div class="secc"><h3>Quién es</h3>'+filas.join('')+
+    (mas.length?'<details class="mas"><summary>Todo lo demás que contestó ('+mas.length+')</summary>'+mas.join('')+'</details>':'')+
+  '</div>';
+}
+function mmss(s){ s=Math.max(0,Math.round(+s||0)); return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2); }
+function minutos(seg){ var m=Math.round((+seg||0)/60); return m<60? m+' min' : (Math.floor(m/60)+' h '+(m%60)+' min'); }
+function bloqueTiempo(ses){
+  if(!ses||!ses.length) return '';
+  var tot=0, act=0, conAct=0, dias={}, fechas=[];
+  ses.forEach(function(x){
+    tot+=+x.segundos||0;
+    if(x.activos!=null){ act+=+x.activos||0; conAct++; }
+    if(x.fecha){ dias[x.fecha]=1; fechas.push(x.fecha); }
+  });
+  fechas.sort();
+  return '<div class="secc"><h3>Tiempo que le ha dedicado</h3><div class="kpis">'+
+    '<div class="kpi"><div class="n">'+minutos(tot)+'</div><div class="l">en total</div></div>'+
+    (conAct?'<div class="kpi"><div class="n">'+minutos(act)+'</div><div class="l">con la app abierta</div></div>':'')+
+    '<div class="kpi"><div class="n">'+minutos(tot/ses.length)+'</div><div class="l">por sesión</div></div>'+
+    '<div class="kpi"><div class="n">'+Object.keys(dias).length+'</div><div class="l">días distintos</div></div>'+
+  '</div>'+
+  (fechas.length?'<div class="tenue" style="margin-top:8px">Primera sesión: '+esc(fechaBonita(fechas[0]))+
+    ' · Última: '+esc(fechaBonita(fechas[fechas.length-1]))+'</div>':'')+
+  '</div>';
+}
+var TIPO_EJ={model:'Repetir',drill:'Cambiar una pieza',ask:'Contestar',sit:'Situación',free:'Hablar libre',
+  idea:'Oír: de qué habla',detalle:'Oír: un detalle',dosc:'Oír: cuál de las dos',segm:'Oír por partes',dicto:'Dictado',
+  regla:'Regla',cazar:'Cazar el error',hueco:'Llenar el hueco',ordenar:'Ordenar palabras',transf:'Transformar',
+  palabra:'Palabra',idiom:'Expresión',pares:'Sonidos parecidos',num:'Números',roleplay:'Role-play',pista:'Pidió pista'};
+function lineaBitacora(e,n){
+  var t='<span class="bt-t">'+mmss(e.s)+'</span>';
+  if(e.ev==='ejercicio') return '<div class="bt ej">'+t+'<b>Ejercicio '+((+e.it||0)+1)+' · '+esc(TIPO_EJ[e.k]||e.k||'')+'</b>'+
+    (e.frase?'<i>'+esc(e.frase)+'</i>':'')+'</div>';
+  if(e.ev==='intento'){
+    var pc=(e.pct==null)?'':'<em class="'+(e.pct>=80?'bien':'mal')+'">'+e.pct+'%</em>';
+    return '<div class="bt in">'+t+'<span>'+(e.tipo==='pista'?'Pidió pista':(e.tipo==='dejada'?'La dejó para después':'Dijo'))+
+      (e.dijo?': “'+esc(e.dijo)+'”':'')+(e.meta&&e.meta!==e.dijo?'<small>debía: '+esc(e.meta)+'</small>':'')+'</span>'+pc+'</div>';
+  }
+  if(e.ev==='clic') return '<div class="bt cl">'+t+'<span>Tocó: '+esc(e.que||'')+'</span></div>';
+  if(e.ev==='salio') return '<div class="bt fu">'+t+'<span>Se salió de la app</span></div>';
+  if(e.ev==='regreso') return '<div class="bt fu">'+t+'<span>Regresó</span></div>';
+  if(e.ev==='fin') return '<div class="bt fin">'+t+'<b>Terminó la sesión</b></div>';
+  return '<div class="bt">'+t+'<span>'+esc(e.ev)+'</span></div>';
+}
+function cuerpoSesion(x){
+  var d=x.detalle;
+  if(!d) return '<div class="tenue">Esta sesión es de antes de que se guardara el detalle: solo hay el resumen.</div>';
+  var b=d.b||[], ints=d.i||[];
+  var clics=b.filter(function(e){return e.ev==='clic';}).length;
+  var sal=b.filter(function(e){return e.ev==='salio';}).length;
+  var ejs={}; b.forEach(function(e){ if(e.ev==='ejercicio') ejs[e.it]=1; });
+  var res='<div class="bt-res">'+Object.keys(ejs).length+(d.n?' de '+d.n:'')+' ejercicios · '+
+    Math.max(ints.length,b.filter(function(e){return e.ev==='intento';}).length)+' intentos · '+clics+' toques'+(sal?' · se salió '+sal+(sal===1?' vez':' veces'):'')+'</div>';
+  var soloClics=false;
+  if(!b.length && ints.length){
+    return res+ints.map(function(i){ return lineaBitacora({s:0,ev:'intento',tipo:i.t,dijo:i.d,meta:i.m,pct:i.p}); }).join('');
+  }
+  return res+'<div class="bt-caja">'+b.map(lineaBitacora).join('')+'</div>';
+}
+function bloqueSesionesTodo(ses){
+  if(!ses||!ses.length) return '<div class="secc"><h3>Sus sesiones</h3><div class="tenue">Todavía no termina ninguna sesión.</div></div>';
+  var l=ses.slice().sort(function(a,b){
+    var x=(a.fecha||'')+(a.hora||''), y=(b.fecha||'')+(b.hora||''); return x<y?1:-1; });
+  return '<div class="secc"><h3>Sus sesiones <span class="cuenta">'+l.length+'</span></h3>'+
+    '<div class="tenue" style="margin-bottom:6px">Toca una sesión para verla paso por paso.</div>'+
+    l.map(function(x){
+      var prom=(x.promedio!=null&&x.promedio!=='')?Math.round(+x.promedio):null;
+      return '<details class="sesd"><summary class="ses">'+
+        '<div class="ses-f">'+esc(fechaBonita(x.fecha))+(x.hora?'<small>'+esc(x.hora)+'</small>':'')+'</div>'+
+        '<div class="ses-t">'+esc(x.titulo||'Sesión')+'<small>'+minutos(x.segundos)+
+          (x.activos!=null?' ('+minutos(x.activos)+' con la app abierta)':'')+
+          (x.frases!=null&&x.frases!==''?' · '+x.frases+' frases':'')+'</small></div>'+
+        (prom!=null?'<div class="pct '+(prom>=80?'bien':'mal')+'">'+prom+'%</div>':'')+
+      '</summary><div class="ses-cuerpo">'+cuerpoSesion(x)+'</div></details>';
+    }).join('')+'</div>';
+}
+function traerTodoEFA(a){
+  var caja=document.getElementById('todo'); if(!caja) return;
+  if(a.muestra){ caja.innerHTML=bloquePerfil(MUESTRA_PERFIL)+bloqueTiempo(MUESTRA_SESIONES)+bloqueSesionesTodo(MUESTRA_SESIONES); return; }
+  caja.innerHTML='<div class="secc"><div class="tenue">Trayendo todo lo que ha hecho…</div></div>';
+  fetch(DATOS_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({accion:'detalle_alumno',pase:(window.pasePanel?window.pasePanel():''),nombre:a.nombre})})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(d){
+      var c=document.getElementById('todo'); if(!c) return;
+      var ses=(d&&d.ok&&d.sesiones&&d.sesiones.length)?d.sesiones:(a.historial||[]);
+      c.innerHTML=bloquePerfil(d&&d.perfil)+bloqueTiempo(ses)+bloqueSesionesTodo(ses);
+    })
+    .catch(function(){
+      var c=document.getElementById('todo'); if(c) c.innerHTML=bloqueTiempo(a.historial||[])+bloqueSesionesTodo(a.historial||[]);
+    });
+}
+// La muestra también enseña todo, con datos inventados
+var MUESTRA_PERFIL={nombre:'Carlos Ruiz',nivel:'A1',trabajo_es:'operador de máquina',lugar_es:'en una fábrica de autopartes',
+  accion_es:'reviso las máquinas y lleno reportes',hora_es:'a las siete',gusto_es:'el fútbol y cocinar',
+  meta_es:'para hablar con los ingenieros de Estados Unidos',enfoque_es:'las dos cosas',con_quien_es:'con los técnicos que vienen de fuera',
+  frecuencia_es:'más o menos',acento:'americano'};
+var MUESTRA_SESIONES=(function(){
+  var hoy=new Date(), f=function(n){ var d=new Date(hoy.getTime()-n*864e5); return d.toISOString().slice(0,10); };
+  return [
+    {fecha:f(0),hora:'07:40',titulo:'Revisar la máquina',segundos:1080,activos:900,frases:14,promedio:81,detalle:{n:6,a:900,i:[],b:[
+      {s:0,ev:'ejercicio',it:0,k:'idea',frase:'I check the machines every morning.'},
+      {s:9,ev:'clic',it:0,que:'▶ Oír otra vez'},
+      {s:21,ev:'clic',it:0,que:'Revisa las máquinas'},
+      {s:22,ev:'ejercicio',it:1,k:'model',frase:'I check the machines every morning.'},
+      {s:41,ev:'intento',it:1,tipo:'model',dijo:'I check the machine every morning',meta:'I check the machines every morning.',pct:72},
+      {s:58,ev:'intento',it:1,tipo:'model',dijo:'I check the machines every morning',meta:'I check the machines every morning.',pct:94},
+      {s:60,ev:'clic',it:1,que:'#sig Siguiente'},
+      {s:61,ev:'ejercicio',it:2,k:'ask',frase:'What do you do every morning?'},
+      {s:75,ev:'clic',it:2,que:'Pista'},
+      {s:76,ev:'intento',it:2,tipo:'pista',dijo:'',meta:'',pct:null},
+      {s:95,ev:'intento',it:2,tipo:'ask',dijo:'I check the machines',meta:'',pct:null},
+      {s:130,ev:'salio',it:2},{s:310,ev:'regreso',it:2},
+      {s:318,ev:'ejercicio',it:3,k:'hueco',frase:'She ___ the reports.'},
+      {s:330,ev:'clic',it:3,que:'checks'},
+      {s:1080,ev:'fin',it:6}]}},
+    {fecha:f(1),hora:'19:15',titulo:'Tú, en tres frases',segundos:840,activos:840,frases:11,promedio:76,detalle:null}
+  ];
+})();
+
 function bloqueSesiones(lista){
   if(!lista) return '';
   if(!lista.length) return '<div class="secc"><h3>Sus sesiones</h3>'+
@@ -792,11 +972,10 @@ function abrirCadete(nombre){
     $('#volver').onclick=function(){ f.classList.remove('on'); f.innerHTML=''; f.style.display='none'; $('#hcm').style.display=''; };
   };
   if(c.muestra){
-    pinta(bloqueSesiones([
-      {fecha:new Date().toISOString().slice(0,10),hora:'07:40',leccion:7,titulo:'Lección 7 · Ranks and duties',segundos:840,frases:23,promedio:84},
-      {fecha:new Date(Date.now()-864e5).toISOString().slice(0,10),hora:'19:15',leccion:6,titulo:'Lección 6 · Daily routine',segundos:660,frases:18,promedio:77},
-      {fecha:new Date(Date.now()-3*864e5).toISOString().slice(0,10),hora:'06:55',leccion:5,titulo:'Lección 5 · My unit',segundos:720,frases:20,promedio:71}])+
-      '<div style="font-size:12px;color:var(--tenue);margin-top:4px">Cadete de muestra: estas sesiones son inventadas.</div>');
+    pinta(bloquePerfil({nombre:'Cadete de muestra',grupo:'301',carril:'medio',gusto_es:'el deporte y la historia',
+      meta_es:'hablar inglés en el servicio y en misiones de paz',acento:'americano'})+
+      bloqueTiempo(MUESTRA_SESIONES)+bloqueSesionesTodo(MUESTRA_SESIONES)+
+      '<div style="font-size:12px;color:var(--tenue);margin-top:4px">Cadete de muestra: todo esto es inventado.</div>');
     return;
   }
   pinta('<div class="secc"><div style="color:var(--tenue)">Trayendo sus sesiones…</div></div>');
@@ -804,7 +983,7 @@ function abrirCadete(nombre){
     body:JSON.stringify({accion:'detalle_cadete', pase:pasHCM(), nombre:c.nombre})})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){
-      if(d&&d.ok) pinta(bloqueSesiones(d.sesiones||[]));
+      if(d&&d.ok) pinta(bloquePerfil(d.perfil)+bloqueTiempo(d.sesiones||[])+bloqueSesionesTodo(d.sesiones||[]));
       else pinta('<div class="secc"><div style="color:var(--tenue)">'+
         (d&&/accion|desconoc/i.test(String(d.error||''))
           ? 'El detalle por sesión todavía no está activo en el servidor del Colegio.'
@@ -871,7 +1050,7 @@ function verFicha(i){
       '<div class="kpi"><div class="n">'+a.dias+'</div><div class="l">días seguidos</div></div>'+
     '</div></div>'+
     // cada sesion, una por renglon
-    bloqueSesiones(a.historial)+
+    '<div id="todo">'+bloqueSesionesTodo(a.historial||[])+'</div>'+
     // errores comunes
     '<div class="secc"><h3>Errores más comunes</h3>'+
       ((a.errores||[]).length?(a.errores||[]).map(function(e,ei){
@@ -930,6 +1109,7 @@ function verFicha(i){
     };
   });
   if(!a.muestra) ligarArmador(a);
+  traerTodoEFA(a);
 }
 </script>
 

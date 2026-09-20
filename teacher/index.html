@@ -47,6 +47,17 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--crema);color:va
 .carril.medio{background:#FDF4E3;color:#8A6210}
 .carril.alto{background:#E7F3EE;color:var(--verde)}
 .cad-num{text-align:center;min-width:44px}
+.cad[data-cad]{cursor:pointer}
+.cad[data-cad]:hover{border-color:var(--verde)}
+.ses{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--linea)}
+.ses:first-of-type{border-top:0}
+.ses-f{min-width:88px;font-weight:600;font-size:13.5px}
+.ses .pct{font-weight:700;font-size:15px}
+.ses .pct.bien{color:var(--verde)}
+.ses .pct.mal{color:var(--coral)}
+.ses-f small,.ses-t small{display:block;font-weight:400;font-size:11.5px;color:var(--tenue)}
+.ses-t{flex:1;min-width:0;font-size:14px}
+.secc h3 .cuenta{font-size:12px;color:var(--tenue);font-weight:400;margin-left:6px}
 .cad-num b{display:block;font-family:'Fraunces',serif;font-size:17px;font-weight:600;line-height:1}
 .cad-num span{font-size:9.5px;color:var(--tenue);text-transform:uppercase;letter-spacing:.06em}
 .cad-baja b{color:var(--coral)}
@@ -436,6 +447,64 @@ var MUESTRA_HCM = {
 var CADETES=[], GRUPOS_HCM=[];
 var ALUMNOS=[];
 
+/* ── FECHAS LEGIBLES ──
+   El servidor a veces manda la fecha cruda ("Mon Sep 07 2026 00:00:00 GMT-0600
+   (hora estándar central)"). Aqui se vuelve "hoy", "ayer", "hace 3 días" o "7 sep". */
+var MESES_C=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+function aFecha(t){
+  if(t instanceof Date) return isNaN(t)?null:t;
+  var x=String(t==null?'':t).trim(); if(!x) return null;
+  var m=x.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(m) return new Date(+m[1],+m[2]-1,+m[3]);
+  m=x.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(m) return new Date(+m[3],+m[2]-1,+m[1]);
+  if(!/\d{4}/.test(x)) return null;          // "hoy", "hace 1 día": ya viene legible
+  var d=new Date(x.replace(/\s*\(.*\)\s*$/,''));
+  return isNaN(d)?null:d;
+}
+function fechaBonita(t){
+  var d=aFecha(t); if(!d) return String(t==null||t===''?'—':t);
+  var h=new Date(); h.setHours(0,0,0,0);
+  var d0=new Date(d); d0.setHours(0,0,0,0);
+  var n=Math.round((h-d0)/864e5);
+  if(n<=0) return 'hoy';
+  if(n===1) return 'ayer';
+  if(n<7) return 'hace '+n+' días';
+  return d.getDate()+' '+MESES_C[d.getMonth()];
+}
+/* ── LOS CADETES NO SON ALUMNOS DE EFA ──
+   La app del Colegio mandaba, por error, cada leccion tambien al servidor de
+   English For All, y los cadetes salian aqui como alumnos particulares.
+   Ya se corrigio en la app (v136), pero lo que llego antes sigue en la hoja.
+   Aqui va la lista de los cadetes, SOLO como huella (no se leen los nombres):
+   si un "alumno" coincide, no se pinta en EFA; su avance esta en la pestaña HCM. */
+var HUELLAS_CADETES=new Set(["0033d5703c49f0df", "006af184b2743bc9", "009def32d510ddff", "0139c0dd32eb455c", "01d203c8d2cbcfb7", "01e7c143a391ee34", "035c3db98616aea1", "037ba993fe7551c6", "040fcfba35539900", "049d1b8758cfa8ab", "053998f900cf6ba1", "05e3f3d356125196", "06323644789c9f61", "07a2c4a25ad7fc07", "0b34fb8cb36f1a58", "0b81d9b93cc7279d", "0bb206824d9b23f1", "0bc5a38294d3c3eb", "0bfa224da5aeabba", "0d6080b4185abec1", "0dcb1cef28b43fb6", "0ebf1423407b54a1", "0ec004cbda4322d6", "0fee729aec5975bc", "10703e9836eb6996", "10871ce37eaa659d", "10b0226d6ffe9ca4", "10cca1225058ca22", "110ccd9318d528ed", "119d7e7ef8433181", "121ee17bc9359625", "12873123a94362c7", "13d13ee0bc112267", "13d512ea5aba6122", "155bfb6414a1c864", "1563d270bd44d134", "1564b6b455692838", "1626ff52f99405f6", "1655274936a57a91", "18e508d3d13ac38d", "1935cc59a117ae3d", "1957b0901914d75f", "1a2d2c16cad12c21", "1a61a575c37e5ea7", "1ac241f777e62adb", "1bc907e05840b1d4", "1c36878a92519525", "1c8d20182382293b", "1c9bf7261daa6ded", "1d4bae998a18e00c", "1dc7168741168419", "1ec7487e6eddab84", "1f7f40493d67e8fc", "1fab01c7d435aa86", "1ffc6605ec737c2a", "2126d937769e98e2", "219d74ecf1a6249d", "21b71f5f45e13d9b", "22d6dd8713b7db23", "235b23ed1bfc76f7", "23645f1d0d602be8", "23e803e35ed9cd3c", "2433a47a07e4c629", "24b3ef791015ca51", "24f30e50b3a1b804", "2544e0bc735268d0", "26850954cac7f0af", "27b027d1cc57406b", "27b9df8b752cd9cb", "28948938b4f85a1f", "28fb9f6f77012e40", "2a6b4ec2f5c4b2d5", "2a8f5e6056b92d9b", "2ad4c5b483536a37", "2aeb532f00e42556", "2b3b5cc4b89e22c0", "2be87da3f90afb29", "2c136a36512ff64e", "2c14ae5aa5c3b9ff", "2cdd36f360f45dc8", "2d09157cd4b37649", "2d0fca1ae90f44f8", "2dabc7737f650a88", "2eb131665bdb8c54", "2f1049dd22fdddab", "2f31f5b897446949", "3030d33dba2a019e", "307686c365821647", "30895bb637ffa7a1", "3104833d77518b8c", "3172f092f62f0968", "341ec2d8f49a8ad1", "3436eb9eda950609", "343f892bbec2afdf", "35109ba58be41f13", "359fceca94489d1b", "36f412bdf9989deb", "374baebf40b1fa4d", "37a59d8d6b599b41", "383b233782a80e32", "38b1e2cfc6393130", "390b813d3eb704af", "39b631020a662899", "3a051626d91803a3", "3aca4fe1793e0792", "3b3e30d304fce614", "3bc5c5712e4391d0", "3c31c97e99450c97", "3c9a35528b30c316", "3d9289dabae6e14e", "40e765f525a6cb79", "40f08a1eb858bfe1", "40f7024616cf0d56", "4136ab7c6126fd1e", "41415bea90a1058c", "419e4fe2c820ef7d", "41fc53fb622dcca0", "42b8150a581786b1", "430371831c6aa35e", "43496731a887b2c9", "435c008598c533fc", "441c4a678cf9f2dc", "44d282cc20eaeb92", "44dd8e11dbad00cf", "453f0ebbd8d6e830", "45d7c8e7f8189217", "45e7bab36f084cc2", "46d959284723f15a", "47a6a124b42af737", "48954ddf11db8768", "4a33a887eab721d4", "4b579e6d830ed86d", "4bff8e8d0407aa31", "4c1f7365a3782e52", "4c2b5e8c780eb987", "4c381b2a7ed88306", "4c3e61fab7352820", "4c88b7648c7568f8", "4c8cd5967078c718", "4cb209773d1a0c74", "4dc1f042fd3b2653", "4ea5b97af552c048", "4ed62456bcd679e4", "4f76eaa55e4a592a", "4fb4bdb6c5d53df9", "5005805b9f2a502f", "5027d540d2dcd329", "504ad1fcf553a610", "5073f7080f42b694", "50acb067e724bd06", "515d211b1f7e3c0f", "535c5befee763ed2", "535f4b5ef0ec1d81", "53d5eab590a95fc0", "540c65bfe04d87dd", "55dde25cf8a655a7", "568ecb91a6011bc8", "56b9e4b00f4531a1", "5815e41c58b2f46a", "58d0c043974a2a7e", "594709275ad9ff99", "5a99e9d5c25f380b", "5b27ea945ad59270", "5bb221c5455c8b15", "5ce70ef809f46234", "5dd868d992697ce5", "5e615c2605dbea58", "5eba622bb508a9dd", "60aade768d1b0bed", "60e27281f29f7c94", "611bf70cd0ab80fe", "61275b3e6e134129", "61487141336f9b41", "61f562f0641ae1a5", "6275822408c1bccf", "628dbb22aa1e0478", "62f3e63f5721dfc5", "637a78b895e28872", "642a4081e321c120", "644f7d2090904189", "64841fde986cf416", "64937e8aeeabe5eb", "64ab6f98b57f82d8", "6513b4907845e960", "662d7909a55d91a1", "6694038b5dc3dd18", "66e3c015b18a1ad7", "670f582cf2202ccb", "674187003fcc57c0", "67c19fca6f5fc7c1", "67c3d0d4c7738aeb", "67f9c45b3013fdbc", "682d27118d10a8ce", "68a1649a7f8b1be2", "68eba1a02cd2e9c3", "69a9fceb97a43eb8", "6adc82e0c55966ab", "6ae91e19da280d4b", "6f2160de8d9ba538", "6f720d83e8009a5c", "6ff4a7fedb308b89", "7055d31ba6800817", "7306fb270d61c837", "73e94db63555bb8c", "743511ee9ce3ee96", "75024184c67e6a09", "751524e6b6d1b1d0", "7549bdebba1455dd", "759efafbef7cb27e", "7644bb6f029b6450", "764a6a0ac17860c2", "7740fac3444cd9d3", "774fed38a9d06d4a", "780cb304f1d52345", "7a38fc6af9ee8fcc", "7a6ddd9a88f0fe25", "7ac73d42b83a4de0", "7ae9c58a0ff0b0c3", "7b1e024bfa2b01f8", "7b5697326c69e65b", "7c7e42e7c9b4ed2f", "7d0ee52ead2ae0bd", "7d1cedbfc6dc7a70", "7da88475a3b84aaa", "7de698afac1f6838", "7e3d2601db901e56", "8065ddded46bb8cf", "80c60c89f9a5f481", "818cd694da20cd07", "81b40eda44f08bff", "81b56445b0301bb0", "832e29340bf68441", "83fc3a73f58ddf72", "846e9364b821a47c", "849e8aab56cf4d9b", "855be96b175eb32f", "8597b4cb5c805c2f", "86f5092b5583ce71", "8846d2e491383d55", "88785a89127de47f", "88a91bae1fb330a1", "88b150863a31b082", "890aff8e5e1441d9", "89ac80a97466365a", "8acc5746bf32139e", "8c413b89d06c58f2", "8e32246250d11f94", "8ee7ae755b7d887a", "8f163e851429c1a2", "9070cebe744297f3", "90aa653da8eba43c", "9142ac90d886bba0", "9221033f16e2d570", "928d84efbad86892", "9300930b595841cd", "9581ed4b13711874", "95e77d5abbe4773e", "96432355d9d2f5a9", "980f85cf83f56693", "98c91edbb6ae7edd", "99185de953e6a0fa", "99b288c368c97e7b", "9a0a28f348092634", "9a38f879cee66886", "9b0b8877778fe821", "9b4755de17ff97fc", "9b9fa63716ef90e6", "9be449477d6d5799", "9bf8b63476f897c9", "9c970c48eafd6138", "9d8e3f54d753673f", "9ddd346bdc1f8917", "9e0aa2664d81a230", "9e1388c473c4eccb", "9e431881206dcb02", "9edcaef556f3f05c", "9f49d671c14590b9", "9f4e558733875ab4", "9f99cc027bc4bc55", "9f9e062b53614310", "a101a5164af3988d", "a1cf687518969a3a", "a244e595cf054e92", "a2d79dfa24a26654", "a354f9e0d137245e", "a42241fed99b10d6", "a4a496dd76cc4a28", "a4af6fb9665dfd21", "a59b2dbf73403927", "a79b954d6f318ae4", "a7dc2b965e7ba5a3", "a81aacbf1dc9950e", "a9482ec06f4af484", "aa4f5345aaffc548", "aa5900a3bc5b6c47", "aa7c71ebc2564d15", "aaaada14313a6462", "ab512602579f77ca", "accdf20791b4014c", "ae27c372551063f5", "b01be833a74cb206", "b0710e31993d1b5e", "b45d856989336da5", "b49b3360ee3c31d7", "b5134b5741285faa", "b5d914e6bc5f52f1", "b65391cd82acc8ce", "b6c390552f550078", "b7105453ea5d1463", "b777f9a05c62fd46", "b7e1fac2397fb0b8", "b812c8434a0724b5", "b83280a52a03aedc", "b91ecae7ad4108ba", "b929df93a76eebe3", "b9c3dc526210f383", "ba69844b91a7dc46", "ba8fd4f9a43dd0fe", "bbc9e5d8a9a211a8", "bc9fba0f565b95b5", "bd489cff6a5b01e4", "be602191d241771e", "bf088db75dfe600a", "bf40a12812f5a28b", "bf4fec0d66f561de", "c0cf0aeabbdc78f5", "c1261cbf14a434a5", "c1931d9a83bdeaa2", "c1b03e1f16ca2e52", "c23437589df42d6e", "c25488c622271744", "c29ddd51c95f3912", "c2cb8b67826d4a90", "c384f340711feba9", "c3d5fdb031c12fea", "c49e8d55fe976e92", "c4f6b9092289fff7", "c53a9bc78e31023b", "c633becaa08188c7", "c766ba0972f8d94a", "c7b11fbf01e910ae", "c88b2800a701fc97", "c95f2941d8b74386", "c984c4f39fe82b00", "ca281defa159f786", "cb54e7d2e59dc534", "cc91e168e00a6a9d", "ce9c6e808a46cb47", "cec086813570b58e", "ceeaa1a2887d0d80", "cfb7838b62d17980", "d00b5009a651c2fe", "d0770fd43f201bb2", "d0d675ce6915e7fd", "d1e34d0f26f79040", "d296cd9e585a9f02", "d365638b143a58a3", "d3db753a45049527", "d41099511abfb0fd", "d526aba8607fbac7", "d533e5f563acd269", "d56ba19b9e9f84bf", "d703c0a9f0715fc3", "d7295099f94f8f33", "d76da62905235180", "d77f55fbd95d1d7f", "d7bc4922463a49ff", "d8f66e4d91cb9330", "d925c97707c0ad4e", "da0f9273ae7d3346", "da213840df695b66", "da99051dee3e28e5", "db572073f3b17ef5", "db61930395f9de86", "db70031a0b346b27", "dc9fc2a378fd2c02", "dccc537a287ab24a", "de053e201078b9f9", "de8f4a51e2a9db36", "df7a8157f84185d5", "dfd9126ba9e8661a", "e125b70518fa36f2", "e14fc1650578fee7", "e172c9f60028fcb7", "e17f9a0b9e9086ba", "e1a681aa7cb8b232", "e2bf9aae7bbf3b45", "e2c389383407f5b1", "e3addad6520b122b", "e3f6c28cdeb14dc3", "e54a3d8eba8b4e31", "e6a94003be13b482", "e74c0ed5545160c4", "e74ca81799f12363", "e7b8c29196d74b57", "e7e353ed9146f433", "e7f6ab086bc80e11", "e81870c2617131f7", "e83838e2a821a8e7", "e86c9db4b0a78f9f", "e8bd7292005dead4", "e912da72cbca2c88", "e954ca40a8df00b8", "ea21419c8ac93c77", "ea2bb4e55544dc4a", "eac253e75ddd82fd", "eb994c72ea6ae639", "ece3b4204ade1f93", "ed7f65cd12901d73", "ed9f091d7b4a97f1", "edf2dc8bc6a6cb16", "eed904210aedbc2f", "ef6c502d57dc44b6", "f0bc889189a3ed4b", "f171c67e144cb8d3", "f210fbe2525671ab", "f38c75211dc31982", "f410f76587f11e3e", "f44fb91080159c3a", "f49fdc526ed336ad", "f4d0f3acc78eedd5", "f4e3251fd6c1f8b2", "f4f5c3ef3024189b", "f502ebcdebb2e5ef", "f68cfe9cb2b041c9", "f7eeddc670b075cb", "f8394727832b3e29", "fa5bb1505201049c", "fadff6a30c9e633e", "fcbaf62a56151c85", "fd19c0de00abe8a2", "fd8b4c2f11871e9a", "fe0b86a362e9c4e9", "fef0da87aacf2d6e", "ff2e213483939864", "ffed17b39daa78b8"]);
+function normNombre(n){
+  return String(n||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/\s+/g,' ').replace(/[^a-z ]/g,'').trim();
+}
+async function huella(n){
+  var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(normNombre(n)));
+  return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0');}).join('').slice(0,16);
+}
+// Un renglon roto de la hoja de perfiles trae la fecha donde va el nombre.
+function nombreRoto(n){ return /GMT|\d{4}.*\d{1,2}:\d{2}|^\s*$/.test(String(n||'')); }
+async function separarCadetes(lista){
+  var buenos=[], fuera=0;
+  for(var i=0;i<lista.length;i++){
+    var a=lista[i]||{};
+    var esCadete=false;
+    try{
+      esCadete = HUELLAS_CADETES.has(await huella(a.nombre)) ||
+                 (nombreRoto(a.nombre) && HUELLAS_CADETES.has(await huella(a.nivel)));
+    }catch(e){}
+    if(esCadete || nombreRoto(a.nombre)) { fuera++; continue; }
+    buenos.push(a);
+  }
+  return {buenos:buenos, fuera:fuera};
+}
+var CADETES_OCULTOS=0;
+
 function iniciales(n){return n.split(/\s+/).map(function(x){return x[0];}).slice(0,2).join('').toUpperCase();}
 
 function cargar(){
@@ -478,11 +547,13 @@ function cargar(){
         mostrarFalla(d.error||'El servidor de datos contestó con un error.');
         return;
       }
-      ALUMNOS=d.alumnos||[];
-      $('#sync').textContent='conectado · '+ALUMNOS.length+
-        (ALUMNOS.length===1?' alumno':' alumnos');
-      $('#sync').style.color='var(--verde)';
-      pintarLista();
+      separarCadetes(d.alumnos||[]).then(function(r){
+        ALUMNOS=r.buenos; CADETES_OCULTOS=r.fuera;
+        $('#sync').textContent='conectado · '+ALUMNOS.length+
+          (ALUMNOS.length===1?' alumno':' alumnos');
+        $('#sync').style.color='var(--verde)';
+        pintarLista();
+      });
     })
     .catch(function(){
       $('#sync').textContent='sin conexión';$('#sync').style.color='var(--coral)';
@@ -534,6 +605,7 @@ function cambiarPrograma(cual){
   var esHCM = cual==='hcm';
   $('#lista').style.display = esHCM?'none':'';
   $('#ficha').style.display = esHCM?'none':'';
+  $('#ficha').classList.remove('on');
   $('#hcm').style.display   = esHCM?'':'none';
   if(esHCM) cargarHCM(); else { $('#sync').textContent='cargando…'; cargar(); }
 }
@@ -619,6 +691,7 @@ function claseCarril(c){
 }
 // Ultima sesion viene como texto largo del servidor. Aqui solo se acorta.
 function diaCorto(t){
+  var f=aFecha(t); if(f) return f.getDate()+' '+MESES_C[f.getMonth()];
   var s=String(t||'').trim();
   if(!s) return '—';
   var m=s.match(/^(\d{1,2})\/(\d{1,2})/);
@@ -627,7 +700,7 @@ function diaCorto(t){
 
 function filaCadete(c){
   var part=Number(c.particip||0), extra=Number(c.extraclase||0);
-  return '<div class="cad'+(c.muestra?' esmuestra':'')+'">'+
+  return '<div class="cad'+(c.muestra?' esmuestra':'')+'" role="button" tabindex="0" data-cad="'+esc(c.nombre||'')+'">'+
     '<div class="av">'+iniciales(c.nombre)+'</div>'+
     '<div class="cad-n"><b>'+esc(c.nombre||'—')+'</b>'+
       '<small>'+esc(c.num||'sin número')+' · '+(c.sesiones||0)+' sesiones · '+
@@ -671,6 +744,73 @@ function pintarCadetes(){
   }
   html += bloqueMuestraHCM();
   $('#hcm').innerHTML=html;
+  $('#hcm').querySelectorAll('.cad[data-cad]').forEach(function(el){
+    el.onclick=function(){ abrirCadete(el.getAttribute('data-cad')); };
+  });
+}
+
+/* ── LAS SESIONES, UNA POR UNA ──
+   Lo mismo para EFA y para el Colegio: fecha, qué practicó, cuánto tiempo,
+   cuántas frases dijo y qué tan parecido le salió. */
+function bloqueSesiones(lista){
+  if(!lista) return '';
+  if(!lista.length) return '<div class="secc"><h3>Sus sesiones</h3>'+
+    '<div style="color:var(--tenue);font-size:14px">Todavía no termina ninguna sesión.</div></div>';
+  var l=lista.slice().sort(function(x,y){
+    var a=aFecha(x.fecha), b=aFecha(y.fecha); return (b?b.getTime():0)-(a?a.getTime():0);
+  });
+  return '<div class="secc"><h3>Sus sesiones <span class="cuenta">'+l.length+'</span></h3>'+
+    l.map(function(x){
+      var min=Math.round((+x.segundos||+x.dur||0)/60);
+      var prom=(x.promedio!=null&&x.promedio!=='')?Math.round(+x.promedio):null;
+      return '<div class="ses">'+
+        '<div class="ses-f">'+esc(fechaBonita(x.fecha))+(x.hora?'<small>'+esc(x.hora)+'</small>':'')+'</div>'+
+        '<div class="ses-t">'+esc(x.titulo||(x.leccion?('Lección '+x.leccion):'Sesión'))+
+          '<small>'+(min?min+' min':'menos de 1 min')+
+          (x.frases!=null?' · '+x.frases+' frases':'')+'</small></div>'+
+        (prom!=null?'<div class="pct '+(prom>=80?'bien':'mal')+'">'+prom+'%</div>':'')+
+      '</div>';
+    }).join('')+'</div>';
+}
+
+function abrirCadete(nombre){
+  var c=CADETES.filter(function(x){return x.nombre===nombre;})[0] ||
+        (MUESTRA_HCM.nombre===nombre?MUESTRA_HCM:null);
+  if(!c) return;
+  var f=$('#ficha'); $('#hcm').style.display='none'; f.style.display=''; f.classList.add('on'); try{window.scrollTo(0,0);}catch(e){}
+  var pinta=function(extra){
+    f.innerHTML='<button class="volver" id="volver">‹ Todos los cadetes</button>'+
+      '<div class="fh"><div class="av">'+iniciales(c.nombre)+'</div>'+
+        '<div><h2>'+esc(c.nombre)+'</h2><div class="cod">Grupo '+esc(c.grupo||'—')+' · '+
+        esc(c.num||'sin número')+' · carril '+esc(c.carril||'—')+' · '+esc(fechaBonita(c.ultima))+'</div></div></div>'+
+      '<div class="secc"><div class="kpis">'+
+        '<div class="kpi"><div class="n">'+(c.leccion||0)+'</div><div class="l">lección</div></div>'+
+        '<div class="kpi"><div class="n">'+(c.sesiones||0)+'</div><div class="l">sesiones</div></div>'+
+        '<div class="kpi"><div class="n">'+(Math.round((c.minutos||0)/6)/10)+'h</div><div class="l">practicadas</div></div>'+
+        '<div class="kpi"><div class="n">'+(+c.particip||0)+'%</div><div class="l">participación</div></div>'+
+      '</div></div>'+extra;
+    $('#volver').onclick=function(){ f.classList.remove('on'); f.innerHTML=''; f.style.display='none'; $('#hcm').style.display=''; };
+  };
+  if(c.muestra){
+    pinta(bloqueSesiones([
+      {fecha:new Date().toISOString().slice(0,10),hora:'07:40',leccion:7,titulo:'Lección 7 · Ranks and duties',segundos:840,frases:23,promedio:84},
+      {fecha:new Date(Date.now()-864e5).toISOString().slice(0,10),hora:'19:15',leccion:6,titulo:'Lección 6 · Daily routine',segundos:660,frases:18,promedio:77},
+      {fecha:new Date(Date.now()-3*864e5).toISOString().slice(0,10),hora:'06:55',leccion:5,titulo:'Lección 5 · My unit',segundos:720,frases:20,promedio:71}])+
+      '<div style="font-size:12px;color:var(--tenue);margin-top:4px">Cadete de muestra: estas sesiones son inventadas.</div>');
+    return;
+  }
+  pinta('<div class="secc"><div style="color:var(--tenue)">Trayendo sus sesiones…</div></div>');
+  fetch(HCM_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({accion:'detalle_cadete', pase:pasHCM(), nombre:c.nombre})})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(d){
+      if(d&&d.ok) pinta(bloqueSesiones(d.sesiones||[]));
+      else pinta('<div class="secc"><div style="color:var(--tenue)">'+
+        (d&&/accion|desconoc/i.test(String(d.error||''))
+          ? 'El detalle por sesión todavía no está activo en el servidor del Colegio.'
+          : 'No se pudieron traer sus sesiones'+(d&&d.error?': '+esc(d.error):'.'))+'</div></div>');
+    })
+    .catch(function(){ pinta('<div class="secc"><div style="color:var(--tenue)">Sin conexión con el Colegio.</div></div>'); });
 }
 
 // VISTA es lo que de verdad esta pintado: los alumnos reales mas la muestra.
@@ -685,17 +825,20 @@ function pintarLista(){
   $('#grid').innerHTML=
     (ALUMNOS.length?'':'<div class="avisomuestra">Todav\u00eda no hay alumnos reales. '+
       'Abajo queda el alumno de muestra, para que veas c\u00f3mo se ve el panel.</div>')+
+    (CADETES_OCULTOS?'<div class="avisomuestra">'+CADETES_OCULTOS+
+      (CADETES_OCULTOS===1?' registro del Colegio Militar llegó':' registros del Colegio Militar llegaron')+
+      ' aquí por error y no se muestran. Su avance está en la pestaña HCM.</div>':'')+
     VISTA.map(function(a,i){
-    var pct=Math.round(a.parada/72*100);
+    var pct=Math.round((+a.parada||0)/72*100);
     return '<button class="card'+(a.muestra?' esmuestra':'')+'" data-i="'+i+'">'+
       '<div class="fila1"><div class="av">'+iniciales(a.nombre)+'</div>'+
       '<div><div class="nom">'+esc(a.nombre)+'</div>'+
       '<div class="cod">'+esc(a.codigo)+' · '+esc(a.nivel)+'</div></div></div>'+
       '<div class="barra"><i style="width:'+pct+'%"></i></div>'+
-      '<div class="mini"><span>parada <b>'+a.parada+'</b>/72</span>'+
+      '<div class="mini"><span>parada <b>'+(a.parada||1)+'</b>/72</span>'+
         '<span><b>'+a.sesiones+'</b> sesiones</span>'+
         '<span><b>'+Math.round(a.minutos/60*10)/10+'</b> h</span></div>'+
-      '<div class="mini" style="margin-top:5px"><span>últ.: '+esc(a.ultima)+'</span>'+
+      '<div class="mini" style="margin-top:5px"><span>últ.: '+esc(fechaBonita(a.ultima))+'</span>'+
         '<span><b>'+a.dias+'</b> días seguidos</span></div>'+
       (a.porRevisar?'<div class="alerta">● '+a.porRevisar+' grabación'+(a.porRevisar>1?'es':'')+' por revisar</div>':'')+
       (a.muestra?'<div class="sello">muestra</div>':'')+
@@ -719,7 +862,7 @@ function verFicha(i){
   f.innerHTML=
     '<button class="volver" id="volver">‹ Todos mis alumnos</button>'+
     '<div class="fh"><div class="av">'+iniciales(a.nombre)+'</div>'+
-      '<div><h2>'+esc(a.nombre)+'</h2><div class="cod">'+esc(a.codigo)+' · nivel '+esc(a.nivel)+' · '+esc(a.ultima)+'</div></div></div>'+
+      '<div><h2>'+esc(a.nombre)+'</h2><div class="cod">'+esc(a.codigo)+' · nivel '+esc(a.nivel)+' · '+esc(fechaBonita(a.ultima))+'</div></div></div>'+
     // KPIs
     '<div class="secc"><div class="kpis">'+
       '<div class="kpi"><div class="n">'+a.parada+'</div><div class="l">parada de 72</div></div>'+
@@ -727,9 +870,11 @@ function verFicha(i){
       '<div class="kpi"><div class="n">'+(Math.round(a.minutos/60*10)/10)+'h</div><div class="l">practicadas</div></div>'+
       '<div class="kpi"><div class="n">'+a.dias+'</div><div class="l">días seguidos</div></div>'+
     '</div></div>'+
+    // cada sesion, una por renglon
+    bloqueSesiones(a.historial)+
     // errores comunes
     '<div class="secc"><h3>Errores más comunes</h3>'+
-      (a.errores.length?a.errores.map(function(e,ei){
+      ((a.errores||[]).length?(a.errores||[]).map(function(e,ei){
         // acepta las dos formas: la vieja ['error',5] y la nueva con casos
         var q=e.q||e[0], casos=e.casos||[], n=casos.length||e[1]||0;
         return '<div class="errbloque">'+
@@ -756,7 +901,7 @@ function verFicha(i){
     '</div>'+
     // grabaciones
     '<div class="secc"><h3>Sus grabaciones</h3>'+
-      a.grabaciones.map(function(g){
+      (a.grabaciones||[]).map(function(g){
         var cl=g.pct>=80?'bien':'mal';
         return '<div class="grab"><span class="fr">'+esc(g.frase)+'<br><span style="font-size:11px;color:var(--tenue)">'+esc(g.fecha)+'</span></span>'+
           '<span class="pct '+cl+'">'+g.pct+'%</span>'+

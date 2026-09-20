@@ -1339,31 +1339,82 @@
 
 
 <style id="cssciu">
-.ciuwrap{padding:0 0 18px;max-width:100%;overflow-x:hidden}
-.ciucab{display:flex;justify-content:space-between;align-items:center;padding:8px 12px 2px;gap:6px;max-width:calc(100vw - 6px);box-sizing:border-box}
-.ciucab .ciupar{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
-.ciuniv{font-weight:800;font-size:15px;letter-spacing:.4px}
-.ciupar{font-size:11px;color:#8A7A5C;letter-spacing:1px}
-.ciuchips{display:flex;gap:5px;padding:5px 10px 2px;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+/* el mapa ocupa toda la pantalla; lo demás flota encima */
+.mf{position:fixed;left:0;right:0;margin:0 auto;width:min(430px,100vw);top:0;
+  bottom:calc(64px + env(safe-area-inset-bottom));z-index:1;overflow:hidden;background:#E6DDC7}
+.mf-mapa{position:absolute;inset:0;overflow:hidden}
+.mf-mapa>img{width:100%;height:100%;object-fit:cover;display:block}
+.mf-mapa>svg{position:absolute;left:0;top:0;width:100%;height:100%;font-family:inherit}
+.mf-mapa .pinciu svg{position:static}
+.mf-top{position:absolute;left:0;right:0;top:0;z-index:3;padding:8px 10px 14px;
+  background:linear-gradient(180deg,rgba(239,230,210,.96) 62%,rgba(239,230,210,0));pointer-events:none}
+.mf-top>*{pointer-events:auto}
+.mf-pie{position:absolute;left:0;right:0;bottom:0;z-index:3;padding:26px 14px 12px;
+  background:linear-gradient(0deg,rgba(239,230,210,.96) 58%,rgba(239,230,210,0))}
+.mf-dias{display:block;width:100%;margin-top:8px;background:transparent;border:0;color:#6E624C;font-size:12.5px;font-weight:600;min-height:38px}
+.mf-visita{margin-bottom:8px;padding:8px 12px;border-radius:12px;background:#413B31;color:#F3EAD3;font-size:12.5px;text-align:center}
+.mf-visita b{color:#E8C063}
+.ciucab{display:flex;justify-content:space-between;align-items:center;gap:6px;max-width:100%;box-sizing:border-box}
+.ciucab .ciupar{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;font-size:10.5px;color:#8A7A5C;letter-spacing:1px}
+.ciuniv{background:transparent;border:0;font-weight:800;font-size:15px;padding:0;min-height:30px}
+.ciupsp{flex:0 0 auto;background:rgba(255,255,255,.7);border:1px solid #DCCFB3;border-radius:999px;padding:3px 9px;font-size:10px;font-weight:700;color:#6E624C;min-height:28px}
+.ciuchips{display:flex;gap:5px;padding:6px 0 2px;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .ciuchips::-webkit-scrollbar{display:none}
-.ciuchip{flex:0 0 auto;border:1px solid #DCCFB3;background:#FBF6EA;color:#1F1B16;border-radius:999px;padding:4px 10px;font-size:10.5px;font-weight:700;min-height:28px;white-space:nowrap}
+.ciuchip{flex:0 0 auto;border:1px solid #DCCFB3;background:rgba(251,246,234,.92);color:#1F1B16;border-radius:999px;padding:4px 10px;font-size:10.5px;font-weight:700;min-height:28px;white-space:nowrap}
 .ciuchip.on{color:#fff}
-.ciumis{margin:6px 10px;padding:9px 12px;border-radius:13px;background:#1F1B16;color:#FBF6EA;max-width:calc(100vw - 20px);box-sizing:border-box}
+.ciumis{margin-top:6px;padding:9px 12px;border-radius:13px;background:rgba(31,27,22,.92);color:#FBF6EA;box-shadow:0 6px 18px rgba(31,27,22,.18)}
 .ciumis-t{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:9.5px;letter-spacing:1px;color:#E8C063}
-.ciumis-x{font-size:13px;line-height:1.3;margin-top:3px}
-.ciues{min-height:28px;padding:3px 10px;border-radius:999px;border:1px solid #5A5448;background:transparent;color:#CFC6B4;font-size:11px;font-weight:700;flex:0 0 auto}
-.ciumapa{position:relative;margin:4px auto 0;border-radius:18px;overflow:hidden;background:#E6DDC7;
-  width:min(calc(100% - 16px), calc(100vw - 30px));aspect-ratio:358/600;max-height:calc(100vh - 300px)}
-.ciumapa>img{display:block;width:100%;height:100%;object-fit:cover}
-.ciumapa>svg{position:absolute;left:0;top:0;width:100%;height:100%;font-family:inherit}
-.ciumapa .pinciu svg{position:static}
-.ciuosm{position:absolute;left:7px;bottom:7px;background:rgba(255,255,255,.85);border-radius:7px;padding:1px 6px;font-size:8.5px;color:#6E624C}
-.ciubotones{padding:10px 14px 96px}
+.ciumis-x{font-size:13px;line-height:1.3;margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ciumis.abierta .ciumis-x{-webkit-line-clamp:unset;overflow:visible}
+.ciues{min-height:26px;padding:2px 9px;border-radius:999px;border:1px solid #5A5448;background:transparent;color:#CFC6B4;font-size:10.5px;font-weight:700;flex:0 0 auto}
+.ciuosm{position:absolute;left:8px;bottom:78px;background:rgba(255,255,255,.8);border-radius:7px;padding:1px 6px;font-size:8.5px;color:#6E624C}
 @keyframes ciupulso{0%{opacity:.7;transform:scale(.6)}80%,100%{opacity:0;transform:scale(1.3)}}
-.ciumapa .pulso{transform-box:fill-box;transform-origin:center;animation:ciupulso 1.6s ease-out infinite}
-@media (prefers-reduced-motion: reduce){.ciumapa .pulso{animation:none}}
+.mf-mapa .pulso{transform-box:fill-box;transform-origin:center;animation:ciupulso 1.6s ease-out infinite}
+@media (prefers-reduced-motion: reduce){.mf-mapa .pulso{animation:none}}
 </style>
 <style id="csspsp">
+.ciu-boleto{margin:10px 12px 0}
+.boleto{display:block;width:100%;height:auto}
+.ciu-nota-bol{margin:6px 12px 0;font-size:11.5px;color:#8A7A5C;line-height:1.35}
+@keyframes picaHoyo{0%{transform:scale(.2);opacity:0}60%{transform:scale(1.25)}100%{transform:scale(1);opacity:1}}
+.boleto .pica{transform-box:fill-box;transform-origin:center;animation:picaHoyo .55s cubic-bezier(.2,.9,.3,1) both}
+@media (prefers-reduced-motion:reduce){.boleto .pica{animation:none}}
+
+/* ── pantalla de carga ── */
+.carga{position:fixed;inset:0;z-index:900;background:#0B0B0A;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;transition:opacity .4s}
+.carga.sale{opacity:0}
+.carga-aro{position:absolute;width:min(78vw,340px);height:auto;opacity:.9;animation:cargaGira 9s linear infinite}
+@keyframes cargaGira{to{transform:rotate(360deg)}}
+.carga-logo{position:relative;animation:cargaEntra .9s cubic-bezier(.2,.9,.3,1) both}
+@keyframes cargaEntra{0%{opacity:0;transform:translateY(14px) scale(.9)}100%{opacity:1;transform:none}}
+.carga-t{position:relative;margin-top:10px;font-size:19px;font-weight:800;letter-spacing:3px;color:#E8C063;animation:cargaEntra 1s .15s cubic-bezier(.2,.9,.3,1) both}
+.carga-s{position:relative;font-size:12.5px;color:#8C8471;animation:cargaEntra 1s .3s cubic-bezier(.2,.9,.3,1) both}
+.carga-barra{position:relative;margin-top:26px;width:120px;height:3px;border-radius:2px;background:#2A2822;overflow:hidden}
+.carga-barra i{display:block;height:100%;width:40%;border-radius:2px;background:#E8C063;animation:cargaVa 1.7s ease-in-out forwards}
+@keyframes cargaVa{0%{width:6%}100%{width:100%}}
+@media (prefers-reduced-motion:reduce){.carga-aro,.carga-logo,.carga-t,.carga-s,.carga-barra i{animation:none}}
+/* ── portada fija, con apertura ── */
+.pspA.fija{position:fixed;inset:0;z-index:2;margin:0;padding:18px 14px calc(80px + env(safe-area-inset-bottom));overflow:hidden;justify-content:center}
+.pspA-escena{position:relative;width:min(330px,86vw);aspect-ratio:330/560;perspective:1400px}
+.pspA-escena .pspA-tapa{position:absolute;inset:0;width:100%;transform-origin:left center;backface-visibility:hidden;transition:transform 1s cubic-bezier(.3,.8,.3,1),box-shadow .6s}
+.pspA.abre .pspA-tapa{transform:rotateY(-155deg)}
+.pspA-hoja{position:absolute;inset:0;border-radius:14px 22px 22px 14px;background:#FBF6EA;color:#1F1B16;padding:34px 24px;display:flex;flex-direction:column;justify-content:center;gap:8px;box-shadow:inset 10px 0 0 rgba(0,0,0,.06)}
+.pspA-hoja-et{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:2.5px;color:#B23A48}
+.pspA-hoja-t{font-family:'Instrument Serif',Georgia,serif;font-size:30px;line-height:1.1}
+.pspA-hoja-x{font-size:14px;color:#6E624C;line-height:1.4}
+.pspA.abre .pspA-hoja{animation:hojaPasa 1.1s .35s cubic-bezier(.3,.8,.3,1) both}
+@keyframes hojaPasa{0%{opacity:.4;transform:translateX(-6px)}100%{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.pspA .pspA-tapa,.pspA-hoja{transition:none;animation:none}}
+/* ── llegada a la ciudad ── */
+.ciu7.llega .ciu-cab{animation:llegaCab .7s cubic-bezier(.2,.9,.3,1) both}
+.ciu7.llega .dia,.ciu7.llega .bp{animation:llegaFila .5s cubic-bezier(.2,.9,.3,1) both}
+.ciu7.llega .dia:nth-of-type(2){animation-delay:.08s}
+.ciu7.llega .dia:nth-of-type(3){animation-delay:.16s}
+.ciu7.llega .bp{animation-delay:.24s}
+@keyframes llegaCab{0%{opacity:0;transform:translateY(-18px)}100%{opacity:1;transform:none}}
+@keyframes llegaFila{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.ciu7.llega .ciu-cab,.ciu7.llega .dia,.ciu7.llega .bp{animation:none}}
+
 /* A · portada */
 .pspA{min-height:100%;background:#0B0B0A;margin:-12px -14px 0;padding:22px 14px 100px;display:flex;flex-direction:column;align-items:center}
 .pspA-tapa{position:relative;width:min(330px,86vw);aspect-ratio:330/560;border-radius:14px 22px 22px 14px;background:#15140F;box-shadow:inset 10px 0 0 #0F0E0B,0 30px 60px rgba(0,0,0,.6);display:flex;flex-direction:column;align-items:center;overflow:hidden}
@@ -1520,7 +1571,7 @@ if('serviceWorker' in navigator){
 <script>
 (function(){
 "use strict";
-var VERSION="v147 · 20 sep · pasaporte completo: portada, visas, país, ciudad de 7 días, sello y entrevista";
+var VERSION="v148 · 20 sep · carga, pasaporte de entrada y mapa a pantalla completa";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -9516,6 +9567,7 @@ function sumarPuntos(rec){
   SALTAR_DESDE=c.parada;             // de aquí brinca el muñeco al volver al mapa
   // Cerrar la parada 7, 14, 21 o 28 es cerrar una ciudad: queda un sello pendiente.
   if(c.parada%7===0)c.sello=Math.floor((c.parada-1)/7);
+  else c.pica=((c.parada-1)%7);   // si no, solo le pican el boleto del día
   c.parada=Math.min(c.parada+1,PARADAS);
   c.maxima=Math.max(c.maxima,c.parada);
   guardarProgreso(c);
@@ -11105,6 +11157,7 @@ function seguirPersonalizacion(){
   if(!D.fotoPreguntada){pedirFotoAlta();return;}
   PERSONALIZANDO=false;
   MAT=materialDe(P);
+  LLEGADA=1;
   mapa();
 }
 
@@ -11435,6 +11488,23 @@ function mapa(){
       pantallaSello(_j); return;
     }
   }catch(e){}
+  try{
+    var _cp=progreso();
+    if(_cp && _cp.pica!=null && window.EFA_CIU && typeof pantallaCiudad==='function'){
+      var _pi=_cp.pica; _cp.pica=null; guardarProgreso(_cp);
+      var _nv3=(P&&P.nivel)||'Pre-A1';
+      pantallaCiudad(_nv3, Math.min(3,Math.floor(Math.max(0,(_cp.parada||1)-1)/7)), false, _pi);
+      return;
+    }
+  }catch(e){}
+  try{
+    if(LLEGADA && window.EFA_CIU && typeof pantallaCiudad==='function'){
+      LLEGADA=0;
+      var _nv=(P&&P.nivel)||'Pre-A1', _c2=progreso();
+      pantallaCiudad(_nv, Math.min(3,Math.floor(Math.max(0,(_c2.parada||1)-1)/7)), true);
+      return;
+    }
+  }catch(e){}
   try{ if(mapaCiudades())return; }catch(e){ MAPA_CIU_APAGADO=true; }
   if(mapa3DoViejo())return;
   mapaViejo();
@@ -11531,6 +11601,7 @@ function asomarseALeccion(n,actual){
    queda con el tablero de antes y nadie se entera.
    ══════════════════════════════════════════════════════════════ */
 var MAPA3D=null, MAPA3D_APAGADO=false, EFA_MOTIVO='';
+var CARGA_VISTA=false, LLEGADA=0;
 
 // Los cuatro bloques del pre-A1. Cada uno cubre 7 paradas.
 var ZONAS_NIVEL={
@@ -11691,7 +11762,7 @@ function montarMapa3D(host,c){
   }
 }
 
-window.EFA_CIU={"Pre-A1":[{"k":"cdmx","n":"AEROPUERTO CDMX","t":"Quién eres","m":"Recoges a un visitante extranjero. Preséntate, dile quién eres y llévalo hasta el coche.","es":"","p":[["avion","Sala de llegadas",68,520],["persona","Tu letrero",266,462],["edificio","Mostrador",104,407],["dinero","Cambio de dinero",261,319],["cafe","Cafetería",107,264],["auto","Estacionamiento",238,205],["estrella","Bienvenido a México",165,117]]},{"k":"cancun","n":"CANCÚN","t":"Tu día","m":"Trabajas la temporada en un hotel. Un huésped quiere saber cómo es un día tuyo.","es":"","p":[["cama","Lobby",167,466],["ola","Alberca",245,422],["plato","Cocina",123,352],["sol","Playa",203,377],["bolsa","Tiendita",114,281],["cama","Tu cuarto",217,208],["estrella","Plática con el huésped",161,160]]},{"k":"loscabos","n":"LOS CABOS","t":"Tu trabajo","m":"Un cliente de fuera visita tu empresa. Explícale qué haces y cómo se hace.","es":"","p":[["edificio","Entrada",79,513],["persona","Tu área",237,414],["caja","Almacén",102,367],["edificio","Oficina",241,300],["plato","Comedor",105,255],["chat","Sala de juntas",259,193],["estrella","El recorrido",177,112]]},{"k":"tijuana","n":"TIJUANA","t":"Números y horas","m":"Cruzas la frontera por el día: horarios, precios, cuentas y regresar a tiempo.","es":"","p":[["bandera","Garita",97,517],["reloj","La fila",254,471],["auto","Taxi",104,397],["bolsa","Mercado",252,323],["cruz","Farmacia",100,254],["plato","Restaurante",288,206],["estrella","Regresar a tiempo",170,121]]}],"A1":[{"k":"losangeles","n":"LOS ANGELES","t":"Your people","m":"You join a new team downtown. Introduce yourself and get invited to the Saturday barbecue.","es":"Llegas a un equipo nuevo en el centro. Preséntate y logra que te inviten a la carne asada del sábado.","p":[["edificio","Front desk",74,515],["persona","Your desk",256,463],["cafe","Cafeteria",115,407],["auto","Parking lot",266,329],["bolsa","Market",102,255],["arbol","Grand Park",263,190],["estrella","The barbecue",179,113]]},{"k":"houston","n":"HOUSTON","t":"Places","m":"Your company sent you here for a week of training. Get around downtown on your own and on Friday present your work at the meeting.","es":"Tu empresa te mandó una semana de capacitación. Muévete solo por el centro y el viernes presenta tu trabajo en la junta.","p":[["cama","Hotel",271,512],["arbol","Discovery Green",76,487],["bolsa","Grocery store",262,390],["tren","METRORail",93,336],["plato","Restaurant",250,253],["edificio","The office",109,187],["estrella","The meeting",173,113]]},{"k":"chicago","n":"CHICAGO","t":"Asking and giving","m":"The airline lost your suitcase. Get what you need by asking, buying and negotiating.","es":"La aerolínea perdió tu maleta. Consigue lo que te falta pidiendo, comprando y negociando.","p":[["avion","Airline desk",69,493],["cruz","Pharmacy",255,464],["bolsa","Clothing store",107,391],["dinero","Bank",263,322],["persona","Your neighbor",103,269],["chat","Help desk",242,186],["estrella","Suitcase back",169,118]]},{"k":"newyork","n":"NEW YORK","t":"Then and now","m":"You meet an old friend. Tell them everything that happened on your trip.","es":"Te encuentras con un viejo amigo. Cuéntale todo lo que pasó en tu viaje.","p":[["cafe","Coffee shop",92,122],["tren","Subway",259,164],["edificio","Museum",118,248],["arbol","Central Park",296,303],["plato","Deli",102,376],["sol","Rooftop",255,446],["estrella","The goodbye",185,522]]}],"A2":[{"k":"vancouver","n":"VANCOUVER","t":"With customers","m":"You work at an outdoor gear store. Customers in a hurry, with questions and returns.","es":"Trabajas en una tienda de equipo de montaña. Clientes con prisa, con dudas y con cambios.","p":[["edificio","Counter",66,525],["persona","Fitting rooms",263,459],["caja","Stockroom",112,397],["dinero","Checkout",257,327],["chat","Returns",97,255],["llave","Repair shop",240,188],["estrella","The big sale",183,115]]},{"k":"calgary","n":"CALGARY","t":"On the phone","m":"You plan your boss’s visit to the Stampede, all by phone.","es":"Organizas la visita de tu jefe al Stampede, todo por teléfono.","p":[["cama","Hotel",82,511],["auto","Car rental",256,468],["plato","Restaurant",113,394],["boleto","Tickets",278,329],["tren","Transport",100,265],["persona","Your boss",252,208],["estrella","All confirmed",164,105]]},{"k":"toronto","n":"TORONTO","t":"When things go wrong","m":"Your flight is cancelled and the hotel lost your booking. Fix it and stay calm.","es":"Te cancelan el vuelo y el hotel perdió tu reserva. Arréglalo sin perder la calma.","p":[["tren","Union Station",73,377],["avion","Airline office",243,465],["cama","Hotel",133,384],["auto","Taxi",274,339],["cruz","Pharmacy",99,270],["telefono","Support line",263,201],["estrella","Sorted out",168,117]]},{"k":"montreal","n":"MONTREAL","t":"Making plans","m":"A weekend with bilingual coworkers. Agree on a plan everyone likes.","es":"Un fin de semana con compañeros bilingües. Pónganse de acuerdo en un plan que le guste a todos.","p":[["cafe","Café",93,524],["bolsa","Market",266,471],["edificio","Museum",112,395],["arbol","Park",278,340],["musica","Festival",87,271],["plato","Dinner",261,195],["estrella","The final plan",164,121]]}],"B1":[{"k":"london","n":"LONDON","t":"Explaining what you do","m":"First day at the London office. Everyone wants to know what you do and how.","es":"Primer día en la oficina de Londres. Todos quieren saber qué haces y cómo.","p":[["edificio","Reception",80,518],["persona","Your team",264,458],["cafe","Office kitchen",92,393],["vaso","Pub",259,335],["tren","The Tube",88,225],["chat","Your manager",261,195],["estrella","Your presentation",177,121]]},{"k":"manchester","n":"MANCHESTER","t":"Giving your opinion","m":"You join a customer panel. Share your views on products, services and the match.","es":"Entras a un panel de clientes. Opina de productos, servicios y del partido.","p":[["reloj","Waiting room",50,506],["chat","The panel",260,478],["cafe","Coffee break",98,403],["pelota","Sports bar",262,326],["vaso","Pub",84,257],["auto","Taxi",239,191],["estrella","Your opinion counts",147,97]]},{"k":"liverpool","n":"LIVERPOOL","t":"Reaching agreement","m":"You plan an event with another company. Nobody wants the same thing.","es":"Organizan un evento con otra empresa. Nadie quiere lo mismo.","p":[["barco","The docks",71,509],["edificio","Venue",264,459],["caja","Supplier",97,399],["plato","Catering",283,339],["musica","Music",99,231],["dinero","Budget",259,203],["estrella","The deal",195,126]]},{"k":"edinburgh","n":"EDINBURGH","t":"Telling what happened","m":"Something went wrong at the festival and you saw it all. Tell it clearly.","es":"Algo salió mal en el festival y tú lo viste todo. Cuéntalo claro.","p":[["castillo","Castle",40,221],["persona","Royal Mile",269,186],["musica","Stage",94,250],["escudo","Police",265,310],["cama","Hotel",103,368],["micro","Reporter",252,452],["estrella","Your side of the story",185,516]]}],"B2":[{"k":"limerick","n":"LIMERICK","t":"In meetings","m":"You join an international team at an office by the River Shannon. Meetings every day, and you have to speak up.","es":"Entras a un equipo internacional, en una oficina junto al río Shannon. Juntas todos los días, y tienes que hablar.","p":[["edificio","Office",87,541],["persona","Stand-up",253,475],["chat","Boardroom",108,388],["cafe","Coffee",260,332],["telefono","Video call",88,265],["vaso","Pub",242,194],["estrella","Your meeting",181,115]]},{"k":"cork","n":"CORK","t":"Persuading","m":"You want funding for your project. Win over whoever you need to.","es":"Quieres que financien tu proyecto. Convence a quien haga falta.","p":[["bolsa","English Market",145,279],["dinero","Investor",240,189],["chat","Committee",96,235],["barco","The quays",268,314],["micro","Local radio",113,368],["plato","Dinner",246,453],["estrella","The yes",166,532]]},{"k":"dublin","n":"DUBLIN","t":"Data and reports","m":"End of quarter. Explain the numbers, the charts and what they mean.","es":"Cierre de trimestre. Explica los números, las gráficas y lo que significan.","p":[["edificio","Office",71,515],["grafica","Spreadsheet",246,477],["persona","Your boss",149,396],["chat","Client",242,355],["lupa","Auditor",84,268],["libro","Report",250,187],["estrella","The close",162,107]]},{"k":"galway","n":"GALWAY","t":"Disagreeing","m":"A change at the university splits everyone. Argue without breaking anything.","es":"Un cambio en la universidad divide a todos. Discute sin romper nada.","p":[["libro","Campus",296,105],["libro","Library",98,171],["persona","Classroom",250,243],["cafe","Café",96,313],["chat","Council",270,407],["ola","Galway Bay",141,427],["estrella","Common ground",179,537]]}],"C1":[{"k":"mumbai","n":"MUMBAI","t":"Leading others","m":"You lead a team in another culture. Give instructions without sounding harsh.","es":"Diriges a un equipo de otra cultura. Da instrucciones sin sonar a regaño.","p":[["edificio","Office",94,522],["persona","Your team",242,360],["caja","Supplier",59,370],["tren","Train station",285,317],["llave","Warehouse",99,266],["cama","Hotel",238,197],["estrella","Your team delivers",179,111]]},{"k":"singapore","n":"SINGAPORE","t":"Nuance and tone","m":"A delicate negotiation: how you say it matters more than what you say.","es":"Una negociación delicada: importa más cómo lo dices que lo que dices.","p":[["cama","Hotel lobby",28,524],["edificio","Office tower",252,466],["plato","Business dinner",105,408],["carta","Email",273,369],["telefono","Call",104,261],["sol","Rooftop terrace",263,189],["estrella","The deal",186,118]]},{"k":"dubai","n":"DUBAI","t":"Public speaking","m":"You present your company at an international trade fair.","es":"Presentas a tu empresa en una feria internacional.","p":[["cama","Hotel",96,516],["edificio","Booth",248,500],["reloj","Rehearsal",78,456],["micro","Stage",234,298],["chat","Q&amp;A",127,266],["persona","Networking",256,200],["estrella","Your presentation",179,117]]},{"k":"hongkong","n":"HONG KONG","t":"Cultural differences","m":"Your local partner and your team don’t get each other. You are the bridge.","es":"Tu socio local y tu equipo no se entienden. Tú eres el puente.","p":[["edificio","Office",80,531],["cafe","Tea",254,452],["chat","Meeting",94,389],["barco","Star Ferry",243,324],["bolsa","Night market",83,257],["plato","Dinner",247,205],["estrella","Partners again",167,115]]}],"C2":[{"k":"geneva","n":"GENEVA","t":"The conference · Register","m":"A conference by the lake. From hallway small talk to the official speech, in one day.","es":"Una conferencia junto al lago. De la plática de pasillo al discurso oficial, el mismo día.","p":[["boleto","Registration",91,511],["persona","Hallway",254,489],["chat","Panel",100,386],["plato","Lunch by the lake",291,307],["micro","Press",118,251],["vaso","Gala dinner",247,194],["estrella","Your speech",156,106]]},{"k":"amsterdam","n":"AMSTERDAM","t":"The meeting · Humor","m":"A tense meeting in a canal house. The right joke at the right time changes everything.","es":"Una junta tensa en una casa del canal. El chiste correcto, dicho a tiempo, lo cambia todo.","p":[["reloj","Before it starts",84,511],["persona","Introductions",247,475],["lupa","The problem",104,407],["sonrisa","The joke",249,310],["pausa","The pause",114,253],["carta","The proposal",246,193],["estrella","Meeting saved",138,130]]},{"k":"oxford","n":"OXFORD","t":"The debate","m":"You defend a position in a public debate, with rebuttals.","es":"Defiendes una postura en un debate público, con réplica.","p":[["libro","Preparation",128,548],["bandera","Your position",257,471],["chat","Rebuttal",134,383],["grafica","Data",266,334],["persona","Audience",99,266],["micro","Moderator",260,191],["estrella","Your closing",208,125]]},{"k":"sydney","n":"SYDNEY","t":"The stage","m":"You tell your story on the big stage by the harbour. No notes.","es":"Cuentas tu historia en el escenario grande, junto a la bahía. Sin notas.","p":[["persona","Dressing room",82,547],["reloj","Rehearsal",177,386],["micro","Microphone",74,383],["libro","Your story",253,335],["pausa","The pauses",102,269],["sonrisa","The punchline",247,206],["estrella","The ovation",193,107]]}]};
+window.EFA_CIU={"Pre-A1":[{"k":"cdmx","n":"AEROPUERTO CDMX","t":"Quién eres","m":"Recoges a un visitante extranjero. Preséntate, dile quién eres y llévalo hasta el coche.","es":"","p":[["avion","Sala de llegadas",88,467],["persona","Tu letrero",277,325],["edificio","Mostrador",146,279],["dinero","Cambio de dinero",221,303],["cafe","Cafetería",91,255],["auto","Estacionamiento",243,201],["estrella","Bienvenido a México",173,162]]},{"k":"cancun","n":"CANCÚN","t":"Tu día","m":"Trabajas la temporada en un hotel. Un huésped quiere saber cómo es un día tuyo.","es":"","p":[["cama","Lobby",76,345],["ola","Alberca",242,421],["plato","Cocina",136,355],["sol","Playa",178,312],["bolsa","Tiendita",119,281],["cama","Tu cuarto",216,205],["estrella","Plática con el huésped",161,160]]},{"k":"loscabos","n":"LOS CABOS","t":"Tu trabajo","m":"Un cliente de fuera visita tu empresa. Explícale qué haces y cómo se hace.","es":"","p":[["edificio","Entrada",173,400],["persona","Tu área",245,415],["caja","Almacén",101,368],["edificio","Oficina",239,298],["plato","Comedor",113,272],["chat","Sala de juntas",243,198],["estrella","El recorrido",169,149]]},{"k":"tijuana","n":"TIJUANA","t":"Números y horas","m":"Cruzas la frontera por el día: horarios, precios, cuentas y regresar a tiempo.","es":"","p":[["bandera","Garita",88,467],["reloj","La fila",240,429],["auto","Taxi",110,366],["bolsa","Mercado",247,312],["cruz","Farmacia",114,270],["plato","Restaurante",209,206],["estrella","Regresar a tiempo",179,153]]}],"A1":[{"k":"losangeles","n":"LOS ANGELES","t":"Your people","m":"You join a new team downtown. Introduce yourself and get invited to the Saturday barbecue.","es":"Llegas a un equipo nuevo en el centro. Preséntate y logra que te inviten a la carne asada del sábado.","p":[["edificio","Front desk",70,479],["persona","Your desk",260,422],["cafe","Cafeteria",122,376],["auto","Parking lot",269,313],["bolsa","Market",107,262],["arbol","Grand Park",251,218],["estrella","The barbecue",174,149]]},{"k":"houston","n":"HOUSTON","t":"Places","m":"Your company sent you here for a week of training. Get around downtown on your own and on Friday present your work at the meeting.","es":"Tu empresa te mandó una semana de capacitación. Muévete solo por el centro y el viernes presenta tu trabajo en la junta.","p":[["cama","Hotel",281,476],["arbol","Discovery Green",76,487],["bolsa","Grocery store",243,375],["tren","METRORail",122,328],["plato","Restaurant",260,248],["edificio","The office",123,210],["estrella","The meeting",203,156]]},{"k":"chicago","n":"CHICAGO","t":"Asking and giving","m":"The airline lost your suitcase. Get what you need by asking, buying and negotiating.","es":"La aerolínea perdió tu maleta. Consigue lo que te falta pidiendo, comprando y negociando.","p":[["avion","Airline desk",97,474],["cruz","Pharmacy",243,428],["bolsa","Clothing store",115,378],["dinero","Bank",252,334],["persona","Your neighbor",113,263],["chat","Help desk",232,198],["estrella","Suitcase back",183,152]]},{"k":"newyork","n":"NEW YORK","t":"Then and now","m":"You meet an old friend. Tell them everything that happened on your trip.","es":"Te encuentras con un viejo amigo. Cuéntale todo lo que pasó en tu viaje.","p":[["cafe","Coffee shop",79,156],["tren","Subway",245,188],["edificio","Museum",102,241],["arbol","Central Park",296,303],["plato","Deli",104,354],["sol","Rooftop",249,425],["estrella","The goodbye",177,471]]}],"A2":[{"k":"vancouver","n":"VANCOUVER","t":"With customers","m":"You work at an outdoor gear store. Customers in a hurry, with questions and returns.","es":"Trabajas en una tienda de equipo de montaña. Clientes con prisa, con dudas y con cambios.","p":[["edificio","Counter",95,477],["persona","Fitting rooms",259,436],["caja","Stockroom",110,374],["dinero","Checkout",263,322],["chat","Returns",92,261],["llave","Repair shop",245,196],["estrella","The big sale",171,147]]},{"k":"calgary","n":"CALGARY","t":"On the phone","m":"You plan your boss’s visit to the Stampede, all by phone.","es":"Organizas la visita de tu jefe al Stampede, todo por teléfono.","p":[["cama","Hotel",85,462],["auto","Car rental",248,421],["plato","Restaurant",99,376],["boleto","Tickets",257,315],["tren","Transport",115,253],["persona","Your boss",236,209],["estrella","All confirmed",184,159]]},{"k":"toronto","n":"TORONTO","t":"When things go wrong","m":"Your flight is cancelled and the hotel lost your booking. Fix it and stay calm.","es":"Te cancelan el vuelo y el hotel perdió tu reserva. Arréglalo sin perder la calma.","p":[["tren","Union Station",73,377],["avion","Airline office",250,433],["cama","Hotel",137,374],["auto","Taxi",248,314],["cruz","Pharmacy",102,268],["telefono","Support line",226,207],["estrella","Sorted out",175,144]]},{"k":"montreal","n":"MONTREAL","t":"Making plans","m":"A weekend with bilingual coworkers. Agree on a plan everyone likes.","es":"Un fin de semana con compañeros bilingües. Pónganse de acuerdo en un plan que le guste a todos.","p":[["cafe","Café",76,477],["bolsa","Market",259,428],["edificio","Museum",108,381],["arbol","Park",270,316],["musica","Festival",97,256],["plato","Dinner",222,199],["estrella","The final plan",173,160]]}],"B1":[{"k":"london","n":"LONDON","t":"Explaining what you do","m":"First day at the London office. Everyone wants to know what you do and how.","es":"Primer día en la oficina de Londres. Todos quieren saber qué haces y cómo.","p":[["edificio","Reception",79,473],["persona","Your team",239,433],["cafe","Office kitchen",117,372],["vaso","Pub",261,322],["tren","The Tube",85,224],["chat","Your manager",244,216],["estrella","Your presentation",190,158]]},{"k":"manchester","n":"MANCHESTER","t":"Giving your opinion","m":"You join a customer panel. Share your views on products, services and the match.","es":"Entras a un panel de clientes. Opina de productos, servicios y del partido.","p":[["reloj","Waiting room",89,470],["chat","The panel",244,421],["cafe","Coffee break",103,366],["pelota","Sports bar",262,323],["vaso","Pub",115,259],["auto","Taxi",226,203],["estrella","Your opinion counts",158,162]]},{"k":"liverpool","n":"LIVERPOOL","t":"Reaching agreement","m":"You plan an event with another company. Nobody wants the same thing.","es":"Organizan un evento con otra empresa. Nadie quiere lo mismo.","p":[["barco","The docks",80,475],["edificio","Venue",238,426],["caja","Supplier",131,371],["plato","Catering",252,314],["musica","Music",125,279],["dinero","Budget",224,209],["estrella","The deal",161,162]]},{"k":"edinburgh","n":"EDINBURGH","t":"Telling what happened","m":"Something went wrong at the festival and you saw it all. Tell it clearly.","es":"Algo salió mal en el festival y tú lo viste todo. Cuéntalo claro.","p":[["castillo","Castle",81,469],["persona","Royal Mile",239,427],["musica","Stage",113,384],["escudo","Police",252,323],["cama","Hotel",114,262],["micro","Reporter",237,199],["estrella","Your side of the story",178,143]]}],"B2":[{"k":"limerick","n":"LIMERICK","t":"In meetings","m":"You join an international team at an office by the River Shannon. Meetings every day, and you have to speak up.","es":"Entras a un equipo internacional, en una oficina junto al río Shannon. Juntas todos los días, y tienes que hablar.","p":[["edificio","Office",75,474],["persona","Stand-up",235,433],["chat","Boardroom",121,363],["cafe","Coffee",244,317],["telefono","Video call",113,269],["vaso","Pub",235,206],["estrella","Your meeting",183,161]]},{"k":"cork","n":"CORK","t":"Persuading","m":"You want funding for your project. Win over whoever you need to.","es":"Quieres que financien tu proyecto. Convence a quien haga falta.","p":[["bolsa","English Market",145,279],["dinero","Investor",245,191],["chat","Committee",99,239],["barco","The quays",263,311],["micro","Local radio",114,368],["plato","Dinner",237,425],["estrella","The yes",176,471]]},{"k":"dublin","n":"DUBLIN","t":"Data and reports","m":"End of quarter. Explain the numbers, the charts and what they mean.","es":"Cierre de trimestre. Explica los números, las gráficas y lo que significan.","p":[["edificio","Office",113,492],["grafica","Spreadsheet",254,432],["persona","Your boss",142,365],["chat","Client",259,310],["lupa","Auditor",100,271],["libro","Report",229,202],["estrella","The close",169,162]]},{"k":"galway","n":"GALWAY","t":"Disagreeing","m":"A change at the university splits everyone. Argue without breaking anything.","es":"Un cambio en la universidad divide a todos. Discute sin romper nada.","p":[["libro","Campus",126,484],["libro","Library",245,412],["persona","Classroom",168,393],["cafe","Café",259,329],["chat","Council",106,263],["ola","Galway Bay",232,199],["estrella","Common ground",170,195]]}],"C1":[{"k":"mumbai","n":"MUMBAI","t":"Leading others","m":"You lead a team in another culture. Give instructions without sounding harsh.","es":"Diriges a un equipo de otra cultura. Da instrucciones sin sonar a regaño.","p":[["edificio","Office",48,373],["persona","Your team",254,361],["caja","Supplier",111,358],["tren","Train station",245,301],["llave","Warehouse",99,270],["cama","Hotel",243,204],["estrella","Your team delivers",161,152]]},{"k":"singapore","n":"SINGAPORE","t":"Nuance and tone","m":"A delicate negotiation: how you say it matters more than what you say.","es":"Una negociación delicada: importa más cómo lo dices que lo que dices.","p":[["cama","Hotel lobby",92,469],["edificio","Office tower",255,424],["plato","Business dinner",115,368],["carta","Email",288,368],["telefono","Call",102,262],["sol","Rooftop terrace",238,215],["estrella","The deal",171,151]]},{"k":"dubai","n":"DUBAI","t":"Public speaking","m":"You present your company at an international trade fair.","es":"Presentas a tu empresa en una feria internacional.","p":[["cama","Hotel",94,469],["edificio","Booth",180,453],["reloj","Rehearsal",135,295],["micro","Stage",232,298],["chat","Q&amp;A",89,247],["persona","Networking",247,206],["estrella","Your presentation",181,148]]},{"k":"hongkong","n":"HONG KONG","t":"Cultural differences","m":"Your local partner and your team don’t get each other. You are the bridge.","es":"Tu socio local y tu equipo no se entienden. Tú eres el puente.","p":[["edificio","Office",87,471],["cafe","Tea",233,424],["chat","Meeting",116,370],["barco","Star Ferry",243,324],["bolsa","Night market",95,270],["plato","Dinner",226,206],["estrella","Partners again",182,152]]}],"C2":[{"k":"geneva","n":"GENEVA","t":"The conference · Register","m":"A conference by the lake. From hallway small talk to the official speech, in one day.","es":"Una conferencia junto al lago. De la plática de pasillo al discurso oficial, el mismo día.","p":[["boleto","Registration",90,474],["persona","Hallway",235,483],["chat","Panel",104,381],["plato","Lunch by the lake",232,297],["micro","Press",115,254],["vaso","Gala dinner",248,207],["estrella","Your speech",160,155]]},{"k":"amsterdam","n":"AMSTERDAM","t":"The meeting · Humor","m":"A tense meeting in a canal house. The right joke at the right time changes everything.","es":"Una junta tensa en una casa del canal. El chiste correcto, dicho a tiempo, lo cambia todo.","p":[["reloj","Before it starts",92,474],["persona","Introductions",241,410],["lupa","The problem",111,356],["sonrisa","The joke",250,310],["pausa","The pause",97,257],["carta","The proposal",238,213],["estrella","Meeting saved",172,160]]},{"k":"oxford","n":"OXFORD","t":"The debate","m":"You defend a position in a public debate, with rebuttals.","es":"Defiendes una postura en un debate público, con réplica.","p":[["libro","Preparation",189,460],["bandera","Your position",254,427],["chat","Rebuttal",132,371],["grafica","Data",237,331],["persona","Audience",106,261],["micro","Moderator",246,224],["estrella","Your closing",193,163]]},{"k":"sydney","n":"SYDNEY","t":"The stage","m":"You tell your story on the big stage by the harbour. No notes.","es":"Cuentas tu historia en el escenario grande, junto a la bahía. Sin notas.","p":[["persona","Dressing room",116,393],["reloj","Rehearsal",187,384],["micro","Microphone",56,379],["libro","Your story",245,337],["pausa","The pauses",112,276],["sonrisa","The punchline",226,215],["estrella","The ovation",159,161]]}]};
 window.EFA_ICO={"avion":"<path d=\"M2 16l20-6-3 8H6z\"></path><path d=\"M6 12l-2-5 3 1 3 3\"></path>","cama":"<path d=\"M3 18V8M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5\"></path><circle cx=\"7\" cy=\"11\" r=\"2\"></circle>","plato":"<circle cx=\"12\" cy=\"12\" r=\"6\"></circle><path d=\"M3 4v6M5 4v6M3 10h2v10M19 4c-2 0-2 6 0 6v10\"></path>","tren":"<rect x=\"6\" y=\"3\" width=\"12\" height=\"13\" rx=\"3\"></rect><path d=\"M6 10h12M9 20l-2 2M15 20l2 2\"></path><circle cx=\"9\" cy=\"13\" r=\"0.8\"></circle><circle cx=\"15\" cy=\"13\" r=\"0.8\"></circle>","bolsa":"<path d=\"M5 8h14l-1 13H6z\"></path><path d=\"M9 8a3 3 0 0 1 6 0\"></path>","edificio":"<rect x=\"5\" y=\"3\" width=\"14\" height=\"18\"></rect><path d=\"M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2\"></path>","estrella":"<path d=\"M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.5 6.7 19.4l1.2-6L3.4 9.3l6-.7z\"></path>","persona":"<circle cx=\"12\" cy=\"8\" r=\"3.5\"></circle><path d=\"M5 21a7 7 0 0 1 14 0\"></path>","cafe":"<path d=\"M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z\"></path><path d=\"M17 11h1.5a2.5 2.5 0 0 1 0 5H17M8 3v3M12 3v3\"></path>","dinero":"<rect x=\"3\" y=\"6\" width=\"18\" height=\"12\" rx=\"2\"></rect><circle cx=\"12\" cy=\"12\" r=\"2.5\"></circle>","auto":"<path d=\"M4 16v-4l2-5h12l2 5v4z\"></path><circle cx=\"8\" cy=\"16\" r=\"1.8\"></circle><circle cx=\"16\" cy=\"16\" r=\"1.8\"></circle>","ola":"<path d=\"M3 10c3-3 6 3 9 0s6 3 9 0M3 16c3-3 6 3 9 0s6 3 9 0\"></path>","sol":"<circle cx=\"12\" cy=\"12\" r=\"4\"></circle><path d=\"M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4\"></path>","caja":"<path d=\"M3 8l9-4 9 4v9l-9 4-9-4z\"></path><path d=\"M3 8l9 4 9-4M12 12v9\"></path>","chat":"<path d=\"M4 5h16v11H9l-5 4z\"></path>","bandera":"<path d=\"M5 21V4M5 4h12l-2 4 2 4H5\"></path>","reloj":"<circle cx=\"12\" cy=\"12\" r=\"8\"></circle><path d=\"M12 7v5l3 2\"></path>","cruz":"<path d=\"M9 3h6v6h6v6h-6v6H9v-6H3V9h6z\"></path>","arbol":"<circle cx=\"12\" cy=\"9\" r=\"5\"></circle><path d=\"M12 14v7\"></path>","llave":"<path d=\"M14 7a4 4 0 1 0 1 4l6 6-2 2-2-2-2 2-2-2\"></path>","boleto":"<path d=\"M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4z\"></path><path d=\"M14 7v10\"></path>","telefono":"<rect x=\"7\" y=\"3\" width=\"10\" height=\"18\" rx=\"2\"></rect><path d=\"M11 18h2\"></path>","musica":"<path d=\"M9 18V5l11-2v13\"></path><circle cx=\"6.5\" cy=\"18\" r=\"2.5\"></circle><circle cx=\"17.5\" cy=\"16\" r=\"2.5\"></circle>","vaso":"<path d=\"M6 4h12l-1.5 16h-9z\"></path><path d=\"M6.5 9h11\"></path>","pelota":"<circle cx=\"12\" cy=\"12\" r=\"8\"></circle><path d=\"M12 4v4l-4 3 1.5 5h5l1.5-5-4-3\"></path>","barco":"<path d=\"M3 15h18l-3 5H6z\"></path><path d=\"M12 3v12M12 4l6 8h-6\"></path>","castillo":"<path d=\"M4 21V8h3v3h3V8h4v3h3V8h3v13z\"></path><path d=\"M10 21v-5h4v5\"></path>","escudo":"<path d=\"M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z\"></path>","micro":"<rect x=\"9\" y=\"3\" width=\"6\" height=\"11\" rx=\"3\"></rect><path d=\"M5 11a7 7 0 0 0 14 0M12 18v3\"></path>","grafica":"<path d=\"M4 20V4M4 20h16\"></path><path d=\"M8 16v-4M12 16V8M16 16v-6\"></path>","lupa":"<circle cx=\"10\" cy=\"10\" r=\"6\"></circle><path d=\"M15 15l6 6\"></path>","libro":"<path d=\"M4 19V5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z\"></path><path d=\"M8 7h6M8 11h6\"></path>","carta":"<rect x=\"3\" y=\"5\" width=\"18\" height=\"14\" rx=\"2\"></rect><path d=\"M3 7l9 6 9-6\"></path>","sonrisa":"<circle cx=\"12\" cy=\"12\" r=\"8\"></circle><path d=\"M8.5 14a4 4 0 0 0 7 0M9 10h.01M15 10h.01\"></path>","pausa":"<circle cx=\"12\" cy=\"12\" r=\"8\"></circle><path d=\"M10 9v6M14 9v6\"></path>"};
 
 /* ── Mapa de ciudades reales (OpenStreetMap) ──────────────────────────
@@ -11789,7 +11860,7 @@ function pantallaPasaporte(){
     '<div class="pspA-tapa">'+
       '<svg viewBox="0 0 330 560" preserveAspectRatio="xMidYMid slice" class="pspA-guil">'+guilloche+'</svg>'+
       '<div class="pspA-et">PASSPORT · PASAPORTE</div>'+
-      '<svg width="80" height="46" viewBox="0 0 80 46" class="pspA-logo">'+
+      '<svg width="80" height="46" viewBox="0 -14 80 60" class="pspA-logo">'+
         '<text x="0" y="36" font-size="40" font-weight="800" fill="'+ORO2+'">E</text>'+
         '<text x="26" y="24" font-size="40" font-weight="800" fill="'+ORO2+'">F</text>'+
         '<text x="50" y="12" font-size="40" font-weight="800" fill="'+ORO+'">A</text></svg>'+
@@ -11901,8 +11972,34 @@ function pantallaPais(nv){
   marcarTab('mapa');
 }
 
+
+/* ── G · el boleto que se pica ── */
+function boletoSVG(nv,ciudad,hechas,hoy,color,pica){
+  var W=358,H=118, out='';
+  out+='<rect x="2" y="2" width="'+(W-4)+'" height="'+(H-4)+'" rx="12" fill="#FBF6EA" stroke="'+color+'" stroke-width="1.2" opacity="0.95"></rect>';
+  out+='<line x1="286" y1="10" x2="286" y2="'+(H-10)+'" stroke="'+color+'" stroke-width="1" stroke-dasharray="3 4" opacity="0.6"></line>';
+  out+='<text x="18" y="26" font-family="ui-monospace,Menlo,monospace" font-size="9" font-weight="700" fill="'+color+'" letter-spacing="1.5">BOLETO DE LA SEMANA</text>';
+  out+='<text x="18" y="52" font-size="22" font-weight="800" fill="#1F1B16" letter-spacing="0.5">'+esc(String(ciudad).slice(0,16))+'</text>';
+  out+='<text x="322" y="30" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="8" fill="'+color+'">CLASE</text>';
+  out+='<text x="322" y="52" text-anchor="middle" font-size="20" font-weight="800" fill="'+color+'">'+esc(nv)+'</text>';
+  for(var i=0;i<7;i++){
+    var cx=(24+i*40), cy=88;
+    if(i<hechas){
+      out+='<circle class="'+((pica===i)?'pica':'')+'" cx="'+cx+'" cy="'+cy+'" r="9" fill="#E6DDC7" stroke="'+color+'" stroke-width="1"></circle>';
+      out+='<circle cx="'+cx+'" cy="'+cy+'" r="4" fill="'+color+'" opacity="0.25"></circle>';
+    }else if(i===hoy){
+      out+='<circle cx="'+cx+'" cy="'+cy+'" r="13" fill="'+color+'" opacity="0.15"></circle>'+
+           '<circle cx="'+cx+'" cy="'+cy+'" r="9" fill="none" stroke="'+color+'" stroke-width="2" stroke-dasharray="3 3"></circle>';
+    }else{
+      out+='<circle cx="'+cx+'" cy="'+cy+'" r="9" fill="none" stroke="'+color+'" stroke-width="1" opacity="0.5"></circle>';
+    }
+    out+='<text x="'+cx+'" y="'+(cy+21)+'" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="8" fill="'+color+'" opacity="0.7">'+(i+1)+'</text>';
+  }
+  return '<svg viewBox="0 0 '+W+' '+H+'" class="boleto">'+out+'</svg>';
+}
+
 /* ── D · LA CIUDAD: SIETE DÍAS ─────────────────────────────────── */
-function pantallaCiudad(nv,j){
+function pantallaCiudad(nv,j,llegando,pica){
   _ocultarTop();
   var d=_pais(nv), lista=(window.EFA_CIU||{})[nv]||[];
   var c=lista[j]; if(!c){ pantallaPais(nv); return; }
@@ -11914,14 +12011,16 @@ function pantallaCiudad(nv,j){
       '<circle cx="43" cy="43" r="36" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-dasharray="4 4" opacity="0.8"></circle>'+
       rayos(43,43,36,'#FFFFFF',0.4,1.5)+
       '<text x="43" y="48" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="13" font-weight="700" fill="#FFFFFF">'+hechas+'/7</text></svg>';
-  var h='<div class="ciu7">'+
+  var h='<div class="ciu7'+(llegando?' llega':'')+'">'+
     '<div class="ciu-cab" style="background:'+d.col+'">'+cab+
       '<button class="ciu-atras" id="ciu-atras">‹ '+esc(_titulo(d.pais))+'</button>'+
       '<div class="ciu-et">CIUDAD '+(j+1)+' DE 4 · '+esc(String(c.t).toUpperCase())+'</div>'+
       '<div class="ciu-nom">'+esc(c.n)+'</div>'+
       '<div class="ciu-sub">7 días · el sello se va entintando</div>'+
     '</div>'+
-    '<div class="ciu-mis">'+esc(c.m)+'</div>';
+    '<div class="ciu-boleto">'+boletoSVG(nv,c.n,hechas,(esMia?hechas:-1),d.col,(typeof pica!=='undefined'?pica:-1))+'</div>'+
+    '<div class="ciu-mis">'+esc(c.m)+'</div>'+
+    '<div class="ciu-nota-bol">Cada día que terminas, te pican el boleto. Con los 7 picados, te vas a la siguiente ciudad.</div>';
   for(var i=0;i<7;i++){
     var n=7*j+i+1;
     var lugar=(i<6)?c.p[i][1]:(esExamen(n)?'Migración · entrevista de visa':'Escala · repasas los 6 días');
@@ -12143,34 +12242,37 @@ function mapaCiudades(){
            esc(x.n)+(hecho?' ✓':(aqui?' •':''))+'</button>';
   }).join('');
 
-  var h='<div class="ciuwrap">'+
-    '<div class="ciucab">'+
-      '<button class="ciuniv" id="ciuniv" style="color:'+col+';background:transparent;border:0;font-weight:800;font-size:15px;padding:0">'+esc(nv)+' ›</button>'+
-      '<span class="ciupar">'+esc(ciu.n)+' · '+(j+1)+(esp?' DE ':' OF ')+lista.length+'</span>'+
-      '<button class="ciupsp" id="ciupsp">Pasaporte</button>'+
-    '</div>'+
-    '<div class="nivfila">'+botonesNivelHTML()+'</div>'+
-    '<div class="ciuchips">'+chips+'</div>'+
-    '<div class="ciumis">'+
-      '<div class="ciumis-t"><span>'+(esp?'TU MISIÓN EN ':'YOUR MISSION IN ')+esc(ciu.n)+' · '+esc(String(ciu.t).toUpperCase())+'</span>'+
-        (esp?'':'<button id="ciues" class="ciues">'+(MAPA_CIU_ES?'EN':'ES')+'</button>')+'</div>'+
-      '<div class="ciumis-x">'+esc(mision)+'</div>'+
-    '</div>'+
-    '<div class="ciumapa" id="ciumapa">'+
+  var visita=(nv!==((P&&P.nivel)||'Pre-A1'));
+  var h='<div class="mf">'+
+    '<div class="mf-mapa" id="ciumapa">'+
       '<img id="ciuimg" alt="'+esc(ciu.n)+'" src="mapas/img/'+esc(ciu.k)+'.webp">'+
       '<svg viewBox="0 0 358 600" preserveAspectRatio="xMidYMid slice" id="ciusvg">'+pinesCiuSVG(ciu,j,actual,col)+'</svg>'+
       '<div class="ciuosm">Map data © OpenStreetMap contributors</div>'+
     '</div>'+
-    '<div class="ciubotones">'+
-      '<button class="btn" id="ciuir">'+
-        (!yaPersonalizo()?'Empezar: cuéntame de ti'
-          :(j!==jAhora
-            ? (esp?'Volver a mi parada · '+esc(lista[jAhora].n):'Back to my stop · '+esc(lista[jAhora].n))
-            : (esp?'Practicar la parada '+actual:'Start stop '+actual)))+'</button>'+
-      ''+
+    '<div class="mf-top">'+
+      '<div class="ciucab">'+
+        '<button class="ciuniv" id="ciuniv" style="color:'+col+'">'+esc(nv)+' ›</button>'+
+        '<span class="ciupar">'+esc(ciu.n)+' · '+(j+1)+(esp?' DE ':' OF ')+lista.length+'</span>'+
+        '<button class="ciupsp" id="ciupsp">Pasaporte</button>'+
+      '</div>'+
+      '<div class="ciuchips">'+chips+'</div>'+
+      '<div class="ciumis">'+
+        '<div class="ciumis-t"><span>'+(esp?'TU MISIÓN EN ':'YOUR MISSION IN ')+esc(ciu.n)+' · '+esc(String(ciu.t).toUpperCase())+'</span>'+
+          (esp?'':'<button id="ciues" class="ciues">'+(MAPA_CIU_ES?'EN':'ES')+'</button>')+'</div>'+
+        '<div class="ciumis-x">'+esc(mision)+'</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="mf-pie">'+
+      (visita
+        ? '<button class="btn" id="ciuir">Volver a lo mío</button>'
+        : '<button class="btn" id="ciuir">'+
+            (!yaPersonalizo()?'Empezar: cuéntame de ti'
+              :(j!==jAhora
+                ? (esp?'Volver a mi parada · '+esc(lista[jAhora].n):'Back to my stop · '+esc(lista[jAhora].n))
+                : (esp?'Practicar la parada '+actual:'Start stop '+actual)))+'</button>')+
+      '<button class="mf-dias" id="ciudias">Ver los 7 días</button>'+
     '</div>'+
   '</div>';
-
   APP.innerHTML=h;
 
   var img=document.getElementById('ciuimg');
@@ -12181,6 +12283,8 @@ function mapaCiudades(){
       try{ mapa(); }catch(e){}
     };
   }
+  var cm=APP.querySelector('.ciumis');
+  if(cm)cm.onclick=function(e){ if(e.target&&e.target.id==='ciues')return; cm.classList.toggle('abierta'); };
   var bn=document.getElementById('ciuniv');
   if(bn)bn.onclick=function(){ pantallaPais(nv); };
   var bp2=document.getElementById('ciupsp');
@@ -12200,8 +12304,11 @@ function mapaCiudades(){
       }catch(e){ avisito('Parada '+n); }
     };
   });
+  var bd=document.getElementById('ciudias');
+  if(bd)bd.onclick=function(){ pantallaCiudad(nv,j); };
   var b=document.getElementById('ciuir');
-  if(b){
+  if(b&&visita){ b.onclick=function(){ volverAMiNivel(); }; }
+  else if(b){
     if(!P){ b.onclick=function(){ try{ personalizar(); }catch(e){ avisito('No pude abrir el alta.'); } }; }
     else if(j!==jAhora){ b.onclick=function(){ CIUDAD_VISTA=null; mapa(); }; }
     else{ b.onclick=function(){ try{ arrancarParada(); }catch(e){ avisito('No pude abrir la lección: '+String(e).slice(0,60)); } }; }
@@ -14358,64 +14465,86 @@ function marca(){
   }
   var tb=document.querySelector('.topbar');
   if(tb)tb.style.display='none';
-  APP.innerHTML='<div class="splash marca" id="mk">'+
-    '<div class="sp-mark">'+
-      '<svg viewBox="0 0 96 96" aria-hidden="true">'+
-        '<circle cx="48" cy="48" r="40" fill="none" stroke="rgba(42,39,36,.12)" stroke-width="5"/>'+
-        '<circle cx="48" cy="48" r="40" fill="none" stroke="#1D9E75" stroke-width="5" '+
-          'stroke-linecap="round" stroke-dasharray="66 185" transform="rotate(-90 48 48)"/>'+
-        '<circle cx="48" cy="48" r="9" fill="#1D9E75"/>'+
-      '</svg></div>'+
-    '<h1 class="mk-t">English<br>For All</h1>'+
-    '<div class="mk-by">por Brian Martínez Rodríguez</div>'+
-    '<div class="mk-sub">Práctica de inglés hablado</div>'+
-    '<button class="btn sp-go" id="mkgo" style="margin-top:34px">Entrar</button>'+
-    '</div>';
   cargarVoces(aplicarPreferencias);
   try{aplicarTema((load().tema)||'crema');}catch(e){}
-  document.getElementById('mkgo').onclick=function(){
-    vioMarca=true;
-    var m=document.getElementById('mk');
-    if(m)m.classList.add('out');
-    setTimeout(router,300);
+  // La carga: solo al abrir la app, una vez. De ahi pasa sola a la portada.
+  if(!CARGA_VISTA){
+    CARGA_VISTA=true;
+    APP.innerHTML='<div class="carga" id="carga">'+
+      '<svg viewBox="0 0 220 220" class="carga-aro">'+
+        roseta(110,110,86,9,7,3,'#C9A24B',0.55,0.8)+
+        roseta(110,110,54,6,9,2,'#C9A24B',0.7,0.8)+
+      '</svg>'+
+      '<svg width="92" height="66" viewBox="0 -14 80 60" class="carga-logo">'+
+        '<text x="0" y="36" font-size="40" font-weight="800" fill="#C9A24B">E</text>'+
+        '<text x="26" y="24" font-size="40" font-weight="800" fill="#C9A24B">F</text>'+
+        '<text x="50" y="12" font-size="40" font-weight="800" fill="#E8C063">A</text></svg>'+
+      '<div class="carga-t">ENGLISH FOR ALL</div>'+
+      '<div class="carga-s">por Brian Martínez Rodríguez</div>'+
+      '<div class="carga-barra"><i></i></div>'+
+    '</div>';
+    setTimeout(function(){
+      var c=document.getElementById('carga');
+      if(c)c.classList.add('sale');
+      setTimeout(portadaPasaporte,420);
+    },1900);
+    return;
+  }
+  portadaPasaporte();
+}
+
+/* La portada del pasaporte: es la puerta de la app. No se mueve, no hace
+   scroll. Al tocarla se abre la tapa y se pasa la hoja. */
+function portadaPasaporte(){
+  var tb=document.querySelector('.topbar');
+  if(tb)tb.style.display='none';
+  var nombre=(P&&P.nombre)||'';
+  var mio=(P&&P.nivel)||'Pre-A1';
+  var aprobadas=0; NIVELES_ORDEN.forEach(function(nv){ if(nOrden(nv)<nOrden(mio))aprobadas++; });
+  var rayitas='';
+  for(var i=0;i<7;i++){
+    var cc=(i<aprobadas)?'#E8C063':(i===aprobadas?'#8C7640':'#2A2822');
+    rayitas+='<i style="background:'+cc+'"></i>';
+  }
+  var guilloche=roseta(165,280,150,16,7,4,'#C9A24B',0.16,0.5)+roseta(165,280,96,10,9,3,'#C9A24B',0.20,0.5)+roseta(165,280,54,6,11,2,'#C9A24B',0.22,0.5);
+  APP.innerHTML='<div class="pspA fija" id="pspA">'+
+    '<div class="pspA-escena">'+
+      '<div class="pspA-hoja">'+
+        '<div class="pspA-hoja-et">PARTE 1</div>'+
+        '<div class="pspA-hoja-t">'+(P?'Bienvenido de vuelta':'Tus datos')+'</div>'+
+        '<div class="pspA-hoja-x">'+(P?'Vamos a donde te quedaste.':'Antes de viajar, cuéntame quién eres. Con eso armo tus frases.')+'</div>'+
+      '</div>'+
+      '<div class="pspA-tapa" id="pspA-tapa">'+
+        '<svg viewBox="0 0 330 560" preserveAspectRatio="xMidYMid slice" class="pspA-guil">'+guilloche+'</svg>'+
+        '<div class="pspA-et">PASSPORT · PASAPORTE</div>'+
+        '<svg width="80" height="46" viewBox="0 -14 80 60" class="pspA-logo">'+
+          '<text x="0" y="36" font-size="40" font-weight="800" fill="#C9A24B">E</text>'+
+          '<text x="26" y="24" font-size="40" font-weight="800" fill="#C9A24B">F</text>'+
+          '<text x="50" y="12" font-size="40" font-weight="800" fill="#E8C063">A</text></svg>'+
+        '<div class="pspA-marca">ENGLISH FOR ALL</div>'+
+        '<div class="pspA-nom">'+esc(nombre||'Tu pasaporte')+'</div>'+
+        '<svg width="34" height="24" viewBox="0 0 34 24" class="pspA-chip"><rect x="1" y="1" width="32" height="22" rx="4" fill="none" stroke="#C9A24B" stroke-width="1.4"></rect><circle cx="17" cy="12" r="5" fill="none" stroke="#C9A24B" stroke-width="1.4"></circle></svg>'+
+      '</div>'+
+    '</div>'+
+    '<div class="pspA-rayas">'+rayitas+'</div>'+
+    '<div class="pspA-sub">'+(P?(aprobadas+' de 7 visas · vas en <b>'+esc(_titulo(_pais(mio).pais))+'</b>')
+                              :'Siete visas por sellar. Se empieza en <b>México</b>.')+'</div>'+
+    '<button class="pspA-btn" id="pspA-abrir">'+(P?'Abrir pasaporte':'Abrir mi pasaporte')+'</button>'+
+  '</div>';
+  var a=document.getElementById('pspA-abrir');
+  if(a)a.onclick=function(){
+    a.disabled=true;
+    var esc2=document.getElementById('pspA');
+    if(esc2)esc2.classList.add('abre');
+    setTimeout(function(){
+      vioMarca=true;
+      // Parte 1 del pasaporte: si todavía no me cuenta quién es, ahí empieza.
+      if(!P){ try{ personalizar(); return; }catch(e){} }
+      router();
+    },1150);
   };
 }
 
-
-/* ═══════════ frases que pueden llevar tu voz ═══════════ */
-// Clave corta -> texto. El archivo se llama igual que la clave: es-01.webm
-var FIJAS=[
-  ['es-01','Hola. Soy tu tutor de inglés. Toca la pantalla y empezamos.'],
-  ['es-02','Muy bien. Ahora quiero saber quién eres.'],
-  ['es-03','No conozco esa palabra en inglés todavía. Dime a cuál se parece más.'],
-  ['es-04','Yo digo la frase, tú la repites en voz alta. Toca el botón verde cuando estés lista para hablar.'],
-  ['es-05','Ahora te voy a hacer preguntas. Contéstame hablando, con lo que ya practicamos.'],
-  ['es-06','Este es tu momento libre. Dime lo que puedas, aunque sea una frase. Cuando ya no tengas más, me avisas.'],
-  ['es-07','Muy bien.'],
-  ['es-08','Eso es.'],
-  ['es-09','Así se dice.'],
-  ['es-10','Bien.'],
-  ['es-11','Está bien, lo anoto.'],
-  ['es-12','Casi. Escúchala otra vez y repítela sin prisa.'],
-  ['es-13','Escribe o dicta tu respuesta antes de continuar.'],
-  ['es-14','Tu inglés va por arriba de este programa. Le voy a avisar a Brian para que te contacte.'],
-  ['en-01','How are you?'],
-  ['en-02','What do you do?'],
-  ['en-03','What did you do yesterday?'],
-  ['en-04','What is the hardest part of your job, and why?'],
-  ['en-05','If you had more time, what would you change about your work?'],
-  ['en-06','Hello. I am your English tutor. Let us practice together.'],
-  ['en-07','Nice to meet you.'],
-  ['en-08','And you?'],
-  ['en-09','I work every day.']
-];
-var GRABABLES={};
-(function(){
-  SALUDOS.forEach(function(x){GRABABLES[clave(x.en)]=clave(x.en);});
-  FIJAS.forEach(function(f){GRABABLES[clave(f[1])]=f[0];});
-})();
-
-/* ═══════════ 0 · portada ═══════════ */
 function portada(){
   var vuelve=!!P;
   var tb=document.querySelector('.topbar');

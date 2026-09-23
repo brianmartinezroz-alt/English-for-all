@@ -746,6 +746,37 @@
 .velbar-b{flex:1 1 0;min-width:0;min-height:40px;padding:0 2px;border-radius:999px;border:1.5px solid rgba(0,0,0,.16);background:rgba(255,255,255,.7);color:inherit;font-weight:700;font-size:13px;font-variant-numeric:tabular-nums;cursor:pointer}
 .velbar-b.on{background:var(--verde,#1D9E75);border-color:var(--verde,#1D9E75);color:#fff}
 .velbar-b:active{transform:scale(.95)}
+
+/* informe de fluidez, racha y ejercicios de boca */
+.infcard,.rachacard,.trescard{background:var(--papel,#FBF6EA);border:1px solid rgba(31,27,22,.12);border-radius:16px;padding:14px 14px 16px;margin:12px 0}
+.inf-t{font-size:12px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;opacity:.65;margin-bottom:10px}
+.inf-rej{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+.inf-d{text-align:center;padding:8px 2px;border-radius:12px;background:rgba(31,27,22,.05)}
+.inf-d b{display:block;font-size:19px;line-height:1.1;font-variant-numeric:tabular-nums}
+.inf-d span{display:block;font-size:10.5px;line-height:1.25;margin-top:3px;opacity:.7}
+.inf-x{font-size:13.5px;line-height:1.45;margin-top:6px;opacity:.9}
+.inf-larga{margin-top:10px;padding:10px 12px;border-radius:12px;background:rgba(31,27,22,.05);font-size:14.5px;line-height:1.4}
+.inf-larga span{display:block;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;opacity:.6;margin-bottom:4px}
+.racha-fila{display:flex;gap:4px;margin-bottom:8px}
+.racha-fila i{flex:1;aspect-ratio:1;max-width:26px;border-radius:50%;border:1.5px dashed rgba(31,27,22,.22);display:flex;align-items:center;justify-content:center;font-size:11px;font-style:normal;color:transparent}
+.racha-fila i.on{border-style:solid;border-color:var(--verde,#1D9E75);background:var(--verde,#1D9E75);color:#fff}
+.tres-f{padding:10px 0;border-top:1px solid rgba(31,27,22,.10)}
+.tres-en{font-size:15px;font-weight:600;line-height:1.35}
+.tres-di{font-size:12.5px;opacity:.7;margin-top:2px}
+.tres-b{margin-top:6px;background:transparent;border:1px solid var(--verde,#1D9E75);color:var(--verde,#1D9E75);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:700;min-height:36px}
+.bocabox{margin:10px 0;padding:14px;border-radius:14px;background:rgba(31,27,22,.05);font-size:19px;line-height:1.45}
+.bocameta{font-size:13px;opacity:.8;margin-bottom:8px}
+
+/* estimación de nivel */
+.nivcard{background:var(--papel,#FBF6EA);border:1px solid rgba(31,27,22,.12);border-radius:16px;padding:14px 14px 12px;margin:12px 0}
+.niv-tit{font-family:'Instrument Serif',Georgia,serif;font-size:25px;line-height:1.15;margin:2px 0 4px}
+.niv-fila{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid rgba(31,27,22,.09);font-size:13px}
+.niv-fila>span{flex:0 0 68px;opacity:.7}
+.niv-fila em{flex:1 1 auto;font-style:normal;text-align:right;opacity:.65;font-size:12px}
+.niv-pts{display:flex;gap:3px;flex:0 0 auto}
+.niv-pts i{width:9px;height:9px;border-radius:50%;background:rgba(31,27,22,.16)}
+.niv-pts i.on{background:var(--verde,#1D9E75)}
+.niv-pie{margin-top:9px;font-size:11.5px;line-height:1.4;opacity:.6}
 </style>
 <style>
   .cargando-audio{position:relative;opacity:.75}
@@ -1669,7 +1700,7 @@ if('serviceWorker' in navigator){
 <script>
 (function(){
 "use strict";
-var VERSION="v150 · 21 sep · velocidad del audio en los listenings (0.5x a 1.5x)";
+var VERSION="v152 · 23 sep · estimacion de nivel en las revisiones y trabalenguas segun el sonido de la leccion";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -2280,6 +2311,7 @@ function listen(lang,onDone,onErr,ops){
   r.maxAlternatives=6;
 
   var firme='', confianza=0, terminado=false, cerrandoYo=false;
+  var _tArranca=Date.now(), _tVoz=null;
   var relojSilencio=null, relojTope=null, dijoAlgo=false;
   var ultimoSuelto='', alternativas=[], seTraboAlguna=false, reaperturas=0;
 
@@ -2290,6 +2322,7 @@ function listen(lang,onDone,onErr,ops){
     cerrandoYo=true;
     try{ r.stop(); }catch(e){}
     var t=(firme.trim()||ultimoSuelto.trim());
+    if(t) sumarHabla(t,(Date.now()-(_tVoz||_tArranca))/1000);
     if(t) onDone(t, confianza||0.9, {alternativas:alternativas.slice(), trabado:seTraboAlguna});
     else   onErr&&onErr('no-speech');
   }
@@ -15636,6 +15669,8 @@ function portadaSesion(){
   if(sIdx==null||sIdx<0||sIdx>=MAT.length)sIdx=0;
   var S=MAT[sIdx];
   if(!S||!S.items){ if(typeof mapa==='function')mapa(); return; }
+  try{ agregarBoca(S,sIdx); }catch(e){}
+  var _pend=[]; try{ _pend=(load().tresPendientes)||[]; }catch(e){}
   var modelos=S.items.filter(function(x){return x.k==='model';});
   var preg=S.items.filter(function(x){return x.k==='ask';}).length;
   var libres=S.items.filter(function(x){return x.k==='free';}).length;
@@ -15658,6 +15693,14 @@ function portadaSesion(){
 
     '';
 
+  if(_pend.length){
+    h+='<div class="prev prev-tres"><span>Tus tres de la vez pasada</span>'+
+       _pend.map(function(t){
+         return '<div class="tres-f"><div class="tres-en">'+esc(t.en)+'</div>'+
+                '<button class="tres-b" data-oir="'+esc(t.en)+'">Oírla</button></div>';
+       }).join('')+
+       '<p class="tiny" style="text-align:left;margin:8px 0 0">Escúchalas una vez antes de empezar. Hoy vuelven a caer.</p></div>';
+  }
   if(rep.length){
     h+='<div class="prev"><span>Empezamos repasando</span>'+rep.length+
        ' frase'+(rep.length>1?'s':'')+' de días pasados. Se practican primero y luego seguimos.</div>';
@@ -15687,6 +15730,7 @@ function portadaSesion(){
     '</div>';
 
   APP.innerHTML=h;
+  try{ ligarTres(); }catch(e){}
   ligarAyuda('Aquí te digo qué vamos a hacer hoy y qué frases vas a oír. Cuando estés listo, toca Empezar.');
   ligarPlan(S);
   (function(){
@@ -15736,6 +15780,7 @@ function correr(){
   if(sIdx==null||sIdx<0||sIdx>=MAT.length)sIdx=0;
   try{ personalizarSesion(MAT[sIdx]); }catch(e){}
   if(it===0&&!attempts.length){portadaSesion();return;}
+  if(it===0){ try{ var _d=load(); if(_d.tresPendientes){ delete _d.tresPendientes; save(_d); D=_d; } }catch(e){} }
   paso();
 }
 
@@ -15984,6 +16029,18 @@ function paso(){
        '<div id="res"></div>'+
        '<button class="mic-big" id="mic"><span class="ring2"></span> Tocar y decirlo</button>'+
        '<button class="btn ghost" id="pista" style="margin-top:10px">No sé · dame la pista</button>';
+  }else if(x.k==='leer'||x.k==='ritmo'||x.k==='trabalenguas'){
+    var _bt={leer:['Léelo en voz alta','Todo de corrido. Si te trabas, empieza otra vez.'],
+             ritmo:['A ritmo de conversación','Ni tan lento que aburra, ni tan rápido que no se entienda.'],
+             trabalenguas:['Trabalenguas','Sirve para soltar la lengua. Nadie lo saca a la primera.']}[x.k];
+    h+='<div class="qlbl">'+_bt[0]+'</div>'+
+       '<div class="qsub">'+esc(x.es||_bt[1])+'</div>'+
+       '<div class="bocabox">'+esc(x.en||'')+'</div>'+
+       (x.k==='ritmo'?'<div class="bocameta">Apunta a decirla en unos <b>'+(x.meta_seg||4)+' segundos</b>.</div>':'')+
+       '<div class="oirfila"><button class="oirb" id="oir">'+ico('bocina',16)+' Escuchar</button>'+
+         '<button class="oirb alt" id="oirlento">'+ico('bocina',16)+' Más lento</button></div>'+
+       '<div id="res"></div>'+
+       '<button class="mic-big" id="mic"><span class="ring2"></span> Tocar y decirlo</button>';
   }else if(x.k==='idea'){
     h+='<div class="qlbl">Escucha · ¿de qué se trata?</div>'+
        '<div class="qsub">No tienes que entender cada palabra. Solo de qué habla.</div>'+
@@ -16488,6 +16545,13 @@ function paso(){
     };
   })();
 
+  if(x.k==='leer'||x.k==='ritmo'||x.k==='trabalenguas'){
+    var _ob=document.getElementById('oir');
+    if(_ob)_ob.onclick=function(){ say(x.en,'en-US'); };
+    var _ol=document.getElementById('oirlento');
+    if(_ol)_ol.onclick=function(){ sayLento(x.en,'en-US'); };
+    setTimeout(function(){ say(x.en,'en-US'); },400);
+  }
   if(x.k==='idea'||x.k==='detalle'||x.k==='dosc'||x.k==='segm'||x.k==='dicto'){
     var _oL=document.getElementById('oir');
     if(_oL)_oL.onclick=function(){
@@ -16678,7 +16742,7 @@ function paso(){
 function grabarPaso(x,b){
   callarTodo();   // que no se grabe la propia app
 
-  var meta=(x.k==='model'||x.k==='drill')?x.en:'';
+  var meta=(x.k==='model'||x.k==='drill'||x.k==='leer'||x.k==='ritmo'||x.k==='trabalenguas')?x.en:'';
   if(!HAY_GRAB){escribir(x);return;}
   var r=document.getElementById('res');
   if(b.dataset.grabando==='1'){
@@ -16778,7 +16842,7 @@ function escribir(x){
 
 function registrar(x,t,extra){
   extra=extra||{};
-  var meta=(x.k==='model'||x.k==='drill')?x.en:'';
+  var meta=(x.k==='model'||x.k==='drill'||x.k==='leer'||x.k==='ritmo'||x.k==='trabalenguas')?x.en:'';
   var cmp=meta?compararMejor(meta,t,extra.alternativas):null;
   // Si la version que mejor embona no es la primera, esa es la que se le
   // ensena: es la que de verdad dijo.
@@ -16798,6 +16862,14 @@ function registrar(x,t,extra){
   if(extra.trabado&&cmp&&cmp.pct<80){
     h+='<div class="fb" style="background:var(--verde-suave);border-color:var(--verde)">'+
        'Se te trabó tantito. Eso le pasa a todos. Tócalo otra vez y va.</div>';
+  }
+  if(x.k==='ritmo'&&HABLA_ULT){
+    var _mt=x.meta_seg||4, _d=HABLA_ULT;
+    var _j=(_d<_mt*0.75)?'Fuiste más rápido que la meta. Si se te entendió todo, perfecto.'
+          :(_d>_mt*1.5)?'Te tardaste. Intenta decirla sin cortarla a la mitad.'
+          :'Justo en el ritmo.';
+    h+='<div class="fb" style="background:var(--verde-suave);border-color:var(--verde)">'+
+       'Tardaste <b>'+_d+' s</b> · la meta eran '+_mt+' s. '+_j+'</div>';
   }
   if(cmp){
     h+='<div class="hl" style="margin-top:11px">contra la frase meta</div><div class="ht">'+pintar(meta,cmp)+'</div>'+
@@ -16933,6 +17005,262 @@ function resumenAprendido(S,ats){
   return h+'</div>';
 }
 
+
+/* ═══════════ cómo habló hoy ═══════════
+   Todo sale de lo que ya guardábamos: los intentos y el tiempo que el
+   micrófono lo estuvo oyendo. No cuesta ni una llamada al servidor. */
+var HABLA_SEG=0, HABLA_PAL=0, HABLA_ULT=0, HABLA_T0=-1;
+var MULETILLAS=[['um',/\bu+m+\b/gi],['uh',/\bu+h+\b/gi],['mmm',/\bm+h*m+\b/gi],
+                ['you know',/\byou know\b/gi],
+                ['este',/\beste\b/gi],['o sea',/\bo sea\b/gi],['eh',/\be+h\b/gi]];
+function sumarHabla(texto,segs){
+  try{
+    if(HABLA_T0!==t0){ HABLA_SEG=0; HABLA_PAL=0; HABLA_T0=t0; }
+    var n=String(texto||'').trim().split(/\s+/).filter(Boolean).length;
+    var s=Math.max(0.6,Math.min(120,segs||0));
+    HABLA_ULT=Math.round(s*10)/10;
+    HABLA_SEG+=s; HABLA_PAL+=n;
+  }catch(e){}
+}
+function informeFluidez(lista){
+  lista=lista||[];
+  var dichas=lista.filter(function(a){return a.oido&&a.tipo!=='pista'&&a.oido.charAt(0)!=='[';});
+  var texto=dichas.map(function(a){return a.oido;}).join(' ');
+  var palabras=texto.trim()?texto.trim().split(/\s+/).filter(Boolean).length:0;
+  var seg=(HABLA_T0===t0)?HABLA_SEG:0;
+  var ppm=(seg>4&&HABLA_PAL>3)?Math.round(HABLA_PAL/(seg/60)):null;
+  var mule=[],totalMule=0;
+  MULETILLAS.forEach(function(m){
+    var n=(texto.match(m[1])||[]).length;
+    if(n){ mule.push({p:m[0],n:n}); totalMule+=n; }
+  });
+  mule.sort(function(a,b){return b.n-a.n;});
+  var larga='';
+  dichas.forEach(function(a){ if(String(a.oido).split(/\s+/).length>larga.split(/\s+/).length)larga=a.oido; });
+  var conPct=lista.filter(function(a){return a.pct!==null&&a.pct!==undefined;});
+  var prom=conPct.length?Math.round(conPct.reduce(function(s,a){return s+a.pct;},0)/conPct.length):null;
+  return {veces:dichas.length,palabras:palabras,seg:Math.round(seg),ppm:ppm,
+          mule:mule,totalMule:totalMule,larga:larga,prom:prom};
+}
+function _lecturaPPM(v){
+  if(v===null)return ['—','Habla un poco más para poder medirte el ritmo.'];
+  if(v<70)return [v+' ppm','Vas despacio. Está bien para empezar: primero claro, luego rápido.'];
+  if(v<=150)return [v+' ppm','Buen ritmo. Así habla la gente en una conversación normal.'];
+  return [v+' ppm','Vas rápido. Baja tantito y respira entre frases: se te entiende mejor.'];
+}
+function hojaInforme(inf){
+  var lec=_lecturaPPM(inf.ppm);
+  var h='<div class="infcard"><div class="inf-t">Cómo hablaste hoy</div>'+
+    '<div class="inf-rej">'+
+      '<div class="inf-d"><b>'+inf.veces+'</b><span>veces hablaste</span></div>'+
+      '<div class="inf-d"><b>'+inf.palabras+'</b><span>palabras tuyas</span></div>'+
+      '<div class="inf-d"><b>'+lec[0]+'</b><span>tu ritmo</span></div>'+
+      '<div class="inf-d"><b>'+(inf.totalMule||0)+'</b><span>muletillas</span></div>'+
+    '</div>'+
+    '<div class="inf-x">'+esc(lec[1])+'</div>';
+  if(inf.mule.length){
+    h+='<div class="inf-x">Se te salieron: '+
+       inf.mule.slice(0,3).map(function(m){return '<b>'+esc(m.p)+'</b> ×'+m.n;}).join(' · ')+
+       '. No es grave; es lo que se oye cuando estás pensando. Mejor una pausa callada.</div>';
+  }else if(inf.veces){
+    h+='<div class="inf-x">Ni una muletilla. Eso es difícil hasta en español.</div>';
+  }
+  if(inf.larga){
+    h+='<div class="inf-larga"><span>tu frase más larga</span>'+esc(inf.larga)+'</div>';
+  }
+  return h+'</div>';
+}
+
+/* ═══════════ la racha, en sellos ═══════════ */
+function sellosRacha(dias){
+  dias=dias||[];
+  var set={}; dias.forEach(function(d){ set[String(d).slice(0,10)]=1; });
+  var hoy=new Date(), fila='', hechos=0;
+  for(var i=13;i>=0;i--){
+    var d=new Date(hoy.getTime()-i*86400000).toISOString().slice(0,10);
+    var si=!!set[d];
+    if(si)hechos++;
+    fila+='<i class="'+(si?'on':'')+'" title="'+d+'">'+(si?'✓':'')+'</i>';
+  }
+  var seg=0; try{ seg=diasSeguidos(dias); }catch(e){}
+  return '<div class="rachacard"><div class="inf-t">Tu racha</div>'+
+    '<div class="racha-fila">'+fila+'</div>'+
+    '<div class="inf-x"><b>'+seg+'</b> '+(seg===1?'día seguido':'días seguidos')+
+      ' · '+hechos+' de los últimos 14. Cada sello es un día que practicaste.</div></div>';
+}
+
+/* ═══════════ tus tres de hoy ═══════════
+   Sin IA de por medio: salen de lo que se falló en esta misma sesión. */
+function tresDeHoy(lista){
+  lista=lista||[];
+  var malas=lista.filter(function(a){
+    return a.meta && a.oido && a.pct!==null && a.pct!==undefined && a.pct<80;
+  });
+  malas.sort(function(a,b){return a.pct-b.pct;});
+  var vistas={}, tres=[];
+  malas.forEach(function(a){
+    var k=normal(a.meta);
+    if(vistas[k]||tres.length>=3)return;
+    vistas[k]=1; tres.push({en:a.meta,dijo:a.oido,pct:a.pct});
+  });
+  if(tres.length<3){
+    lista.filter(function(a){return a.tipo==='pista'&&a.meta;}).forEach(function(a){
+      var k=normal(a.meta);
+      if(vistas[k]||tres.length>=3)return;
+      vistas[k]=1; tres.push({en:a.meta,dijo:'',pct:null});
+    });
+  }
+  return tres;
+}
+function hojaTres(tres){
+  if(!tres.length)return '';
+  var h='<div class="trescard"><div class="inf-t">Tus tres de hoy</div>'+
+    '<div class="inf-x">Estas tres regresan la próxima vez, antes de lo nuevo.</div>';
+  tres.forEach(function(t){
+    h+='<div class="tres-f"><div class="tres-en">'+esc(t.en)+'</div>'+
+       (t.dijo?'<div class="tres-di">dijiste: '+esc(t.dijo)+(t.pct!==null?' · '+t.pct+'%':'')+'</div>'
+              :'<div class="tres-di">pediste la pista</div>')+
+       '<button class="tres-b" data-oir="'+esc(t.en)+'">Oírla</button></div>';
+  });
+  return h+'</div>';
+}
+function ligarTres(){
+  APP.querySelectorAll('.tres-b').forEach(function(b){
+    b.onclick=function(){ say(b.getAttribute('data-oir'),'en-US'); };
+  });
+}
+function guardarTres(tres){
+  try{
+    var d=load();
+    d.tresPendientes=tres.slice(0,3);
+    d.tresFecha=new Date().toISOString().slice(0,10);
+    save(d); D=d;
+  }catch(e){}
+}
+
+/* ═══════════ ejercicios de boca ═══════════
+   Uno por lección, alternando. Se arman con las frases de la propia
+   lección, así que no hay que escribir contenido nuevo. */
+var TRABAS=[
+  'She sells seashells by the seashore.',
+  'Red lorry, yellow lorry.',
+  'Thirty-three thirsty thinkers.',
+  'A proper copper coffee pot.',
+  'Six thick thistle sticks.',
+  'Which wristwatch works well?',
+  'The client clearly claimed a clean claim.',
+  'Three free throws on the first shift.'
+];
+function agregarBoca(S,idx){
+  if(!S||!S.items||S._boca)return;
+  S._boca=true;
+  var mods=S.items.filter(function(x){return x.k==='model'&&x.en;});
+  if(!mods.length)return;
+  var cual=idx%3;
+  if(cual===0){
+    var tres=mods.slice(0,3).map(function(m){return m.en;});
+    if(tres.length<2)tres=mods.slice(0,1).map(function(m){return m.en;});
+    S.items.push({area:'hab',k:'leer',en:tres.join(' '),
+      es:'Léelo en voz alta, de corrido, sin cortar entre frases.'});
+  }else if(cual===1){
+    var f=mods[Math.min(1,mods.length-1)].en;
+    var pal=f.split(/\s+/).length;
+    S.items.push({area:'hab',k:'ritmo',en:f,meta_seg:Math.max(3,Math.round(pal/2)),
+      es:'La misma frase, pero al ritmo de una conversación.'});
+  }else{
+    // el trabalenguas se escoge por el sonido que más se repite en las
+    // frases de hoy: así entrena justo lo que va a decir
+    var todo=mods.map(function(m){return m.en;}).join(' ').toLowerCase();
+    var mejor=0, cual=idx%TRABAS.length;
+    TRABAS.forEach(function(t,i){
+      var son=t.toLowerCase().replace(/[^a-z ]/g,'').split(/\s+/)
+              .map(function(w){return w.slice(0,2);});
+      var n=0;
+      son.forEach(function(s2){ if(s2.length>1&&todo.indexOf(s2)>=0)n++; });
+      if(n>mejor){ mejor=n; cual=i; }
+    });
+    S.items.push({area:'hab',k:'trabalenguas',en:TRABAS[cual],
+      es:'Primero despacio. Cuando salga limpio, súbele.'});
+  }
+}
+
+
+/* ═══════════ estimación de nivel ═══════════
+   No es una banda oficial ni quiere serlo. Son cuatro cosas que sí se
+   pueden medir de lo que el alumno dijo, cada una de 0 a 3. Sale solo en
+   las paradas de revisión, y siempre dice que Brian es quien confirma. */
+function _puntoFluidez(inf){
+  if(inf.ppm===null)return 0;
+  var porCien=inf.palabras?(inf.totalMule*100/inf.palabras):0;
+  var p=0;
+  if(inf.ppm>=60)p++;
+  if(inf.ppm>=90&&inf.ppm<=170)p++;
+  if(porCien<4)p++;
+  return p;
+}
+function _puntoPrecision(inf){
+  if(inf.prom===null)return 0;
+  return inf.prom>=90?3:(inf.prom>=78?2:(inf.prom>=62?1:0));
+}
+function _puntoAlcance(lista){
+  var t=lista.filter(function(a){return a.oido&&a.tipo!=='pista'&&a.oido.charAt(0)!=='[';})
+             .map(function(a){return a.oido;}).join(' ').toLowerCase();
+  var v={},n=0;
+  t.replace(/[^a-záéíóúñ' ]/g,' ').split(/\s+/).forEach(function(w){
+    if(w.length>2&&!v[w]){ v[w]=1; n++; }
+  });
+  return {n:n, p:(n>=60?3:(n>=35?2:(n>=18?1:0)))};
+}
+function _puntoTurnos(inf){
+  var w=inf.larga?inf.larga.trim().split(/\s+/).length:0;
+  return {w:w, p:(w>=20?3:(w>=13?2:(w>=7?1:0)))};
+}
+function estimarNivel(lista,inf){
+  var alc=_puntoAlcance(lista), tur=_puntoTurnos(inf);
+  var f=_puntoFluidez(inf), pr=_puntoPrecision(inf);
+  // Si el micrófono no dio tiempo de habla, la fluidez no se puede medir.
+  // No se cuenta como cero: se reparte el total entre lo que sí se midió,
+  // para no castigar a quien trae un teléfono que no oye.
+  var total;
+  if(inf.ppm===null) total=Math.round((pr+alc.p+tur.p)*12/9);
+  else total=f+pr+alc.p+tur.p;
+  var nv=(P&&P.nivel)||'Pre-A1';
+  var i=NIVELES_ORDEN.indexOf(nv);
+  var sig=NIVELES_ORDEN[Math.min(NIVELES_ORDEN.length-1,i+1)];
+  var veredicto = total<=4 ? ['Todavía por debajo de '+nv,'Hoy no alcanzó. No pasa nada: se repite y ya.']
+    : total<=7 ? [nv+' en construcción','Vas dentro de tu nivel. Falta soltura, no conocimiento.']
+    : total<=10 ? [nv+' sólido','Estás donde debes estar. Así se ve '+nv+' bien hecho.']
+    : [nv+' alto · en camino a '+sig,'Ya estás empujando el techo de tu nivel.'];
+  return {total:total,f:f,pr:pr,alc:alc,tur:tur,titulo:veredicto[0],nota:veredicto[1]};
+}
+function _pts(n){
+  var s='';
+  for(var i=0;i<3;i++)s+='<i class="'+(i<n?'on':'')+'"></i>';
+  return '<span class="niv-pts">'+s+'</span>';
+}
+function hojaNivel(est,inf){
+  return '<div class="nivcard"><div class="inf-t">Tu nivel de hoy</div>'+
+    '<div class="niv-tit">'+esc(est.titulo)+'</div>'+
+    '<div class="inf-x">'+esc(est.nota)+'</div>'+
+    '<div class="niv-fila"><span>fluidez</span>'+_pts(est.f)+
+      '<em>'+(inf.ppm===null?'sin medir':inf.ppm+' ppm · '+inf.totalMule+' muletillas')+'</em></div>'+
+    '<div class="niv-fila"><span>precisión</span>'+_pts(est.pr)+
+      '<em>'+(inf.prom===null?'sin medir':inf.prom+'% contra el modelo')+'</em></div>'+
+    '<div class="niv-fila"><span>alcance</span>'+_pts(est.alc.p)+
+      '<em>'+est.alc.n+' palabras distintas</em></div>'+
+    '<div class="niv-fila"><span>turnos</span>'+_pts(est.tur.p)+
+      '<em>tu turno más largo: '+est.tur.w+' palabras</em></div>'+
+    '<div class="niv-pie">Es una estimación de la app, sacada de lo que dijiste hoy. '+
+      'No es una banda oficial: quien confirma tu nivel es Brian.</div></div>';
+}
+function tocaEstimar(){
+  try{
+    var c=progreso(), n=c.parada;
+    return (typeof esExamen==='function'&&esExamen(n))||
+           (typeof esRepaso==='function'&&esRepaso(n));
+  }catch(e){ return false; }
+}
+
 function cierre(){
   pararReloj();
   var S=MAT[sIdx];
@@ -16990,6 +17318,17 @@ function cierre(){
   var h='<div class="qcard"><div class="qlbl">Cierre</div><div class="qtxt">Buen trabajo, '+esc(P.nombre)+'.</div>'+
     '<div class="qsub">'+msg+(prom!==null?' Tus repeticiones salieron al '+prom+'% de parecido con el modelo.':'')+'</div>'+
     '<button class="btn" id="menu">Volver al camino</button></div>'+
+    (function(){
+      try{
+        var _inf=informeFluidez(attempts);
+        var _tres=tresDeHoy(attempts);
+        guardarTres(_tres);
+        var _c=null; try{ _c=progreso(); }catch(e){}
+        var _niv='';
+        if(tocaEstimar()){ try{ _niv=hojaNivel(estimarNivel(attempts,_inf),_inf); }catch(e){} }
+        return _niv+hojaInforme(_inf)+hojaTres(_tres)+sellosRacha((_c&&_c.dias)||[]);
+      }catch(e){ return ''; }
+    })()+
     resumenAprendido(S,attempts)+
     '<div class="sumcard"><h3>Lo que se le manda a tu maestro</h3><p class="sub">Cada intento, tal como salió. Brian lo revisa y te devuelve máximo tres correcciones.</p>'+
     attempts.map(function(a){
@@ -17006,6 +17345,7 @@ function cierre(){
     '<button id="cop">Copiar código</button></div>'+
     '<textarea class="code" id="cd" readonly'+((ONLINE||DATOS_ENDPOINT)?' hidden':'')+'></textarea></div>';
   APP.innerHTML=h;
+  try{ ligarTres(); }catch(e){}
   say(msgVoz,'es-MX');
 
   // la observación se recoge al enviar, no antes

@@ -253,6 +253,26 @@ body.trabado{overflow:hidden}
   line-height:1.5;white-space:pre-wrap;word-break:break-word;max-height:45vh;overflow:auto}
 .avdiag b{color:#E8A93A}
 .avdiag .x{float:right;cursor:pointer;color:#8A837A;font-size:14px;padding:0 4px}
+
+/* lo que la app mide al cerrar: fluidez, nivel y las tres del día */
+.flcaja{background:var(--papel);border:1px solid var(--linea);border-radius:12px;padding:11px 12px;margin:0 0 10px}
+.flniv-t{font-size:16px;font-weight:700;margin-bottom:6px}
+.flniv-p{display:flex;flex-wrap:wrap;gap:10px}
+.pm{font-size:11.5px;color:var(--tenue);display:flex;align-items:center;gap:4px}
+.pmp{display:inline-flex;gap:2px}
+.pmp i{width:7px;height:7px;border-radius:50%;background:var(--linea)}
+.pmp i.on{background:var(--verde)}
+.flniv{padding-bottom:9px;margin-bottom:9px;border-bottom:1px solid var(--linea)}
+.flrej{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:6px}
+.flk{text-align:center;background:var(--crema);border-radius:9px;padding:6px 2px}
+.flk b{display:block;font-size:17px;line-height:1.1}
+.flk span{display:block;font-size:10px;color:var(--tenue);margin-top:2px;line-height:1.2}
+.fllarga{background:var(--crema);border-radius:9px;padding:8px 10px;font-size:13.5px;line-height:1.35;margin-bottom:6px}
+.fllarga span{display:block;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--tenue);margin-bottom:3px}
+.fltres{margin-top:4px}
+.fltres>span{display:block;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--tenue);margin-bottom:4px}
+.fltres-f{padding:5px 0;border-top:1px solid var(--linea);font-size:13.5px}
+.fltres-f em{display:block;font-style:normal;font-size:12px;color:var(--tenue)}
 </style></head><body class="trabado">
 
 <div id="cerrojo">
@@ -856,9 +876,64 @@ function lineaBitacora(e,n){
   if(e.ev==='fin') return '<div class="bt fin">'+t+'<b>Terminó la sesión</b></div>';
   return '<div class="bt">'+t+'<span>'+esc(e.ev)+'</span></div>';
 }
+/* Lo que la app ya mide al cerrar la sesión: ritmo, muletillas, las tres
+   frases que peor salieron y, en las paradas de revisión, el nivel
+   estimado. Se acepta tanto el nombre largo como el corto, según cómo lo
+   mande el servidor de datos. */
+function _fl(x){ return x.fluidez||x.fl||null; }
+function _nv(x){ return x.nivel_est||x.nv||null; }
+function _tr(x){ return x.tres||x.tr||null; }
+function _pastilla(n,de,etiq){
+  var p=(+n||0), t=(+de||3);
+  var s='';
+  for(var i=0;i<t;i++)s+='<i class="'+(i<p?'on':'')+'"></i>';
+  return '<span class="pm">'+esc(etiq)+' <span class="pmp">'+s+'</span></span>';
+}
+function bloqueFluidez(x){
+  var f=_fl(x), nv=_nv(x), tr=_tr(x);
+  if(!f&&!nv&&!tr) return '';
+  var h='';
+  if(nv){
+    h+='<div class="flniv"><div class="flniv-t">'+esc(nv.titulo||'')+'</div>'+
+       '<div class="flniv-p">'+
+         _pastilla(nv.fluidez,3,'fluidez')+_pastilla(nv.precision,3,'precisión')+
+         _pastilla(nv.alcance,3,'alcance')+_pastilla(nv.turnos,3,'turnos')+
+       '</div>'+
+       '<div class="tenue" style="margin-top:4px">'+(+nv.total||0)+' de 12 · '+
+         (nv.palabras_distintas!=null?nv.palabras_distintas+' palabras distintas · ':'')+
+         (nv.turno_largo!=null?'turno más largo de '+nv.turno_largo+' palabras':'')+'</div></div>';
+  }
+  if(f){
+    var mu=(f.cuales||f.mule||[]);
+    h+='<div class="flrej">'+
+      '<div class="flk"><b>'+(f.veces!=null?f.veces:'—')+'</b><span>veces habló</span></div>'+
+      '<div class="flk"><b>'+(f.palabras!=null?f.palabras:'—')+'</b><span>palabras suyas</span></div>'+
+      '<div class="flk"><b>'+(f.ppm!=null?f.ppm:'—')+'</b><span>ppm</span></div>'+
+      '<div class="flk"><b>'+(f.muletillas!=null?f.muletillas:'—')+'</b><span>muletillas</span></div>'+
+      '</div>';
+    if(mu.length){
+      h+='<div class="tenue" style="margin:2px 0 6px">'+
+         mu.map(function(m){return esc(m.p||m[0])+' ×'+(m.n||m[1]);}).join(' · ')+'</div>';
+    }
+    if(f.larga){
+      h+='<div class="fllarga"><span>su frase más larga</span>'+esc(f.larga)+'</div>';
+    }
+  }
+  if(tr&&tr.length){
+    h+='<div class="fltres"><span>sus tres de ese día</span>'+
+       tr.map(function(t){
+         return '<div class="fltres-f"><b>'+esc(t.en||'')+'</b>'+
+                (t.dijo?'<em>dijo: '+esc(t.dijo)+(t.pct!=null?' · '+t.pct+'%':'')+'</em>'
+                       :'<em>pidió la pista</em>')+'</div>';
+       }).join('')+'</div>';
+  }
+  return h?'<div class="flcaja">'+h+'</div>':'';
+}
 function cuerpoSesion(x){
+  var fl=bloqueFluidez(x);
   var d=x.detalle;
-  if(!d) return '<div class="tenue">Esta sesión es de antes de que se guardara el detalle: solo hay el resumen.</div>';
+  if(!d) return fl+(fl?'<div class="tenue">De esta sesión solo hay el resumen: el paso por paso todavía no se guardaba.</div>'
+                      :'<div class="tenue">Esta sesión es de antes de que se guardara el detalle: solo hay el resumen.</div>');
   var b=d.b||[], ints=d.i||[];
   var clics=b.filter(function(e){return e.ev==='clic';}).length;
   var sal=b.filter(function(e){return e.ev==='salio';}).length;
@@ -867,9 +942,9 @@ function cuerpoSesion(x){
     Math.max(ints.length,b.filter(function(e){return e.ev==='intento';}).length)+' intentos · '+clics+' toques'+(sal?' · se salió '+sal+(sal===1?' vez':' veces'):'')+'</div>';
   var soloClics=false;
   if(!b.length && ints.length){
-    return res+ints.map(function(i){ return lineaBitacora({s:0,ev:'intento',tipo:i.t,dijo:i.d,meta:i.m,pct:i.p}); }).join('');
+    return fl+res+ints.map(function(i){ return lineaBitacora({s:0,ev:'intento',tipo:i.t,dijo:i.d,meta:i.m,pct:i.p}); }).join('');
   }
-  return res+'<div class="bt-caja">'+b.map(lineaBitacora).join('')+'</div>';
+  return fl+res+'<div class="bt-caja">'+b.map(lineaBitacora).join('')+'</div>';
 }
 function bloqueSesionesTodo(ses){
   if(!ses||!ses.length) return '<div class="secc"><h3>Sus sesiones</h3><div class="tenue">Todavía no termina ninguna sesión.</div></div>';
@@ -928,7 +1003,15 @@ var MUESTRA_SESIONES=(function(){
       {s:318,ev:'ejercicio',it:3,k:'hueco',frase:'She ___ the reports.'},
       {s:330,ev:'clic',it:3,que:'checks'},
       {s:1080,ev:'fin',it:6}]}},
-    {fecha:f(1),hora:'19:15',titulo:'Tú, en tres frases',segundos:840,activos:840,frases:11,promedio:76,detalle:null}
+    {fecha:f(1),hora:'19:15',titulo:'Tú, en tres frases',segundos:840,activos:840,frases:11,promedio:76,detalle:null,
+     fluidez:{veces:9,palabras:96,segundos:71,ppm:81,muletillas:4,
+              cuales:[{p:'um',n:3},{p:'este',n:1}],
+              larga:'i check the machines every morning and then i fill the report for my supervisor',
+              promedio:76},
+     nivel_est:{total:8,titulo:'A1 sólido',fluidez:2,precision:2,alcance:2,palabras_distintas:38,turnos:2,turno_largo:15},
+     tres:[{en:'I fill the reports every day.',dijo:'i fill the report every day',pct:71},
+           {en:'The machine is not working.',dijo:'the machine no working',pct:58},
+           {en:'How long have you worked here?',dijo:'',pct:null}]}
   ];
 })();
 

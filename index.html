@@ -354,6 +354,16 @@
     text-align:center;color:var(--verde);margin:13px 4px 15px;font-style:italic}
   .hoja-mas{width:100%;margin-top:9px;background:none;border:0;font-family:inherit;
     font-size:13.5px;color:var(--tenue);cursor:pointer;padding:9px}
+  /* la hoja de "¿cuánto tiempo traes?" */
+  .largo-ops{display:flex;flex-direction:column;gap:9px;margin:14px 0 4px}
+  .largo-op{display:block;width:100%;text-align:left;font-family:inherit;cursor:pointer;
+    background:var(--papel,#FBF7EC);border:1.5px solid rgba(31,78,140,.22);
+    border-radius:14px;padding:13px 15px;color:inherit;transition:border-color .15s,background .15s}
+  .largo-op:active{background:rgba(31,78,140,.06)}
+  .largo-op b{display:block;font-size:16.5px;font-weight:700;margin-bottom:3px}
+  .largo-op span{display:block;font-size:13px;line-height:1.45;opacity:.72}
+  .largo-op.destacada{border-color:var(--verde);background:rgba(29,158,117,.07)}
+  .largo-op.destacada b{color:var(--verde)}
   @media (prefers-reduced-motion:reduce){
     .hoja{transition:none} .hoja-velo{transition:none}
   }
@@ -1712,7 +1722,7 @@ if('serviceWorker' in navigator){
 <script>
 (function(){
 "use strict";
-var VERSION="v157 · 24 sep · los siete niveles abiertos, con su texto y el picker arreglado";
+var VERSION="v159 · 25 sep · entras por un rato o por la lección completa, y lo que dejaste a medias te espera";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -8541,7 +8551,7 @@ function pintarBarraJefe(){
     document.body.appendChild(b);
   }
   var S=(MAT&&MAT[sIdx])||null;
-  var tot=S&&S.items?S.items.length:0;
+  var tot=S&&S.items?largoSesion(S):0;
   var c; try{ c=progreso(); }catch(e){ c={parada:1}; }
   b.innerHTML=
     '<div class="bj-fila">'+
@@ -9861,6 +9871,38 @@ function ejercicioNumeros(){
 // Al llegar a cero no se bloquea nada — se le ofrece cerrar. Practicar de más
 // cansado no sirve, y obligarlo a parar a media frase tampoco.
 var MINUTOS=20, RELOJ=null, AVISADO=false;
+
+/* ═══════════ ¿CUÁNTO TIEMPO TRAES HOY? ═══════════
+   Traído de la versión del Colegio Militar. El alumno que hoy no trae
+   los veinte minutos no tiene por qué perder el día: entra por un rato,
+   se le guarda dónde se quedó y vuelve. Un RATO NO CIERRA LA PARADA —
+   la parada se cierra cuando de verdad se acabó la lección — así que
+   nadie puede correrse un nivel a pedacitos de cinco minutos. */
+var LARGO='completa';      // rato | completa | finde
+
+/* Un rato es UNA TERCERA PARTE de la lección, no un número fijo: las
+   lecciones traen entre siete y quince ejercicios y unos pesan mucho
+   más que otros. Así el rato siempre sale de siete a nueve minutos,
+   se llame como se llame la lección. */
+function topeRato(total){
+  if(!total)return 0;
+  return Math.max(2,Math.min(5,Math.ceil(total/3)));
+}
+function minutosRato(total){
+  if(!total)return 7;
+  return Math.max(3,Math.round(MINUTOS*topeRato(total)/total));
+}
+function largoSesion(S){
+  if(!S||!S.items)return 0;
+  if(LARGO==='rato')return Math.min(S.items.length,topeRato(S.items.length));
+  return S.items.length;
+}
+function minutosHoy(){
+  if(LARGO!=='rato')return MINUTOS;
+  var S=(MAT&&sIdx!=null&&MAT[sIdx])||null;
+  return (S&&S.items&&S.items.length)?minutosRato(S.items.length):7;
+}
+function esRato(S){ return LARGO==='rato' && S && S.items && largoSesion(S)<S.items.length; }
 function arrancarReloj(){
   pararReloj();AVISADO=false;
   RELOJ=setInterval(pintarReloj,1000);
@@ -9871,7 +9913,7 @@ function pintarReloj(){
   var caja=document.getElementById('reloj');
   if(!caja)return;
   var pasados=Math.floor((Date.now()-t0)/1000);
-  var quedan=Math.max(0,MINUTOS*60-pasados);
+  var quedan=Math.max(0,minutosHoy()*60-pasados);
   var m=Math.floor(quedan/60), sg=quedan%60;
   caja.textContent=m+':'+(sg<10?'0':'')+sg;
   caja.className='reloj'+(quedan<=180?' poco':'')+(quedan===0?' fin':'');
@@ -9881,12 +9923,12 @@ function pintarReloj(){
     var b=document.getElementById('skip');
     if(b){
       b.classList.add('btn-cerrar');
-      b.textContent='Cerrar aquí · ya son 20 minutos';
+      b.textContent='Cerrar aquí · ya son '+minutosHoy()+' minutos';
     }
-    say('Ya pasaron los veinte minutos. Puedes cerrar aquí o terminar lo que estás haciendo.','es-MX');
+    say('Ya pasaron los '+(minutosHoy()===20?'veinte':minutosHoy())+' minutos. Puedes cerrar aquí o terminar lo que estás haciendo.','es-MX');
   }
 }
-function marcaReloj(){ return '<div class="reloj" id="reloj">'+MINUTOS+':00</div>'; }
+function marcaReloj(){ return '<div class="reloj" id="reloj">'+minutosHoy()+':00</div>'; }
 
 /* ═══════════ el camino ═══════════ */
 // Sesenta paradas, iguales para todos. Lo que cambia es dónde entra cada
@@ -10887,7 +10929,7 @@ function avisarSiYaCasi(){
     if(document.getElementById('hojaadios'))return;
     var S=MAT&&MAT[sIdx];
     if(!S||!S.items||!S.items.length)return;
-    var faltan=S.items.length-it;
+    var faltan=largoSesion(S)-it;
     if(faltan===2){
       YA_AVISE_FINAL=true;
       setTimeout(function(){ hojaAdios(true); },500);
@@ -12458,7 +12500,7 @@ function pantallaCiudad(nv,j,llegando,pica){
               '<svg width="90" height="20" viewBox="0 0 90 20"><path d="M4 14 Q45 -6 86 14" fill="none" stroke="#9FB3D1" stroke-width="1.5" stroke-dasharray="2 4"></path><path d="M45 3 l6 3 l-6 3 l1.5 -3 Z" fill="'+d.col+'"></path></svg>'+
               '<div style="text-align:right"><div class="bp-lbl">A</div><div class="bp-dia" style="color:'+d.col+'">DÍA '+(i+1)+'</div></div></div>'+
             '<div class="bp-tit">'+esc(lugar)+'</div>'+
-            '<div class="bp-datos"><div><div class="bp-lbl">DURACIÓN</div><b>15 min</b></div>'+
+            '<div class="bp-datos"><div><div class="bp-lbl">DURACIÓN</div><b>'+MINUTOS+' min</b></div>'+
               '<div><div class="bp-lbl">ACENTO</div><b>'+esc(String(d.acento).split(' ')[0])+'</b></div>'+
               '<div><div class="bp-lbl">PARADA</div><b>'+n+' de 28</b></div></div>'+
           '</div>'+
@@ -12471,7 +12513,7 @@ function pantallaCiudad(nv,j,llegando,pica){
           '<span class="dia-n">DÍA '+(i+1)+'</span>'+
           '<span class="dia-t">'+esc(lugar)+'</span>'+
           (hecho?'<svg width="42" height="42" viewBox="0 0 42 42" class="dia-sello">'+selloRedondo(21,21,17,'OK','','',ROJO,'')+'</svg>'
-                :'<span class="dia-min">15 min</span>')+
+                :'<span class="dia-min">'+MINUTOS+' min</span>')+
         '</div>';
     }
   }
@@ -15972,7 +16014,7 @@ function paso(){
   var S=MAT[sIdx];
   if(!S||!S.items||!S.items.length){ if(typeof mapa==='function')mapa(); return; }
   if(it<0)it=0;
-  if(it>=S.items.length){cierre();return;}
+  if(it>=largoSesion(S)){ if(esRato(S)){cierreRato();}else{cierre();} return;}
   avisarSiYaCasi();
   var x=S.items[it];
   bitacora('ejercicio',{k:x.k||'',area:x.area||'',
@@ -16012,8 +16054,8 @@ function paso(){
     idiom:'Una expresion hecha. Palabra por palabra no tiene sentido. Adivina que significa.',
     charla:'Es la parte de conversacion del examen. Primero yo te hago preguntas y tu contestas hablando; despues le das la vuelta y tu me preguntas a mi. Todo pasa en esta misma pantalla.',
   };
-  var quedan=S.items.length-it-1;
-  var h=atras()+marcaReloj()+ayuda(ayudas[x.k]||'Sigue las instrucciones de la tarjeta.',(quedan>0?'quedan '+quedan+' ejercicios':'el cierre de la sesión'))+'<div class="prog">'+S.items.map(function(_,i){return '<i class="'+(i<=it?'on':'')+'"></i>';}).join('')+'</div>'+navPaso(it>0, it<S.items.length-1)+'<div class="qcard">';
+  var quedan=largoSesion(S)-it-1;
+  var h=atras()+marcaReloj()+ayuda(ayudas[x.k]||'Sigue las instrucciones de la tarjeta.',(quedan>0?'quedan '+quedan+' ejercicios':'el cierre de la sesión'))+'<div class="prog">'+S.items.slice(0,largoSesion(S)).map(function(_,i){return '<i class="'+(i<=it?'on':'')+'"></i>';}).join('')+'</div>'+navPaso(it>0, it<largoSesion(S)-1)+'<div class="qcard">';
 
   if(x.k==='model'){
     var vars=variantesDe(x.en,P);
@@ -16377,7 +16419,7 @@ function paso(){
   APP.innerHTML=h+botonDuda()+'</div>';
   ligarNavPaso();
   var _mid=document.getElementById('np-mid');
-  if(_mid)_mid.textContent=(it+1)+' de '+S.items.length;
+  if(_mid)_mid.textContent=(it+1)+' de '+largoSesion(S);
   ligarDuda();
   ligarVideo();
   pintarVideoVocab();
@@ -16984,6 +17026,9 @@ function registrar(x,t,extra){
   if(x.k==='free')pedirSeguimiento(t);
   if(x.k==='roleplay'&&hayIA())seguirRoleplay(x,t);
   var r=document.getElementById('res');
+  // el micrófono tarda en cerrar: si para cuando contesta ya se fue de
+  // este ejercicio, el intento queda anotado y ya. Antes tronaba.
+  if(!r)return;
   var h='<div class="heard"><div class="hl">te entendí</div><div class="ht">'+esc(t)+'</div>';
   // Trabarse no es equivocarse. Si se atoró y ademas le salio bajo, se le
   // dice eso y no "mal": lo que necesita es volver a intentarlo, no una
@@ -17026,7 +17071,8 @@ function registrar(x,t,extra){
   var o=document.getElementById('otra');
   if(o)o.onclick=function(){say(meta,'en-US');r.innerHTML='';};
   ligarRescate(r,meta);
-  document.getElementById('sig').onclick=function(){it++;paso();};
+  var _sig=document.getElementById('sig');
+  if(_sig)_sig.onclick=function(){it++;paso();};
 }
 
 /* ── la red de abajo ──
@@ -17527,12 +17573,19 @@ function cierre(){
     '<div class="ganados"><span>+'+gan.ganados+' puntos</span>'+
     gan.producidas+' frases tuyas · '+gan.escuchas+' escuchas · '+gan.sombra+' veces al mismo tiempo</div>');
   var codigo=pack(rec);
-  document.getElementById('cd').value=codigo;
-  document.getElementById('menu').onclick=function(){sIdx=null;router();};
+  /* La respuesta del servidor puede llegar cuando el alumno ya se fue de
+     esta pantalla (encadenó otra lección o se volvió al mapa). Escribir
+     en algo que ya no existe tronaba la sesión: por eso todo lo que toca
+     el DOM después del cierre pasa por aquí. */
+  function _est(t){ var e=document.getElementById('stat'); if(e)e.textContent=t; }
+  function _ver(id){ var e=document.getElementById(id); if(e)e.hidden=false; }
+  var _cd=document.getElementById('cd'); if(_cd)_cd.value=codigo;
+  var _menu=document.getElementById('menu');
+  if(_menu)_menu.onclick=function(){sIdx=null;router();};
 
   // se manda sola al servidor de datos
   if(DATOS_ENDPOINT){
-    document.getElementById('stat').textContent='Enviando a Brian…';
+    _est('Enviando a Brian…');
     var enviar=function(){
       var o=document.getElementById('obs');
       rec.observacion=o?o.value.trim():'';
@@ -17541,18 +17594,14 @@ function cierre(){
         body:JSON.stringify(rec)})
         .then(function(r){return r.ok?r.json():null;})
         .then(function(d){
-          document.getElementById('stat').textContent=(d&&d.ok)
+          _est((d&&d.ok)
             ? '✓ Enviada. Brian ya la tiene.'
-            : 'No se pudo enviar. Usa el botón de correo.';
-          if(!d||!d.ok){
-            document.getElementById('manual').hidden=false;
-            document.getElementById('cd').hidden=false;
-          }
+            : 'No se pudo enviar. Usa el botón de correo.');
+          if(!d||!d.ok){ _ver('manual'); _ver('cd'); }
         })
         .catch(function(){
-          document.getElementById('stat').textContent='Sin conexión. Usa el botón de correo.';
-          document.getElementById('manual').hidden=false;
-          document.getElementById('cd').hidden=false;
+          _est('Sin conexión. Usa el botón de correo.');
+          _ver('manual'); _ver('cd');
         });
     };
     // se espera un poco por si escribe una observación
@@ -17561,12 +17610,12 @@ function cierre(){
     if(ob)ob.onblur=enviar;
   }
   if(ONLINE&&!DATOS_ENDPOINT){
-    document.getElementById('stat').textContent='Enviando…';
+    _est('Enviando…');
     google.script.run
-      .withSuccessHandler(function(r){document.getElementById('stat').textContent=(r&&r.ok)?'✓ Enviada. Brian ya la tiene.':'No la aceptó el servidor.';})
+      .withSuccessHandler(function(r){_est((r&&r.ok)?'✓ Enviada. Brian ya la tiene.':'No la aceptó el servidor.');})
       .withFailureHandler(function(){
-        document.getElementById('stat').textContent='No se pudo conectar. Mándala por correo.';
-        document.getElementById('manual').hidden=false;document.getElementById('cd').hidden=false;
+        _est('No se pudo conectar. Mándala por correo.');
+        _ver('manual'); _ver('cd');
       })
       .guardarSesion(rec);
     var envio=document.getElementById('obs');
@@ -17594,9 +17643,246 @@ function cierre(){
     var t=document.getElementById('cd');
     t.value=recogido();
     t.select();
-    try{document.execCommand('copy');document.getElementById('stat').textContent='Código copiado.';}catch(x){}
+    try{document.execCommand('copy');_est('Código copiado.');}catch(x){}
   };
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   CUÁNTO TIEMPO TRAES HOY
+   ───────────────────────────────────────────────────────────────────
+   Esta capa va al final a propósito: envuelve arrancarParada y cierre
+   sin tocar el código de arriba, igual que se hizo en la versión del
+   Colegio Militar.
+
+   Tres puertas de entrada a la misma lección:
+     rato    · cinco ejercicios. NO cierra la parada: guarda dónde se
+               quedó y la próxima vez sigue ahí.
+     completa· la lección entera. Cierra la parada y avanza.
+     finde   · la entera y al terminar le ofrece seguir con la que
+               viene, sin volver al mapa.
+   ═══════════════════════════════════════════════════════════════════ */
+
+var CP_LARGO='efa_a_medias';
+
+function cpLeer(){
+  try{ var r=localStorage.getItem(CP_LARGO); return r?JSON.parse(r):null; }catch(e){ return null; }
+}
+function cpBorrar(){ try{ localStorage.removeItem(CP_LARGO); }catch(e){} }
+function cpSinAudio(lista){
+  return (lista||[]).map(function(a){
+    var b={}; for(var k in a){ if(k!=='audio')b[k]=a[k]; } return b;
+  });
+}
+/* Se guarda solo si de verdad va a medias: ni antes de empezar ni
+   cuando ya llegó al cierre, que ese lo guarda la lección. */
+function cpGuardar(){
+  try{
+    if(!MAT||!MAT.length||sIdx==null||!MAT[sIdx])return;
+    var S=MAT[sIdx], total=(S.items||[]).length;
+    if(it>=total)return;
+    if(it<=0&&!(attempts&&attempts.length))return;
+    var c=null; try{ c=progreso(); }catch(e){}
+    var cp={ parada:(c&&c.parada)||1, sIdx:sIdx, it:it, total:total,
+             titulo:S.t||'', largo:LARGO,
+             attempts:cpSinAudio(attempts),
+             intentosDe:(typeof intentosDe==='object'?intentosDe:{}),
+             dur:Math.round((Date.now()-(t0||Date.now()))/1000),
+             cuando:Date.now() };
+    try{ localStorage.setItem(CP_LARGO,JSON.stringify(cp)); }
+    catch(e){ try{ cp.attempts=[]; localStorage.setItem(CP_LARGO,JSON.stringify(cp)); }catch(e2){} }
+  }catch(e){}
+}
+function cpParaHoy(){
+  var cp=cpLeer(); if(!cp)return null;
+  if(Date.now()-(cp.cuando||0)>21*864e5){ cpBorrar(); return null; }   // tres semanas y se olvida
+  var c=null; try{ c=progreso(); }catch(e){}
+  if(!c||cp.parada!==c.parada){ return null; }
+  return cp;
+}
+function cpRestaurar(cp){
+  try{
+    if(!MAT||!MAT.length){ try{ MAT=materialDe(P); }catch(e){} }
+    if(!MAT||!MAT.length)return false;
+    LARGO='completa';                      // al volver se le da la lección entera
+    sIdx=Math.min(Math.max(0,cp.sIdx||0),MAT.length-1);
+    it=Math.max(0,Math.min(cp.it||0,((MAT[sIdx].items||[]).length)-1));
+    attempts=cp.attempts||[];
+    intentosDe=cp.intentosDe||{};
+    vistos={};
+    t0=Date.now()-(cp.dur||0)*1000;
+    paso();
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ── el cierre de un rato: guarda y se despide, sin avanzar ── */
+function cierreRato(){
+  pararReloj();
+  cpGuardar();
+  var S=(MAT&&MAT[sIdx])||{};
+  var total=(S.items||[]).length;
+  var dichas=attempts.filter(function(a){return a.oido&&a.tipo!=='pista';}).length;
+  APP.innerHTML='<div class="qcard"><div class="qlbl">Hasta aquí por hoy</div>'+
+    '<div class="qtxt">Bien, '+esc((P&&P.nombre)||'')+'.</div>'+
+    '<div class="qsub">Hiciste '+it+' de '+total+' ejercicios'+
+      (dichas?' y hablaste '+dichas+' '+(dichas===1?'vez':'veces'):'')+'. '+
+      'Esta parada <b>sigue abierta</b>: la próxima vez entras justo donde te quedaste.</div>'+
+    '<button class="btn" id="ratovolver">Volver al camino</button>'+
+    '<button class="btn ghost" id="ratoseguir" style="margin-top:8px">Mejor sigo otro rato</button>'+
+    '</div>'+
+    '<p class="tiny" style="text-align:center;margin:14px 20px 90px;opacity:.75">'+
+    'Un rato no cuenta como parada cerrada. Se cierra cuando acabas la lección, '+
+    'y es entonces cuando le llega completa a tu maestro.</p>';
+  try{ say('Hasta aquí por hoy. Tu avance quedó guardado.','es-MX'); }catch(e){}
+  var v=document.getElementById('ratovolver');
+  if(v)v.onclick=function(){ try{ mapa(); }catch(e){} };
+  var g=document.getElementById('ratoseguir');
+  if(g)g.onclick=function(){
+    LARGO='completa'; cpBorrar();
+    try{ paso(); }catch(e){}
+  };
+}
+
+/* ── la hoja que pregunta ── */
+function hojaLargo(alEscoger){
+  if(document.getElementById('hojalargo')){ return; }
+  var cp=cpParaHoy();
+  // cuántos ejercicios trae la lección que está a punto de abrir
+  var totalHoy=0;
+  try{
+    if(!MAT||!MAT.length)MAT=materialDe(P);
+    var _c=progreso();
+    var _i=(contenidoDe(_c.parada)-1)%MAT.length; if(_i<0)_i=0;
+    totalHoy=((MAT[_i]||{}).items||[]).length;
+  }catch(e){}
+  var minRato=minutosRato(totalHoy), topRato=topeRato(totalHoy);
+  var v=document.createElement('div');
+  v.className='hoja-velo'; v.id='hojalargo';
+
+  var ops='';
+  if(cp){
+    ops+='<button class="largo-op destacada" data-s="seguir">'+
+           '<b>Seguir donde me quedé</b>'+
+           '<span>Ibas en el ejercicio '+(cp.it+1)+' de '+cp.total+'. Tu avance está guardado.</span></button>';
+  }
+  ops+='<button class="largo-op" data-s="rato"><b>Un rato · '+minRato+' minutos</b>'+
+         '<span>'+(topRato?topRato+' ejercicios de los '+totalHoy+'. ':'')+
+         'No cierra la parada: vuelves donde te quedaste.</span></button>'+
+       '<button class="largo-op" data-s="completa"><b>La lección completa · '+MINUTOS+' minutos</b>'+
+         '<span>Todo: escuchar, la regla, hablar y los ejercicios de boca.</span></button>'+
+       '<button class="largo-op" data-s="finde"><b>Sesión de fin de semana</b>'+
+         '<span>Esta lección y sigues con la que viene, sin volver al mapa.</span></button>';
+
+  v.innerHTML='<div class="hoja">'+
+    '<div class="hoja-asa"></div>'+
+    '<div class="hoja-hola" style="font-size:22px">¿Cuánto tiempo traes?</div>'+
+    '<div class="hoja-gloss">No tienes que traer los '+MINUTOS+' minutos para abrir la app.</div>'+
+    '<div class="largo-ops">'+ops+'</div>'+
+    (cp?'<button class="hoja-mas" id="largo-nuevo">Mejor empezar esta lección de nuevo</button>':'')+
+  '</div>';
+  document.body.appendChild(v);
+  requestAnimationFrame(function(){ v.classList.add('abierta'); });
+
+  function cerrar(cb){
+    v.classList.remove('abierta');
+    setTimeout(function(){ v.remove(); if(cb)cb(); },300);
+  }
+  v.onclick=function(e){ if(e.target===v)cerrar(); };
+
+  v.querySelectorAll('[data-s]').forEach(function(b){
+    b.onclick=function(){
+      var s=b.dataset.s;
+      if(s==='seguir'){
+        cerrar(function(){ if(!cpRestaurar(cp)) alEscoger(); });
+        return;
+      }
+      LARGO=s;
+      try{ if(P){ P.largo_pref=s; var d=load(); d.perfil=P; save(d); D=d; } }catch(e){}
+      cpBorrar();
+      cerrar(alEscoger);
+    };
+  });
+  var nu=document.getElementById('largo-nuevo');
+  if(nu)nu.onclick=function(){ cpBorrar(); cerrar(function(){ hojaLargo(alEscoger); }); };
+}
+
+/* ── envolver la entrada: primero se pregunta, luego se entra ── */
+(function(){
+  if(typeof arrancarParada!=='function')return;
+  var base=arrancarParada;
+  arrancarParada=function(){
+    var c; try{ c=progreso(); }catch(e){ c={parada:1}; }
+    // exámenes y repasos no se parten: son de una sentada
+    var partible=true;
+    try{ partible=!esExamen(c.parada)&&!esRepaso(c.parada); }catch(e){}
+    // La PRIMERA lección no pregunta nada: el que acaba de darse de alta
+    // quiere entrar, no escoger. La hoja aparece de la segunda en adelante,
+    // que es cuando ya sabe cuánto dura y cuánto tiempo trae.
+    var primera=false;
+    try{ primera=((D&&D.sesiones||[]).length===0 && (c.parada||1)===1); }catch(e){}
+    if(!partible||!yaPersonalizo()||primera){
+      if(primera)LARGO='completa';
+      return base.apply(this,arguments);
+    }
+    var self=this, args=arguments;
+    hojaLargo(function(){ base.apply(self,args); });
+  };
+  // el jefe entra directo, sin hoja
+  if(typeof irALeccionDe==='function'){
+    var baseL=irALeccionDe;
+    irALeccionDe=function(){ LARGO='completa'; return baseL.apply(this,arguments); };
+  }
+})();
+
+/* ── al cerrar de verdad: se borra el guardado y, si es fin de
+      semana, se le ofrece la siguiente sin volver al mapa ── */
+(function(){
+  if(typeof cierre!=='function')return;
+  var base=cierre;
+  cierre=function(){
+    var r=base.apply(this,arguments);
+    cpBorrar();
+    try{
+      if(LARGO!=='finde')return r;
+      var c=progreso();
+      if(c.parada>PARADAS)return r;
+      var esp=false; try{ esp=esExamen(c.parada)||esRepaso(c.parada); }catch(e){}
+      if(esp)return r;
+      var caja=APP.querySelector('.qcard'); if(!caja)return r;
+      var b=document.createElement('button');
+      b.className='btn'; b.id='findesigue';
+      b.style.cssText='margin-top:8px';
+      b.textContent='Seguir con la siguiente ›';
+      var vol=document.getElementById('menu');
+      if(vol&&vol.parentNode)vol.parentNode.insertBefore(b,vol);
+      b.onclick=function(){
+        try{
+          if(!MAT||!MAT.length){ MAT=materialDe(P); }
+          sIdx=(contenidoDe(progreso().parada)-1)%MAT.length;
+          it=0; attempts=[]; intentosDe={}; vistos={}; t0=Date.now();
+          YA_AVISE_FINAL=false;
+          correr();
+        }catch(e){ try{ mapa(); }catch(e2){} }
+      };
+    }catch(e){}
+    return r;
+  };
+})();
+
+/* ── guardar el avance cuando se sale a medias ── */
+(function(){
+  if(typeof mapa==='function'){
+    var baseM=mapa;
+    mapa=function(){ cpGuardar(); return baseM.apply(this,arguments); };
+  }
+  window.addEventListener('pagehide',cpGuardar);
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='hidden')cpGuardar();
+  });
+  // la preferencia de la vez pasada solo sirve de sugerencia: la hoja
+  // se vuelve a preguntar cada vez, porque el tiempo que traes cambia.
+})();
 
 /* arranque */
 if(P){sIdx=null;}

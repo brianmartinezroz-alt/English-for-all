@@ -354,6 +354,14 @@
     text-align:center;color:var(--verde);margin:13px 4px 15px;font-style:italic}
   .hoja-mas{width:100%;margin-top:9px;background:none;border:0;font-family:inherit;
     font-size:13.5px;color:var(--tenue);cursor:pointer;padding:9px}
+  /* la puerta: el código de invitación */
+  .puertacard{margin-top:18px}
+  .codtx{font-family:var(--mono,ui-monospace,monospace);font-size:21px;letter-spacing:.09em;
+    text-align:center;text-transform:uppercase;margin:16px 0 6px}
+  .codmal{min-height:20px;font-size:13.5px;line-height:1.45;color:var(--rojo,#B3332E);
+    text-align:center;margin-bottom:8px}
+  .codwa{display:block;text-align:center;text-decoration:none;margin-top:9px;line-height:1.3}
+  .puertapie{margin:16px 6px 0;text-align:center;opacity:.72;line-height:1.5}
   /* la hoja de "¿cuánto tiempo traes?" */
   .largo-ops{display:flex;flex-direction:column;gap:9px;margin:14px 0 4px}
   .largo-op{display:block;width:100%;text-align:left;font-family:inherit;cursor:pointer;
@@ -1722,7 +1730,7 @@ if('serviceWorker' in navigator){
 <script>
 (function(){
 "use strict";
-var VERSION="v159 · 25 sep · entras por un rato o por la lección completa, y lo que dejaste a medias te espera";
+var VERSION="v160 · 1 oct · se entra con código de invitación; el código trae su mes y se renueva cada mes";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -17882,6 +17890,140 @@ function hojaLargo(alEscoger){
   });
   // la preferencia de la vez pasada solo sirve de sugerencia: la hoja
   // se vuelve a preguntar cada vez, porque el tiempo que traes cambia.
+})();
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   LA PUERTA · código de invitación
+   ───────────────────────────────────────────────────────────────────
+   Sin código no se pasa del alta. El código lo genera Brian y trae
+   dentro el mes hasta el que sirve: cuando se acaba el mes, el alumno
+   tiene que pedir otro. Eso es la mensualidad, sin cobrar dentro de
+   la app y sin servidor de pagos.
+
+   Se valida aquí mismo, sin internet: el código trae su propia firma.
+   Si alguien presta su código, Brian lo ve en el panel, porque el
+   código viaja con cada sesión y ahí aparecen dos nombres distintos
+   usando el mismo.
+   ═══════════════════════════════════════════════════════════════════ */
+
+var WHATS_BRIAN='525530576077';          // a dónde escribe quien no tiene código
+var SAL_EFA='efa-2026-bmr';              // cámbiala y TODOS los códigos viejos mueren
+var ALF_COD='23456789ABCDEFGHJKLMNPQRSTUVWXYZ';   // sin 0 O 1 I l, para que nadie se equivoque
+
+function _hEfa(s){
+  var h=2166136261;
+  for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=(h*16777619)>>>0; }
+  return h>>>0;
+}
+function _mesEfa(d){ d=d||new Date(); return (d.getFullYear()-2026)*12+d.getMonth(); }
+function _a32(n,largo){ var s=''; for(var i=0;i<largo;i++){ s=ALF_COD.charAt(n%32)+s; n=Math.floor(n/32); } return s; }
+function _de32(s){
+  var n=0;
+  for(var i=0;i<s.length;i++){ var k=ALF_COD.indexOf(s.charAt(i)); if(k<0)return -1; n=n*32+k; }
+  return n;
+}
+/* mes = el ÚLTIMO mes en que sirve. serie = 0..8191, para que no haya dos iguales. */
+function hacerCodigo(mes,serie){
+  var a=(mes*8192)+(serie&8191);
+  var f=_hEfa(a+'·'+SAL_EFA)%1048576;
+  return 'EFA-'+_a32(a,4)+'-'+_a32(f,4);
+}
+function leerCodigo(txt){
+  var t=String(txt||'').toUpperCase().replace(/[^0-9A-Z]/g,'');
+  if(t.indexOf('EFA')===0)t=t.slice(3);
+  if(t.length!==8)return null;
+  var a=_de32(t.slice(0,4)), f=_de32(t.slice(4));
+  if(a<0||f<0)return null;
+  if(_hEfa(a+'·'+SAL_EFA)%1048576!==f)return null;
+  return {mes:Math.floor(a/8192), serie:a%8192, texto:'EFA-'+t.slice(0,4)+'-'+t.slice(4)};
+}
+var MESES_EFA=['enero','febrero','marzo','abril','mayo','junio','julio',
+               'agosto','septiembre','octubre','noviembre','diciembre'];
+function mesEnPalabras(m){ return MESES_EFA[((m%12)+12)%12]+' de '+(2026+Math.floor(m/12)); }
+
+function codigoGuardado(){
+  try{ var d=load(); return d.codigo||null; }catch(e){ return null; }
+}
+function guardarCodigo(c){
+  try{
+    var d=load(); d.codigo=c.texto; d.codigoMes=c.mes; save(d); D=d;
+    if(P){ P.codigo=c.texto; P.codigo_vence=mesEnPalabras(c.mes); var d2=load(); d2.perfil=P; save(d2); D=d2; }
+  }catch(e){}
+}
+/* ok | vencido | falta */
+function estadoPuerta(){
+  var t=codigoGuardado(); if(!t)return 'falta';
+  var c=leerCodigo(t); if(!c)return 'falta';
+  return (c.mes<_mesEfa())?'vencido':'ok';
+}
+
+function pantallaPuerta(vencido,alPasar){
+  modoEntrada(true);
+  var t=codigoGuardado(), c=t?leerCodigo(t):null;
+  var msj=encodeURIComponent(vencido
+    ? 'Hola Brian, soy alumno de English For All y se me venció el código. Quiero seguir.'
+    : 'Hola Brian, vi English For All y quiero mi código para entrar.');
+  APP.innerHTML=
+    '<div class="qcard puertacard">'+
+      '<div class="qlbl">'+(vencido?'Se acabó tu mes':'English For All')+'</div>'+
+      '<div class="qtxt">'+(vencido?'Pide tu código nuevo':'Tu código de acceso')+'</div>'+
+      '<div class="qsub">'+(vencido
+        ? 'Tu código sirvió hasta '+(c?mesEnPalabras(c.mes):'el mes pasado')+'. '+
+          'Tu avance está guardado: en cuanto pongas el nuevo, sigues donde ibas.'
+        : 'Brian te lo da cuando apartas tu lugar. Se escribe una sola vez y se queda guardado en tu teléfono.')+'</div>'+
+      '<input class="tx codtx" id="codtx" placeholder="EFA-0000-0000" autocomplete="off" '+
+        'autocapitalize="characters" spellcheck="false" inputmode="text" maxlength="14">'+
+      '<div class="codmal" id="codmal"></div>'+
+      '<button class="btn" id="codok">Entrar</button>'+
+      '<a class="btn ghost codwa" href="https://wa.me/'+WHATS_BRIAN+'?text='+msj+'" target="_blank" rel="noopener">'+
+        (vencido?'Escribirle a Brian para renovar':'No tengo código · pedírselo a Brian')+'</a>'+
+      '<p class="tiny puertapie">Lo que practicas lo revisa un maestro de verdad, no un robot. '+
+      'Por eso hay lugares contados.</p>'+
+    '</div>';
+  var caja=document.getElementById('codtx'),
+      bot=document.getElementById('codok'),
+      mal=document.getElementById('codmal');
+  // se va formateando solo mientras escribe: EFA-XXXX-XXXX
+  caja.addEventListener('input',function(){
+    var v=caja.value.toUpperCase().replace(/[^0-9A-Z]/g,'');
+    if(v.indexOf('EFA')===0)v=v.slice(3);
+    v=v.slice(0,8);
+    caja.value='EFA-'+v.slice(0,4)+(v.length>4?'-'+v.slice(4):'');
+    mal.textContent='';
+  });
+  caja.addEventListener('keydown',function(e){ if(e.key==='Enter')bot.click(); });
+  bot.onclick=function(){
+    var c2=leerCodigo(caja.value);
+    if(!c2){ mal.textContent='Ese código no es. Revísalo: no lleva ceros ni oes, ni unos ni íes.'; return; }
+    if(c2.mes<_mesEfa()){ mal.textContent='Ese código ya venció (servía hasta '+mesEnPalabras(c2.mes)+'). Pídele uno nuevo a Brian.'; return; }
+    guardarCodigo(c2);
+    mal.textContent='';
+    modoEntrada(false);
+    alPasar();
+  };
+  setTimeout(function(){ try{ caja.focus(); }catch(e){} },300);
+}
+
+/* ── envolver las dos entradas ── */
+(function(){
+  if(typeof personalizar==='function'){
+    var base=personalizar;
+    personalizar=function(){
+      var self=this,args=arguments;
+      if(estadoPuerta()==='ok')return base.apply(self,args);
+      pantallaPuerta(estadoPuerta()==='vencido',function(){ base.apply(self,args); });
+    };
+  }
+  if(typeof arrancarParada==='function'){
+    var baseP=arrancarParada;
+    arrancarParada=function(){
+      var self=this,args=arguments;
+      var e=estadoPuerta();
+      if(e==='ok')return baseP.apply(self,args);
+      pantallaPuerta(e==='vencido',function(){ baseP.apply(self,args); });
+    };
+  }
 })();
 
 /* arranque */

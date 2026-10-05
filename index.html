@@ -381,6 +381,13 @@
   .puertapie{margin:16px 6px 0;text-align:center;opacity:.72;line-height:1.5}
   /* la hoja de "¿cuánto tiempo traes?" */
   .largo-ops{display:flex;flex-direction:column;gap:9px;margin:14px 0 4px}
+  .efa-mins{display:flex;gap:7px;margin-bottom:11px}
+  .efa-min{flex:1;background:var(--crema);border:1.5px solid var(--linea);
+    border-radius:13px;padding:11px 3px;font:inherit;color:inherit;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:1px}
+  .efa-min b{font-size:20px;line-height:1}
+  .efa-min span{font-size:10.5px;opacity:.6;letter-spacing:.04em}
+  .efa-min.sel{border-color:var(--coral,#D85A30);background:rgba(216,90,48,.10)}
   .largo-op{display:block;width:100%;text-align:left;font-family:inherit;cursor:pointer;
     background:var(--papel,#FBF7EC);border:1.5px solid rgba(31,78,140,.22);
     border-radius:14px;padding:13px 15px;color:inherit;transition:border-color .15s,background .15s}
@@ -9904,6 +9911,28 @@ var MINUTOS=20, RELOJ=null, AVISADO=false;
    la parada se cierra cuando de verdad se acabó la lección — así que
    nadie puede correrse un nivel a pedacitos de cinco minutos. */
 var LARGO='completa';      // rato | completa | finde
+/* Y además, los MINUTOS que escogió para ESTA lección. Antes solo podía
+   elegir entre "un rato" y "la lección completa", con los minutos fijados
+   por la app. Ahora pone el número, lección por lección, y se le recuerda
+   la próxima vez que entre a esa misma. 0 = sin reloj. */
+var MIN_ELEGIDO = null;
+var EFA_TIEMPOS = [5, 10, 15, 20, 30];
+function paradaHoy(){ try{ return progreso().parada || 1; }catch(e){ return 1; } }
+function tiempoDe(n){
+  try{
+    var t = ((P||{}).tiempos) || {};
+    var v = t[n];
+    return (v === 0 || v) ? v : null;
+  }catch(e){ return null; }
+}
+function guardarTiempo(n, min){
+  try{
+    if(!P) return;
+    P.tiempos = P.tiempos || {};
+    P.tiempos[n] = min;
+    var d = load(); d.perfil = P; save(d); D = d;
+  }catch(e){}
+}
 
 /* Un rato es UNA TERCERA PARTE de la lección, no un número fijo: las
    lecciones traen entre siete y quince ejercicios y unos pesan mucho
@@ -9919,24 +9948,33 @@ function minutosRato(total){
 }
 function largoSesion(S){
   if(!S||!S.items)return 0;
+  // Si puso un número de minutos, los ejercicios se recortan en proporción
+  // a la lección completa, nunca por debajo de dos.
+  if(MIN_ELEGIDO && MIN_ELEGIDO < MINUTOS){
+    return Math.max(2, Math.min(S.items.length,
+      Math.round(S.items.length * MIN_ELEGIDO / MINUTOS)));
+  }
   if(LARGO==='rato')return Math.min(S.items.length,topeRato(S.items.length));
   return S.items.length;
 }
 function minutosHoy(){
+  if(MIN_ELEGIDO === 0) return 0;              // sin reloj
+  if(MIN_ELEGIDO) return MIN_ELEGIDO;          // lo que puso el alumno
   if(LARGO!=='rato')return MINUTOS;
   var S=(MAT&&sIdx!=null&&MAT[sIdx])||null;
   return (S&&S.items&&S.items.length)?minutosRato(S.items.length):7;
 }
-function esRato(S){ return LARGO==='rato' && S && S.items && largoSesion(S)<S.items.length; }
+function esRato(S){ return S && S.items && largoSesion(S) < S.items.length; }
 function arrancarReloj(){
   pararReloj();AVISADO=false;
+  if(!minutosHoy())return;        // escogió sin reloj
   RELOJ=setInterval(pintarReloj,1000);
   pintarReloj();
 }
 function pararReloj(){ if(RELOJ){clearInterval(RELOJ);RELOJ=null;} }
 function pintarReloj(){
   var caja=document.getElementById('reloj');
-  if(!caja)return;
+  if(!caja||!minutosHoy())return;
   var pasados=Math.floor((Date.now()-t0)/1000);
   var quedan=Math.max(0,minutosHoy()*60-pasados);
   var m=Math.floor(quedan/60), sg=quedan%60;
@@ -9953,7 +9991,10 @@ function pintarReloj(){
     say('Ya pasaron los '+(minutosHoy()===20?'veinte':minutosHoy())+' minutos. Puedes cerrar aquí o terminar lo que estás haciendo.','es-MX');
   }
 }
-function marcaReloj(){ return '<div class="reloj" id="reloj">'+minutosHoy()+':00</div>'; }
+function marcaReloj(){
+  if(!minutosHoy())return '';
+  return '<div class="reloj" id="reloj">'+minutosHoy()+':00</div>';
+}
 
 /* ═══════════ el camino ═══════════ */
 // Sesenta paradas, iguales para todos. Lo que cambia es dónde entra cada
@@ -17791,18 +17832,25 @@ function hojaLargo(alEscoger){
            '<b>Seguir donde me quedé</b>'+
            '<span>Ibas en el ejercicio '+(cp.it+1)+' de '+cp.total+'. Tu avance está guardado.</span></button>';
   }
-  ops+='<button class="largo-op" data-s="rato"><b>Un rato · '+minRato+' minutos</b>'+
-         '<span>'+(topRato?topRato+' ejercicios de los '+totalHoy+'. ':'')+
-         'No cierra la parada: vuelves donde te quedaste.</span></button>'+
-       '<button class="largo-op" data-s="completa"><b>La lección completa · '+MINUTOS+' minutos</b>'+
-         '<span>Todo: escuchar, la regla, hablar y los ejercicios de boca.</span></button>'+
+  // Los minutos los pone el alumno. Se le marca el que escogió la vez
+  // pasada para ESTA lección, porque la gente repite su propio ritmo.
+  var _n = paradaHoy(), _prev = tiempoDe(_n), _chips = '';
+  for(var _i2=0;_i2<EFA_TIEMPOS.length;_i2++){
+    var _m = EFA_TIEMPOS[_i2];
+    _chips += '<button class="efa-min'+(_prev===_m?' sel':'')+'" data-min="'+_m+'">'+
+              '<b>'+_m+'</b><span>min</span></button>';
+  }
+  ops+='<div class="efa-mins">'+_chips+'</div>'+
+       '<button class="largo-op'+(_prev===0?' sel':'')+'" data-min="0"><b>Sin reloj</b>'+
+         '<span>Sigo hasta acabar la lección, sin cronómetro.</span></button>'+
        '<button class="largo-op" data-s="finde"><b>Sesión de fin de semana</b>'+
          '<span>Esta lección y sigues con la que viene, sin volver al mapa.</span></button>';
 
   v.innerHTML='<div class="hoja">'+
     '<div class="hoja-asa"></div>'+
     '<div class="hoja-hola" style="font-size:22px">¿Cuánto tiempo traes?</div>'+
-    '<div class="hoja-gloss">No tienes que traer los '+MINUTOS+' minutos para abrir la app.</div>'+
+    '<div class="hoja-gloss">T\u00fa decides cu\u00e1ntos minutos le das hoy. La app acomoda los '+
+      'ejercicios a ese tiempo y te avisa al cumplirse \u2014 nada se cierra solo.</div>'+
     '<div class="largo-ops">'+ops+'</div>'+
     (cp?'<button class="hoja-mas" id="largo-nuevo">Mejor empezar esta lección de nuevo</button>':'')+
   '</div>';
@@ -17815,6 +17863,20 @@ function hojaLargo(alEscoger){
   }
   v.onclick=function(e){ if(e.target===v)cerrar(); };
 
+  v.querySelectorAll('[data-min]').forEach(function(b){
+    b.onclick=function(){
+      var min=parseInt(b.dataset.min,10);
+      MIN_ELEGIDO=min;
+      // Si pidió menos que la lección entera, cuenta como "rato": no cierra
+      // la parada, para que nadie se corra un nivel a pedacitos.
+      LARGO=(min && min < MINUTOS) ? 'rato' : 'completa';
+      guardarTiempo(paradaHoy(), min);
+      try{ if(P){ P.largo_pref=LARGO; var d=load(); d.perfil=P; save(d); D=d; } }catch(e){}
+      cpBorrar();
+      cerrar(alEscoger);
+    };
+  });
+
   v.querySelectorAll('[data-s]').forEach(function(b){
     b.onclick=function(){
       var s=b.dataset.s;
@@ -17822,6 +17884,7 @@ function hojaLargo(alEscoger){
         cerrar(function(){ if(!cpRestaurar(cp)) alEscoger(); });
         return;
       }
+      MIN_ELEGIDO=null;
       LARGO=s;
       try{ if(P){ P.largo_pref=s; var d=load(); d.perfil=P; save(d); D=d; } }catch(e){}
       cpBorrar();

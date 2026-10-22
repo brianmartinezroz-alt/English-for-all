@@ -365,7 +365,7 @@ W.ASISTENTE=A;
 /* ¿el alumno dijo esa opción (sus palabras, o "la dos", "la B")? */
 function dijoLaOpcion(dijo,op){
   var d=norm(dijo);
-  if(/\b(primera|primero|segunda|segundo|tercera|tercero|cuarta|cuarto|first|second|third|fourth)\b/.test(d)) return true;
+  if(/\b(primera|primero|segunda|segundo|tercera|tercero|cuarta|cuarto|first|second|third|fourth|medio|enmedio|ultima|ultimo|arriba|abajo|middle|last|top|bottom)\b/.test(d)) return true;
   if(/\b(la|el|opcion|option|number|numero|letra)\s+(uno|una|dos|tres|cuatro|one|two|three|four|[1-4]|[abcd])\b/.test(d)) return true;
   var ws=norm(op).split(' ').filter(function(w){ return w.length>2; });
   if(!ws.length) return parecido(d,norm(op))>=0.6;

@@ -136,13 +136,23 @@ function textoPantalla(){
   var t=(app.innerText||'').replace(/\s+\n/g,'\n').replace(/\n{2,}/g,'\n').trim();
   return t.slice(0,1500);
 }
-function preguntarCerebro(dijo,cb){
+var PLATICA=[];   // lo último que se dijeron, para que entienda "¿y eso?" o "la otra"
+function recuerda(dijo,r){
+  var hizo=r.tipo==='responder'?('contestó: '+(r.decir||'')):(r.tipo+(r.indice!=null?' '+r.indice:'')+(r.cmd?' '+r.cmd:''));
+  PLATICA.push('Alumno: "'+dijo+'" -> '+hizo); if(PLATICA.length>4) PLATICA.shift();
+}
+function preguntarCerebro(alts,cb){
+  if(typeof alts==='string') alts=[alts];
   var ops=opciones(), bs=botones(true).filter(function(b){ return ops.indexOf(b)<0; });
-  var datos={dijo:dijo, nivel:nivel(), pantalla:textoPantalla(),
+  var dijo=alts[0]; var otras=alts.slice(1).filter(function(x){ return x&&x!==dijo; });
+  if(otras.length) dijo+='"  (el celular también entendió: "'+otras.join('" / "')+'")';
+  var pant=textoPantalla();
+  if(PLATICA.length) pant='Lo último que platicaron:\n'+PLATICA.join('\n')+'\n\nEn pantalla:\n'+pant;
+  var datos={dijo:dijo, nivel:nivel(), pantalla:pant.slice(0,1500),
     botones:bs.map(function(b){ return (b.innerText||b.getAttribute('aria-label')||'').trim().slice(0,60); }),
     opciones:ops.map(function(b){ return (b.innerText||'').trim().slice(0,80); }),
     leccion:tituloLeccion()};
-  var listo=false, t=setTimeout(function(){ if(!listo){ listo=true; cb(null); } },9000);
+  var listo=false, t=setTimeout(function(){ if(!listo){ listo=true; cb(null); } },12000);
   fetch(IA_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({accion:'voz',datos:datos})})
     .then(function(r){ return r.ok?r.json():null; })
     .then(function(j){ if(listo)return; listo=true; clearTimeout(t); cb(j&&j.ok?j.resultado:null, bs, ops); })
@@ -252,45 +262,56 @@ var A={
     }catch(e){ fin(); }
   },
 
-  /* qué quiso decir */
+  /* qué quiso decir: TODO va a Claude, salvo lo instantáneo */
   entender:function(alts){
     var t=norm(alts[0]); LOG('oí',alts);
     if(!t) return;
     mostrarBurbuja('“'+alts[0]+'”', true);
-    // 1) ¿dijo una de las opciones en pantalla? ("I agree", "la dos", "la B")
-    var ops=opciones();
+    if(this.rapido(alts)) return;           // "siguiente", "pausa", "la dos", o la opción tal cual
+    this.pensar(alts);
+  },
+  /* respuestas al instante, sin esperar al cerebro */
+  rapido:function(alts){
+    var t=norm(alts[0]), n=t.split(' ').length, ops=opciones();
     if(ops.length){
-      var m=t.match(/\b(?:la|el|opcion|option|number|numero|letra)?\s*(primera|primero|segunda|segundo|tercera|tercero|cuarta|cuarto|uno|una|dos|tres|cuatro|first|second|third|fourth|one|two|three|four|[1-4]|[abcd])\b$/);
-      if(m&&ORD[m[1]]&&ops[ORD[m[1]]-1]&&t.split(' ').length<=3){ apretar(ops[ORD[m[1]]-1]); return; }
+      var m=t.match(/^(?:la|el|opcion|option|number|numero|letra)?\s*(primera|primero|segunda|segundo|tercera|tercero|cuarta|cuarto|uno|una|dos|tres|cuatro|first|second|third|fourth|one|two|three|four|[1-4]|[abcd])$/);
+      if(m&&ORD[m[1]]&&ops[ORD[m[1]]-1]){ apretar(ops[ORD[m[1]]-1]); return true; }
       for(var a=0;a<alts.length;a++){
-        var ta=norm(alts[a]), mejor=null, pm=0;
-        ops.forEach(function(o){ var p=parecido(ta,textoBtn(o)); if(p>pm){pm=p;mejor=o;} });
-        if(mejor&&pm>=0.72){ apretar(mejor); return; }
+        var ta=norm(alts[a]);
+        for(var k=0;k<ops.length;k++){ if(parecido(ta,textoBtn(ops[k]))>=0.9){ apretar(ops[k]); return true; } }
       }
     }
-    // 2) comandos (frases cortas; una frase larga se la pasamos a Claude)
-    var corta=t.split(' ').length<=5;
-    for(var i=0;i<CMD.length;i++){
-      if(!corta) break;
-      var c=CMD[i];
-      if(!c.voz.test(t)) continue;
-      if(c.accion) return this.hacer(c.accion,t);
-      var b=buscar(c.btn);
-      if(b){ apretar(b); return; }
-      if(c.id==='turno'){ return this.decir(modo().ingles?'Tap the microphone to answer.':'Toca el micrófono para contestar.'); }
-      return this.decir(modo().ingles?'That is not on this screen.':'Eso no está en esta pantalla. Di "ayuda" para ver qué puedes hacer.');
-    }
-    // 3) no es un comando conocido: que Claude lo entienda
-    this.pensar(alts[0]);
+    if(n<=2){ for(var i=0;i<CMD.length;i++){ if(CMD[i].voz.test(t)) return this.comando(CMD[i],t); } }
+    return false;
   },
-  pensar:function(dijo){
-    var ing=modo().ingles; pintar('pensando');
-    preguntarCerebro(dijo,function(r,bs,ops){
+  comando:function(c,t){
+    if(c.accion){ this.hacer(c.accion,t); return true; }
+    var b=buscar(c.btn);
+    if(b){ apretar(b); return true; }
+    if(c.id==='turno'){ this.decir(modo().ingles?'Tap the microphone to answer.':'Toca el micrófono para contestar.'); return true; }
+    this.decir(modo().ingles?'That is not on this screen.':'Eso no está en esta pantalla. Di "ayuda" para ver qué puedes hacer.');
+    return true;
+  },
+  /* respaldo con palabras clave, solo si el cerebro no contesta */
+  respaldo:function(alts){
+    var t=norm(alts[0]), ops=opciones();
+    for(var a=0;a<alts.length&&ops.length;a++){
+      var ta=norm(alts[a]), mejor=null, pm=0;
+      ops.forEach(function(o){ var p=parecido(ta,textoBtn(o)); if(p>pm){pm=p;mejor=o;} });
+      if(mejor&&pm>=0.72){ apretar(mejor); return true; }
+    }
+    if(t.split(' ').length<=10){ for(var i=0;i<CMD.length;i++){ if(CMD[i].voz.test(t)) return this.comando(CMD[i],t); } }
+    return false;
+  },
+  pensar:function(alts){
+    var ing=modo().ingles, dijo=alts[0]; pintar('pensando');
+    preguntarCerebro(alts,function(r,bs,ops){
       if(!A.activo) return;
-      if(!r){ return A.decir(ing?'Sorry, I didn\'t get that. Say "help" to hear the options.':'No te entendí. Di "ayuda" para oír las opciones.'); }
+      if(!r){ if(A.respaldo(alts)) return; return A.decir(ing?'Sorry, I didn\'t get that. Can you say it again?':'Perdón, no te entendí. ¿Me lo repites?'); }
+      recuerda(dijo, r);
       if(r.tipo==='opcion'&&ops&&ops[r.indice]){
         // solo si de verdad dijo esa opción: la esfera nunca contesta por el alumno
-        if(!dijoLaOpcion(dijo,textoBtn(ops[r.indice]))){
+        if(!alts.some(function(x){ return dijoLaOpcion(x,textoBtn(ops[r.indice])); })){
           if(/\b(sigue|siguiente|pasale|pasa|pasar|ya me la se|ya la se|next|continua|adelante|otra)\b/.test(norm(dijo))){ var sb=buscar(CMD[0].btn); if(sb){ apretar(sb); return; } }
           return A.decir(ing?'Which answer do you choose? Say it, or say "number two".':'¿Cuál respuesta escoges? Dímela, o di "la uno", "la dos".');
         }

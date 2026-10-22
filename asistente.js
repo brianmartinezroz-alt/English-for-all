@@ -62,7 +62,7 @@ try{
         appHabla++; avisa();
         var listo=false, termina=function(){ if(!listo){ listo=true; appHabla=Math.max(0,appHabla-1); avisa(); } };
         u.addEventListener('end',termina); u.addEventListener('error',termina);
-        setTimeout(termina,30000);
+        setTimeout(termina,Math.min(30000,2500+String(u.text||'').length*110/(u.rate||1)));
       }
       return speakOrig(u);
     };

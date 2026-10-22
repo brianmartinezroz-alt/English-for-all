@@ -101,7 +101,7 @@ function norm(t){ return String(t||'').toLowerCase().normalize('NFD').replace(/[
 var CMD=[
   {id:'siguiente', voz:/\b(siguiente|sigue|continua|continuar|adelante|listo|ya|empezar|empieza|vamos|next|continue|go on|ready|start|done|ok next)\b/,
      btn:/^(siguiente|continuar|empezar|comenzar|revisar|listo|seguir|abrir|entrar|vamos|next|continue|start)/},
-  {id:'repite', voz:/\b(repite|repitelo|otra vez|de nuevo|escuchar|escucha|oir|oirla|como se dice|repeat|again|listen|say it again|one more time)\b/,
+  {id:'repite', voz:/\b(repite|repitelo|otra vez|de nuevo|escuchar|escucha|oir|oirla|repeat|again|listen|say it again|one more time)\b/,
      btn:/(escuchar|oirla|oir en ingles|repetir|^oir)/},
   {id:'lento', voz:/\b(mas (despacio|lento)|despacio|lento|slower|slow down|more slowly)\b/, accion:'lento'},
   {id:'normal', voz:/\b(velocidad normal|mas rapido|normal speed|faster)\b/, accion:'normal'},
@@ -137,7 +137,7 @@ function textoPantalla(){
   return t.slice(0,1500);
 }
 function preguntarCerebro(dijo,cb){
-  var bs=botones(true), ops=opciones();
+  var ops=opciones(), bs=botones(true).filter(function(b){ return ops.indexOf(b)<0; });
   var datos={dijo:dijo, nivel:nivel(), pantalla:textoPantalla(),
     botones:bs.map(function(b){ return (b.innerText||b.getAttribute('aria-label')||'').trim().slice(0,60); }),
     opciones:ops.map(function(b){ return (b.innerText||'').trim().slice(0,80); }),
@@ -288,7 +288,14 @@ var A={
     preguntarCerebro(dijo,function(r,bs,ops){
       if(!A.activo) return;
       if(!r){ return A.decir(ing?'Sorry, I didn\'t get that. Say "help" to hear the options.':'No te entendí. Di "ayuda" para oír las opciones.'); }
-      if(r.tipo==='opcion'&&ops&&ops[r.indice]){ apretar(ops[r.indice]); if(r.decir) A.decir(r.decir); return; }
+      if(r.tipo==='opcion'&&ops&&ops[r.indice]){
+        // solo si de verdad dijo esa opción: la esfera nunca contesta por el alumno
+        if(!dijoLaOpcion(dijo,textoBtn(ops[r.indice]))){
+          if(/\b(sigue|siguiente|pasale|pasa|pasar|ya me la se|ya la se|next|continua|adelante|otra)\b/.test(norm(dijo))){ var sb=buscar(CMD[0].btn); if(sb){ apretar(sb); return; } }
+          return A.decir(ing?'Which answer do you choose? Say it, or say "number two".':'¿Cuál respuesta escoges? Dímela, o di "la uno", "la dos".');
+        }
+        apretar(ops[r.indice]); if(r.decir) A.decir(r.decir); return;
+      }
       if(r.tipo==='boton'&&bs&&bs[r.indice]){ if(r.decir) A.decir(r.decir,function(){ apretar(bs[r.indice]); A.reanudarPronto(); }); else apretar(bs[r.indice]); return; }
       if(r.tipo==='comando'&&r.cmd){ var c=String(r.cmd); if(/^acento/.test(c)) return A.hacer('acento',c.replace('acento:','acento ')); return A.hacer(c, c); }
       if(r.decir) return A.decir(r.decir);
@@ -334,6 +341,16 @@ var A={
 };
 W.ASISTENTE=A;
 
+/* ¿el alumno dijo esa opción (sus palabras, o "la dos", "la B")? */
+function dijoLaOpcion(dijo,op){
+  var d=norm(dijo);
+  if(/\b(primera|primero|segunda|segundo|tercera|tercero|cuarta|cuarto|first|second|third|fourth)\b/.test(d)) return true;
+  if(/\b(la|el|opcion|option|number|numero|letra)\s+(uno|una|dos|tres|cuatro|one|two|three|four|[1-4]|[abcd])\b/.test(d)) return true;
+  var ws=norm(op).split(' ').filter(function(w){ return w.length>2; });
+  if(!ws.length) return parecido(d,norm(op))>=0.6;
+  var hay=ws.filter(function(w){ return (' '+d+' ').indexOf(' '+w+' ')>=0; }).length;
+  return hay/ws.length>=0.6;
+}
 /* parecido entre lo que dijo y una opción (0 a 1) */
 function parecido(a,b){
   if(!a||!b)return 0; if(a===b)return 1;

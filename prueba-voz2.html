@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<script src="asistente2.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>EFA · Prueba de la esfera (barra nueva)</title>
+<style>
+:root{--fondo:#15140F;--tarjeta:#211f18;--oro:#E8C063;--oro2:#C9A24B;--texto:#f3eedf;--suave:#a9a18a;--ok:#4caf7a;--mal:#d4664a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--texto);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:16px 16px 180px}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+header h1{font-size:17px;margin:0;color:var(--oro)}
+select{background:var(--tarjeta);color:var(--texto);border:1px solid #3a372c;border-radius:10px;padding:8px;font-size:15px}
+.aviso{background:#2a2619;border:1px solid #4a4230;border-radius:12px;padding:12px;font-size:14px;line-height:1.45;color:var(--suave);margin-bottom:14px}
+.aviso b{color:var(--texto)}
+#app{background:var(--tarjeta);border-radius:18px;padding:18px;min-height:300px}
+.paso{font-size:12px;color:var(--suave);letter-spacing:.06em;text-transform:uppercase}
+h2{font-size:21px;margin:6px 0 14px}
+.frase{font-size:24px;font-weight:700;color:var(--oro);margin:10px 0}
+.es{color:var(--suave);font-size:15px;min-height:20px}
+.opts{display:grid;gap:10px;margin:14px 0}
+.opt{background:#2e2b21;color:var(--texto);border:2px solid #3e3a2c;border-radius:14px;padding:14px;font-size:18px;text-align:left}
+.opt.bien{border-color:var(--ok);background:#1f3326}
+.opt.malo{border-color:var(--mal);background:#3a221b}
+.fila{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.sec{background:transparent;color:var(--suave);border:1px solid #3e3a2c;border-radius:999px;padding:9px 13px;font-size:14px}
+.prim{background:var(--oro);color:#1b1a14;border:0;border-radius:14px;padding:14px 18px;font-size:17px;font-weight:700;width:100%;margin-top:14px}
+.mic{background:#2c6e8f;color:#fff;border:0;border-radius:14px;padding:14px;font-size:17px;width:100%;margin-top:6px}
+.resultado{margin-top:10px;font-size:15px;min-height:22px}
+#bitacora{margin-top:16px;background:#0e0d0a;border-radius:12px;padding:10px;font:13px/1.45 ui-monospace,Menlo,monospace;color:#cfc7ae;max-height:220px;overflow:auto}
+#bitacora .oi{color:#9fd3ff}#bitacora .hace{color:#b6e3a8}#bitacora .dice{color:var(--oro)}#bitacora .piensa{color:#e0a7ff}
+#bitacora h3{margin:0 0 6px;font:600 12px system-ui;color:var(--suave);text-transform:uppercase;letter-spacing:.06em}
+</style>
+</head>
+<body>
+<header>
+  <h1>Prueba de la esfera 🎙️</h1>
+  <select id="nivel" aria-label="Nivel">
+    <option value="Pre-A1">Pre-A1 · voz en español</option>
+    <option value="A1" selected>A1 · voz en español</option>
+    <option value="B2">B2 · voz en inglés</option>
+  </select>
+</header>
+
+<div class="aviso">
+  <b>Cómo probar:</b> toca la esfera dorada de abajo a la derecha y dale permiso al micrófono. Luego habla normal, sin tocar nada:
+  “la dos”, “I agree”, “repite”, “más despacio”, “qué significa”, “ya me la sé, pásale”, “no oí bien”, “cómo se dice ventana”, “ayuda”, “pausa”.
+  Aquí no se guarda nada ni cambia tu avance. Abajo ves lo que oyó y lo que hizo.
+</div>
+
+<div id="app"></div>
+
+<div id="bitacora"><h3>Lo que oyó y lo que hizo</h3><div id="lg"></div></div>
+
+<script>
+var NIVEL='A1';
+window.nivelDelMapa=function(){ return NIVEL; };
+window.ASISTENTE_LECCION=function(){ return 'Prueba · Tu trabajo'; };
+document.getElementById('nivel').onchange=function(){
+  NIVEL=this.value; anota('hace','Nivel cambiado a '+NIVEL+(NIVEL==='B2'?' (la esfera ahora habla y escucha en inglés)':''));
+  if(window.ASISTENTE&&ASISTENTE.activo){ ASISTENTE.apagar(true); setTimeout(function(){ ASISTENTE.encender(); },400); }
+};
+
+function anota(tipo,txt){
+  var d=document.createElement('div'); d.className=tipo;
+  var ico={oi:'👂 Oí: ',hace:'👉 ',dice:'🗣️ Dice: ',piensa:'🧠 '}[tipo]||'';
+  d.textContent=ico+txt; var lg=document.getElementById('lg'); lg.insertBefore(d,lg.firstChild);
+}
+
+// ver lo que pasa dentro de la esfera
+(function(){
+  var A=window.ASISTENTE; if(!A) return;
+  var e=A.entender, p=A.pensar, d=A.decir;
+  A.entender=function(alts){ anota('oi','“'+alts[0]+'”'); return e.apply(this,arguments); };
+  A.pensar=function(t){ anota('piensa','No es un comando: se lo pregunto a Claude…'); return p.apply(this,arguments); };
+  A.decir=function(t){ anota('dice',t); return d.apply(this,arguments); };
+})();
+
+function hablar(t,lang,vel){
+  try{ speechSynthesis.cancel(); var u=new SpeechSynthesisUtterance(t); u.lang=lang||'en-US'; u.rate=vel||1;
+    var v=speechSynthesis.getVoices().find(function(x){ return x.lang&&x.lang.indexOf((lang||'en-US').slice(0,2))===0; }); if(v) u.voice=v;
+    speechSynthesis.speak(u); }catch(e){}
+}
+
+var PANTALLAS=[
+  {tipo:'opc', titulo:'Which one is correct?', frase:'I agree with you.', es:'Estoy de acuerdo contigo.',
+   ops:['I am agree with you.','I agree with you.','I agreed it with you.'], buena:1},
+  {tipo:'opc', titulo:'Listen and choose', frase:'Where do you work?', es:'¿Dónde trabajas?',
+   ops:['I work in a hotel.','I am twenty-eight.','I like pizza.'], buena:0},
+  {tipo:'decir', titulo:'Say it out loud', frase:'I work in a hotel.', es:'Trabajo en un hotel.'},
+  {tipo:'fin'}
+];
+var i=0;
+
+function pinta(){
+  var s=PANTALLAS[i], app=document.getElementById('app'), h='';
+  if(s.tipo==='fin'){
+    app.innerHTML='<div class="paso">Fin de la prueba</div><h2>¡Listo! 🎉</h2><p class="es">Así se siente una lección manejada con la voz.</p>'+
+      '<button class="prim" onclick="i=0;pinta()">Intentar otra vez</button>';
+    return;
+  }
+  h+='<div class="paso">Ejercicio '+(i+1)+' de 3</div><h2>'+s.titulo+'</h2>';
+  h+='<div class="frase">'+s.frase+'</div><div class="es" id="es"></div>';
+  if(s.tipo==='opc'){
+    h+='<div class="opts">'+s.ops.map(function(o,k){ return '<button class="opt" onclick="elige('+k+',this)">'+o+'</button>'; }).join('')+'</div>';
+  } else {
+    h+='<button class="mic" onclick="miTurno()">🎙️ Decirlo en voz alta</button><div class="resultado" id="res"></div>';
+  }
+  h+='<div class="fila">'+
+     '<button class="sec" onclick="escuchar(1)">🔊 Escuchar</button>'+
+     '<button class="sec" onclick="escuchar(0.7)">🔊 Más lento</button>'+
+     '<button class="sec" onclick="significa()">🇲🇽 Qué significa</button>'+
+     '<button class="sec" onclick="anota(\'hace\',\'Tocó: Saltar esta\');sig()">Saltar esta</button>'+
+     '</div>';
+  h+='<button class="prim" onclick="anota(\'hace\',\'Tocó: Siguiente\');sig()">Siguiente</button>';
+  app.innerHTML=h;
+}
+function escuchar(v){ anota('hace','Tocó: '+(v<1?'Más lento':'Escuchar')); hablar(PANTALLAS[i].frase,'en-US',v); }
+function significa(){ anota('hace','Tocó: Qué significa'); document.getElementById('es').textContent=PANTALLAS[i].es; hablar(PANTALLAS[i].es,'es-MX',1); }
+function elige(k,b){
+  var s=PANTALLAS[i], ok=k===s.buena;
+  anota('hace','Eligió: “'+s.ops[k]+'” '+(ok?'✅':'❌'));
+  [].forEach.call(document.querySelectorAll('.opt'),function(x,n){ x.classList.remove('bien','malo'); if(n===s.buena&&ok) x.classList.add('bien'); });
+  if(!ok) b.classList.add('malo');
+  hablar(ok?'Correct!':'Not quite. Try again.','en-US',1);
+}
+function miTurno(){
+  var R=window.SpeechRecognition||window.webkitSpeechRecognition, res=document.getElementById('res');
+  if(!R){ res.textContent='Este navegador no tiene micrófono de voz.'; return; }
+  anota('hace','Tocó: Decirlo en voz alta (micrófono de la app)');
+  var r=new R(); r.lang='en-US'; r.interimResults=false; r.maxAlternatives=1;
+  res.textContent='🎙️ Te escucho…';
+  r.onresult=function(e){ var t=e.results[0][0].transcript; var bien=/work/i.test(t)&&/hotel/i.test(t);
+    res.innerHTML='Dijiste: <b>'+t+'</b> '+(bien?'✅':'— casi, inténtalo otra vez'); anota('hace','La app oyó: “'+t+'”'); };
+  r.onerror=function(){ res.textContent='No te oí. Toca otra vez.'; };
+  r.start();
+}
+function sig(){ i=Math.min(i+1,PANTALLAS.length-1); pinta(); }
+pinta();
+</script>
+</body>
+</html>

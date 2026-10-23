@@ -115,6 +115,7 @@ var CMD=[
      btn:/(decirlo en voz alta|tocar y decirlo|tocar y contestar|grabar|decirlo)/},
   {id:'otravez', voz:/\b(intentar otra vez|otra oportunidad|intentar de nuevo|try again)\b/, btn:/intentar otra vez/},
   {id:'mapa', voz:/\b(mapa|volver al mapa|regresar|volver|atras|back|go back|map)\b/, btn:/(volver al (camino|mapa)|^mapa|atras|volver)/},
+  {id:'quitar', voz:/\b(quita(lo|la)?|quitalo|quitar|cierra(lo|la)? eso|ya (lo )?entendi|entendido|ok gracias|esconde(lo)?|dismiss|got it|close (it|that))\b/, accion:'quitar'},
   {id:'cerrar', voz:/\b(cerrar|cierra|close)\b/, btn:/^cerrar/},
   {id:'explica', voz:/\b(explicame|explicacion|ver el video|video|explain|explanation)\b/, accion:'video'},
   {id:'acento', voz:/\b(acento|accent)\b.*\b(britanico|ingles de inglaterra|inglaterra|british|uk|australiano|australia|australian|indio|india|indian|americano|estados unidos|american|us)\b/, accion:'acento'},
@@ -301,7 +302,7 @@ var A={
       }
     }
     // solo si la frase ES el comando ("siguiente", "más despacio"); "para qué" o "ya no" van al cerebro
-    if(n<=3&&/^(siguiente|sigue|la que sigue|next|continua|continuar|listo|repite|repitelo|otra vez|escuchar|repeat|again|mas despacio|mas lento|despacio|slower|velocidad normal|que significa|en espanol|pausa|alto|stop|pause|ayuda|help|saltar|salta|saltala|skip|mi turno|my turn|dame una pista|pista|volver al mapa|mapa|cerrar)$/.test(t)){
+    if(n<=3&&/^(siguiente|sigue|la que sigue|next|continua|continuar|listo|repite|repitelo|otra vez|escuchar|repeat|again|mas despacio|mas lento|despacio|slower|velocidad normal|que significa|en espanol|pausa|alto|stop|pause|ayuda|help|saltar|salta|saltala|skip|mi turno|my turn|dame una pista|pista|volver al mapa|mapa|cerrar|quita eso|quitalo|quitala|quita|ya entendi|entendido|cierra eso|got it)$/.test(t)){
       for(var i=0;i<CMD.length;i++){ if(CMD[i].voz.test(t)) return this.comando(CMD[i],t); }
     }
     return false;
@@ -380,8 +381,17 @@ var A={
     this.silencioDesde=Date.now(); this.entender([t]);
   },
 
+  /* quitar avisos: la burbuja de la esfera y las ventanitas de la app */
+  quitarAvisos:function(){
+    ocultarBurbuja();
+    var b=buscar(/^(cerrar|x|entendido|ok|listo|saltar|omitir|ahora no|no gracias|got it|close|skip)$/);
+    if(!b){ var cand=botones(false).filter(function(x){ return /^[×✕✖x]$/i.test((x.innerText||x.textContent||'').trim())||/cerrar|close/i.test(x.getAttribute('aria-label')||''); }); b=cand[0]; }
+    if(b){ apretar(b); return true; }
+    return false;
+  },
   hacer:function(acc,t){
     var ing=modo().ingles;
+    if(acc==='quitar'){ this.quitarAvisos(); return this.reanudarPronto(); }
     if(acc==='pausa'){ return this.apagar(); }
     if(acc==='ayuda'){
       var bs=botones(true).map(textoBtn).filter(Boolean);
@@ -502,7 +512,8 @@ var CSS=''+
 '#esfera-voz .vz-ico{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#15140F}'+
 '#esfera-voz .vz-burb{pointer-events:none;max-width:min(78vw,340px);background:rgba(21,20,15,.92);color:#F4EEDF;border-radius:16px;padding:10px 14px;font-size:15px;line-height:1.35;'+
   'box-shadow:0 6px 20px rgba(0,0,0,.3);opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s}'+
-'#esfera-voz .vz-burb.ver{opacity:1;transform:none}'+
+'#esfera-voz .vz-burb.ver{opacity:1;transform:none;pointer-events:auto;cursor:pointer}'+
+'#esfera-voz .vz-burb.ver::after{content:"  ✕";opacity:.55;font-size:13px;font-style:normal}'+
 '#esfera-voz .vz-burb.oido{background:rgba(232,192,99,.95);color:#15140F;font-style:italic}'+
 '@keyframes vzPulso{0%{transform:scale(1);opacity:1}100%{transform:scale(1.5);opacity:0}}'+
 '@keyframes vzHabla{from{transform:scale(1)}to{transform:scale(1.08)}}'+
@@ -554,6 +565,7 @@ function abrirTeclado(si){
   if(si){ f.removeAttribute('hidden'); kb.classList.add('on'); var i=f.querySelector('input'); i.placeholder=modo().ingles?'Type here…':'Escribe aquí…'; setTimeout(function(){ try{i.focus();}catch(e){} },50); }
   else { f.setAttribute('hidden',''); kb.classList.remove('on'); }
 }
+function ocultarBurbuja(){ if(BURB){ clearTimeout(tBurb); BURB.classList.remove('ver'); } }
 function mostrarBurbuja(t,oido,ms){
   if(!BURB) return;
   BURB.textContent=t; BURB.classList.toggle('oido',!!oido); BURB.classList.add('ver');
@@ -587,6 +599,7 @@ function montar(){
     if(A.hablandoYo){ try{ speechSynthesis.cancel(); }catch(e){} return; }
     A.alternarMic();
   });
+  BURB.addEventListener('click',ocultarBurbuja);
   CAJA.querySelector('.vz-mic').addEventListener('click',function(){ A.alternarMic(); });
   CAJA.querySelector('.vz-todo').addEventListener('click',function(){ A.verTodo(); });
   CAJA.querySelector('.vz-kb').addEventListener('click',function(){ abrirTeclado(); });

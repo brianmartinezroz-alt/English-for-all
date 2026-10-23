@@ -168,8 +168,20 @@ function visible(el){
   var cs=getComputedStyle(el); if(cs.visibility==='hidden'||cs.display==='none')return false;
   return true;
 }
+/* tarjetas que se tocan aunque no sean botones (lecciones del mapa, paradas) */
+var TARJ='a[href],[class*=parada],[class*=lecc],[class*=tarjeta],[class*=card]';
+function tarjetas(){
+  return [].slice.call(DOC.querySelectorAll(TARJ)).filter(function(e){
+    if(e.closest('#esfera-voz')||e.closest('button')||e.querySelector('button')) return false;
+    try{ if(getComputedStyle(e).cursor!=='pointer') return false; }catch(x){ return false; }
+    var pa=e.parentElement&&e.parentElement.closest(TARJ);
+    if(pa){ try{ if(getComputedStyle(pa).cursor==='pointer') return false; }catch(x){} }
+    return visible(e);
+  });
+}
 function botones(incluirOcultos){
-  return [].slice.call(DOC.querySelectorAll('button,[role=button],a.btn')).filter(function(b){
+  return [].slice.call(DOC.querySelectorAll('button,[role=button],a.btn')).concat(tarjetas()).filter(function(b,i,arr){
+    if(arr.indexOf(b)!==i) return false;
     if(b.closest('#esfera-voz'))return false;
     if(incluirOcultos&&b.getAttribute('data-vz')==='sec'){ var r=b.parentElement&&b.parentElement.getBoundingClientRect(); return !!(r&&r.width); }
     return visible(b);
@@ -281,7 +293,10 @@ var A={
         for(var k=0;k<ops.length;k++){ if(parecido(ta,textoBtn(ops[k]))>=0.9){ apretar(ops[k]); return true; } }
       }
     }
-    if(n<=2){ for(var i=0;i<CMD.length;i++){ if(CMD[i].voz.test(t)) return this.comando(CMD[i],t); } }
+    // solo si la frase ES el comando ("siguiente", "más despacio"); "para qué" o "ya no" van al cerebro
+    if(n<=3&&/^(siguiente|sigue|la que sigue|next|continua|continuar|listo|repite|repitelo|otra vez|escuchar|repeat|again|mas despacio|mas lento|despacio|slower|velocidad normal|que significa|en espanol|pausa|alto|stop|pause|ayuda|help|saltar|salta|saltala|skip|mi turno|my turn|dame una pista|pista|volver al mapa|mapa|cerrar)$/.test(t)){
+      for(var i=0;i<CMD.length;i++){ if(CMD[i].voz.test(t)) return this.comando(CMD[i],t); }
+    }
     return false;
   },
   comando:function(c,t){

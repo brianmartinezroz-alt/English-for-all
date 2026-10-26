@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1c140e">
+<title>EFA · Bienvenida</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cafe:#1c140e; --cafe2:#2b1e14; --cafe3:#4a3322;
+  --amarillo:#F2C14E; --amarillo2:#E8B23A; --miel:#f7d98b;
+  --crema:#fbf3e4; --crema2:rgba(251,243,228,.62); --crema3:rgba(251,243,228,.38);
+  --curva:cubic-bezier(.22,.8,.24,1);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--cafe);color:var(--crema);font-family:Inter,system-ui,sans-serif}
+
+/* ── fondo vivo: manchas de luz que flotan despacio ── */
+.fondo{position:fixed;inset:-20%;z-index:0;filter:blur(60px) saturate(120%)}
+.fondo i{position:absolute;border-radius:50%;opacity:.55;animation:flota 22s ease-in-out infinite alternate}
+.fondo i:nth-child(1){width:55vmax;height:55vmax;left:-5%;top:-10%;background:radial-gradient(circle,#7a4a24,transparent 65%)}
+.fondo i:nth-child(2){width:45vmax;height:45vmax;right:-10%;top:20%;background:radial-gradient(circle,#c98a2e,transparent 62%);animation-duration:28s;opacity:.38}
+.fondo i:nth-child(3){width:50vmax;height:50vmax;left:10%;bottom:-25%;background:radial-gradient(circle,#F2C14E,transparent 60%);animation-duration:34s;opacity:.22}
+@keyframes flota{to{transform:translate(6vmax,-5vmax) scale(1.12)}}
+.grano{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.07;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ── lienzo: cada pregunta ocupa toda la pantalla, sin bordes ── */
+.lienzo{position:fixed;inset:0;z-index:2;display:flex;flex-direction:column;justify-content:center;
+  padding:calc(70px + env(safe-area-inset-top,0px)) 28px calc(150px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(180deg,rgba(255,240,215,.07),rgba(255,240,215,.02) 40%,rgba(0,0,0,.08));
+  -webkit-backdrop-filter:blur(26px) saturate(140%);backdrop-filter:blur(26px) saturate(140%);
+  opacity:0;transform:translateY(60px);filter:blur(10px);
+  transition:opacity .9s var(--curva),transform .9s var(--curva),filter .9s var(--curva)}
+.lienzo::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.10),transparent 18%);mix-blend-mode:soft-light}
+.lienzo.dentro{opacity:1;transform:none;filter:none}
+.lienzo.fuera{opacity:0;transform:translateY(-70px);filter:blur(12px)}
+
+.etiqueta{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--amarillo);opacity:.85;margin-bottom:22px}
+.dice{font-family:Inter,system-ui,sans-serif;font-size:clamp(30px,8.2vw,40px);line-height:1.18;letter-spacing:-.025em;margin:0;font-weight:300}
+.dice em{font-style:normal;font-weight:500;color:var(--amarillo)}
+.w{display:inline-block;opacity:0;transform:translateY(.28em);filter:blur(6px);transition:opacity .55s var(--curva),transform .55s var(--curva),filter .55s var(--curva)}
+.w.on{opacity:1;transform:none;filter:none}
+.apoyo{margin-top:22px;font-size:16px;line-height:1.5;color:var(--crema2);font-weight:300;max-width:34ch}
+
+/* lo que el alumno va diciendo, en vivo */
+.oye{margin-top:34px;min-height:62px;font-size:21px;line-height:1.4;font-weight:300;color:var(--crema);opacity:0;transition:opacity .5s}
+.oye.on{opacity:1}
+.oye .tmp{color:var(--crema3)}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.chip{padding:10px 16px;border-radius:999px;font-size:15px;background:rgba(255,255,255,.09);
+  border:1px solid rgba(255,255,255,.14);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  opacity:0;transform:translateY(12px);transition:all .6s var(--curva)}
+.chip.on{opacity:1;transform:none}
+
+/* ── EFA: la esfera abajo, con su anillo de voz ── */
+.efa{position:fixed;left:50%;bottom:calc(46px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:5;
+  display:flex;flex-direction:column;align-items:center;gap:12px}
+.orbe{position:relative;width:84px;height:84px;border-radius:50%;border:0;padding:0;cursor:pointer;
+  background:radial-gradient(circle at 34% 28%,#fff6dc 0,#F7D98B 18%,#F2C14E 42%,#b9822a 75%,#6e4618 100%);
+  box-shadow:0 18px 50px rgba(242,193,78,.28),0 0 0 1px rgba(255,255,255,.18) inset,inset 0 -10px 20px rgba(90,50,10,.35);
+  transition:transform .5s var(--curva)}
+.orbe::before,.orbe::after{content:"";position:absolute;inset:-10px;border-radius:50%;border:1.5px solid rgba(242,193,78,.0)}
+.efa[data-e=habla] .orbe{animation:respira 1.6s ease-in-out infinite}
+.efa[data-e=escucha] .orbe::before{border-color:rgba(242,193,78,.55);animation:onda 2s ease-out infinite}
+.efa[data-e=escucha] .orbe::after{border-color:rgba(242,193,78,.35);animation:onda 2s ease-out .7s infinite}
+.efa[data-e=piensa] .orbe{animation:piensa 1.4s ease-in-out infinite}
+.efa[data-e=mute] .orbe{filter:grayscale(.75) brightness(.75)}
+@keyframes respira{50%{transform:scale(1.07)}}
+@keyframes onda{from{transform:scale(1);opacity:1}to{transform:scale(1.55);opacity:0}}
+@keyframes piensa{50%{filter:brightness(1.25) saturate(1.2)}}
+.estado{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--crema3);min-height:15px}
+
+/* respaldo discreto: micrófono y teclado */
+.respaldo{position:fixed;bottom:calc(66px + env(safe-area-inset-bottom,0px));z-index:5;width:44px;height:44px;border-radius:50%;border:0;cursor:pointer;
+  display:grid;place-items:center;color:var(--crema2);background:rgba(255,255,255,.07);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.respaldo.izq{left:calc(50% - 120px)} .respaldo.der{left:calc(50% + 76px)}
+.respaldo.off{color:#fff;background:rgba(201,90,60,.55)}
+.teclado{position:fixed;left:16px;right:16px;bottom:calc(160px + env(safe-area-inset-bottom,0px));z-index:6;display:none;gap:8px;
+  padding:6px;border-radius:22px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+.teclado.on{display:flex}
+.teclado input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--crema);font:400 17px Inter,sans-serif;padding:12px 14px}
+.teclado input::placeholder{color:var(--crema3)}
+.teclado button{border:0;border-radius:16px;width:48px;background:var(--amarillo);color:var(--cafe);font-size:18px;cursor:pointer}
+.saltar{position:fixed;top:calc(18px + env(safe-area-inset-top,0px));right:18px;z-index:6;border:0;background:none;color:var(--crema3);font:500 13px Inter,sans-serif;letter-spacing:.06em;cursor:pointer}
+.marca{position:fixed;top:calc(20px + env(safe-area-inset-top,0px));left:24px;z-index:6;font:600 12px Inter,sans-serif;letter-spacing:.28em;color:var(--amarillo)}
+@media (prefers-reduced-motion:reduce){.fondo i,.orbe,.orbe::before,.orbe::after{animation:none!important}.lienzo,.w,.chip{transition:opacity .3s!important;transform:none!important;filter:none!important}}
+</style>
+</head>
+<body>
+<div class="fondo"><i></i><i></i><i></i></div><div class="grano"></div>
+<div class="marca">EFA</div>
+<button class="saltar" id="saltar">Saltar</button>
+<div id="escena"></div>
+
+<button class="respaldo izq" id="bMic" aria-label="Apagar micrófono"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+<div class="efa" id="efa" data-e="calla"><button class="orbe" id="orbe" aria-label="EFA"></button><div class="estado" id="estado"></div></div>
+<button class="respaldo der" id="bTec" aria-label="Escribir"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg></button>
+<form class="teclado" id="teclado"><input id="tx" placeholder="Escríbelo aquí…" autocomplete="off" enterkeyhint="send"><button>➤</button></form>
+
+<script>
+/* ═══════════════ EFA · bienvenida por voz ═══════════════
+   Una voz de mujer, tranquila, que se presenta, platica y conoce al
+   alumno. Todo en español y con respuestas abiertas. Lo que dice se
+   escribe al ritmo de su voz; lo que el alumno dice aparece en vivo. */
+var VOZ_URL='https://script.google.com/macros/s/AKfycbxJgynQD_GCLvdzlDNUrc8AnnWbTeS-1G6_lqIkNjelpB7Mqbjeg-qH3_tpidzNMGiK/exec';
+var IA_URL ='https://script.google.com/macros/s/AKfycbxlAGlMVpdjqLZ_yh-Oh3934akKkfHojlGonjHKnUE3ZncdQRsT2bMzv0Elc0Ng4DK1Hw/exec';
+var $=function(id){ return document.getElementById(id); };
+var esperar=function(ms){ return new Promise(function(r){ setTimeout(r,ms); }); };
+var R=window.SpeechRecognition||window.webkitSpeechRecognition;
+var MUTE=!R, TURNO=0, perfil={};
+
+function estado(e,tx){ $('efa').dataset.e=e; $('estado').textContent=tx||''; }
+
+/* ── palabras que aparecen ── */
+function palabrear(el,texto){
+  el.innerHTML=''; var spans=[];
+  String(texto).split(/(\s+)/).forEach(function(w){
+    if(w&&!/^\s+$/.test(w)){ var s=document.createElement('span'); s.className='w'; s.textContent=w; el.appendChild(s); spans.push(s); }
+    else if(w) el.appendChild(document.createTextNode(w));
+  });
+  return spans;
+}
+// reparte las palabras sobre lo que dura el audio (las largas tardan más)
+function sincronizar(spans,dur,obtenerT){
+  var pesos=spans.map(function(s){ return s.textContent.length+2; }), total=pesos.reduce(function(a,b){return a+b;},0), acum=0;
+  var marcas=pesos.map(function(p){ var m=acum/total; acum+=p; return m; });
+  var i=0;
+  (function paso(){
+    var t=obtenerT(); if(t<0) { spans.forEach(function(s){ s.classList.add('on'); }); return; }
+    while(i<spans.length&&marcas[i]<=t/dur+0.02){ spans[i].classList.add('on'); i++; }
+    if(i<spans.length) requestAnimationFrame(paso);
+  })();
+}
+
+/* ── la voz de EFA: primero la voz de Google (mujer), si no, la del celular ── */
+var AUD=new Audio(); AUD.preload='auto';
+function vozGoogle(texto){
+  return fetch(VOZ_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({texto:texto,idioma:'es',paquete:'audio-us',sexo:'f'})})
+    .then(function(r){ return r.ok?r.json():null; }).then(function(d){ return d&&d.ok&&d.audio?'data:audio/mpeg;base64,'+d.audio:null; })
+    .catch(function(){ return null; });
+}
+function hablar(texto,el){
+  var t=++TURNO; estado('habla',''); var spans=el?palabrear(el,texto):[];
+  return new Promise(function(listo){
+    var hecho=false; function fin(){ if(hecho)return; hecho=true; spans.forEach(function(s){ s.classList.add('on'); }); listo(); }
+    var guardia=setTimeout(fin,2500+texto.length*90);
+    Promise.race([vozGoogle(texto),esperar(4000).then(function(){ return null; })]).then(function(url){
+      if(t!==TURNO) return fin();
+      if(url){
+        AUD.src=url; AUD.playbackRate=1;
+        AUD.onloadedmetadata=function(){ sincronizar(spans,AUD.duration||texto.length/14,function(){ return hecho?-1:AUD.currentTime; }); };
+        AUD.onended=function(){ clearTimeout(guardia); fin(); }; AUD.onerror=function(){ celular(); };
+        AUD.play().catch(celular);
+      } else celular();
+    });
+    function celular(){
+      try{
+        speechSynthesis.cancel(); var u=new SpeechSynthesisUtterance(texto); u.lang='es-MX'; u.rate=.95; u.pitch=1.05;
+        var vs=speechSynthesis.getVoices().filter(function(v){ return /^es/.test(v.lang); });
+        u.voice=vs.find(function(v){ return /Paulina|Monica|Mónica|Google español de Estados|female|mujer/i.test(v.name); })||vs[0]||null;
+        var ini=Date.now(), dur=Math.max(1.2,texto.length/13.5);
+        sincronizar(spans,dur,function(){ return hecho?-1:(Date.now()-ini)/1000; });
+        u.onend=function(){ clearTimeout(guardia); fin(); }; u.onerror=function(){ fin(); };
+        speechSynthesis.speak(u);
+      }catch(e){ fin(); }
+    }
+  });
+}
+
+/* ── escuchar: respuesta abierta, se ve en vivo ── */
+var recActual=null;
+function escuchar(el){
+  return new Promise(function(listo){
+    var t=TURNO;
+    el.classList.add('on'); el.innerHTML='';
+    $('tx').value=''; var porTeclado=function(texto){ cerrar(); listo(texto); };
+    escuchar._teclado=porTeclado;
+    if(MUTE||!R){ estado('mute','Escríbelo abajo'); $('teclado').classList.add('on'); return; }
+    estado('escucha','Te escucho');
+    var r=new R(); recActual=r; r.lang='es-MX'; r.interimResults=true; r.continuous=true; r.maxAlternatives=1;
+    var final='', silencio=null, terminado=false;
+    function cerrar(){ terminado=true; clearTimeout(silencio); try{ r.onend=null; r.abort(); }catch(e){} recActual=null; }
+    r.onresult=function(ev){
+      var tmp=''; for(var i=ev.resultIndex;i<ev.results.length;i++){ if(ev.results[i].isFinal) final+=ev.results[i][0].transcript+' '; else tmp+=ev.results[i][0].transcript; }
+      el.innerHTML=esc(final)+'<span class="tmp">'+esc(tmp)+'</span>';
+      clearTimeout(silencio);
+      // 1.8 s callado después de hablar = terminó (aguanta pausas para pensar)
+      silencio=setTimeout(function(){ if(final.trim()||tmp.trim()){ var x=(final+tmp).trim(); cerrar(); el.textContent=x; listo(x); } },1800);
+    };
+    r.onerror=function(e){ if(e.error==='not-allowed'||e.error==='service-not-allowed'||e.error==='audio-capture'){ cerrar(); MUTE=true; $('bMic').classList.add('off'); estado('mute','Escríbelo abajo'); $('teclado').classList.add('on'); } };
+    r.onend=function(){ if(!terminado&&t===TURNO){ try{ r.start(); }catch(e){} } };   // iOS corta solo: se vuelve a prender
+    try{ r.start(); }catch(e){}
+  });
+}
+function esc(s){ return String(s).replace(/[&<>]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]; }); }
+
+/* ── lienzos ── */
+var actual=null;
+function lienzo(html){
+  var n=document.createElement('section'); n.className='lienzo'; n.innerHTML=html; $('escena').appendChild(n);
+  if(actual){ var v=actual; v.classList.remove('dentro'); v.classList.add('fuera'); setTimeout(function(){ v.remove(); },950); }
+  actual=n; requestAnimationFrame(function(){ requestAnimationFrame(function(){ n.classList.add('dentro'); }); });
+  return n;
+}
+
+/* ── el guion ── */
+var PREGUNTAS=[
+  {k:'nombre', et:'Para empezar', q:'¿Cómo te llamas?', apoyo:'Con tu nombre basta.',
+   eco:function(x){ var n=nombreDe(x); perfil.nombre=n; return 'Mucho gusto, '+n+'.'; }},
+  {k:'trabajo', et:'Tu día', q:'¿A qué te dedicas, y cómo es un día normal para ti?', apoyo:'Cuéntamelo como se lo contarías a un amigo.',
+   eco:function(){ return 'Va, con eso armo ejemplos de tu propio trabajo.'; }},
+  {k:'metas', et:'Tu motivo', q:'¿Para qué quieres el inglés?', apoyo:'Un viaje, tu chamba, tus hijos, o simplemente porque te gusta.',
+   eco:function(){ return 'Me encanta. Lo vamos a tener presente en cada lección.'; }},
+  {k:'gustos', et:'Lo tuyo', q:'¿Qué te gusta hacer cuando no estás trabajando?', apoyo:'Así las lecciones hablan de cosas que te importan.',
+   eco:function(){ return 'Anotado.'; }},
+  {k:'nivel', et:'Con honestidad', q:'¿Cuánto inglés sientes que hablas hoy?', apoyo:'Nada, poquito, algo, o bastante. Aquí no se califica.',
+   eco:function(){ return 'Gracias por decírmelo así.'; }}
+];
+function nombreDe(x){
+  var t=String(x).replace(/^(me llamo|mi nombre es|soy|yo soy|hola,?\s*soy)\s+/i,'').replace(/[.!¿?]/g,'').trim().split(/\s+/)[0]||'';
+  return t.charAt(0).toUpperCase()+t.slice(1).toLowerCase();
+}
+
+async function inicio(){
+  // 1. EFA se presenta
+  var a=lienzo('<div class="etiqueta">Hola</div><p class="dice" id="d"></p><p class="apoyo w" id="ap">Toca la esfera cuando quieras pausarme.</p>');
+  await esperar(500);
+  await hablar('Hola, soy EFA. Voy a acompañarte a hablar inglés, unos minutos cada día.', a.querySelector('#d'));
+  a.querySelector('#ap').classList.add('on'); await esperar(500);
+  var b=lienzo('<div class="etiqueta">Cómo funciona</div><p class="dice" id="d"></p>');
+  await esperar(400);
+  await hablar('Aquí vas a escuchar, hablar y pulir tu pronunciación. Tú me hablas, yo te escucho, y te ayudo en cada paso.', b.querySelector('#d'));
+  var c=lienzo('<div class="etiqueta">Antes de empezar</div><p class="dice" id="d"></p>');
+  await esperar(400);
+  await hablar('Primero quiero conocerte. Contéstame con tus palabras, como si estuviéramos platicando.', c.querySelector('#d'));
+  await esperar(300);
+  // 2. las preguntas, una por lienzo
+  for(var i=0;i<PREGUNTAS.length;i++){
+    var P=PREGUNTAS[i];
+    var l=lienzo('<div class="etiqueta">'+P.et+' · '+(i+1)+' de '+PREGUNTAS.length+'</div><p class="dice" id="d"></p><p class="apoyo w" id="ap">'+P.apoyo+'</p><div class="oye" id="oye"></div>');
+    await esperar(450);
+    await hablar(P.q, l.querySelector('#d'));
+    l.querySelector('#ap').classList.add('on');
+    var resp=await escuchar(l.querySelector('#oye'));
+    perfil[P.k]=resp;
+    estado('habla',''); await hablar(P.eco(resp), null);
+  }
+  // 3. lo que entendió
+  var f=lienzo('<div class="etiqueta">Esto entendí de ti</div><p class="dice" id="d"></p><div class="chips" id="chips"></div>');
+  estado('piensa','Pensando…');
+  var res=await entender();
+  await hablar(res.frase, f.querySelector('#d'));
+  res.chips.forEach(function(t,k){ var s=document.createElement('span'); s.className='chip'; s.textContent=t; f.querySelector('#chips').appendChild(s); setTimeout(function(){ s.classList.add('on'); },150*k); });
+  await esperar(900+res.chips.length*150);
+  var g=lienzo('<div class="etiqueta">Siguiente paso</div><p class="dice" id="d"></p>');
+  await esperar(400);
+  await hablar('Ahora vamos a escuchar cómo está tu inglés. Sin presión: es solo para acomodar tus lecciones.', g.querySelector('#d'));
+  estado('calla','');
+  try{ localStorage.setItem('efa2_perfil',JSON.stringify(perfil)); }catch(e){}
+}
+
+/* el cerebro (Claude) lee las respuestas abiertas; si no contesta, se arma a mano */
+function entender(){
+  var datos={nombre:perfil.nombre,trabajo:perfil.trabajo,accion:perfil.trabajo,gustos:perfil.gustos,metas:perfil.metas,enfoque:'',respuestas_nivel:[],puntos:null};
+  var aMano={frase:'Te llamas '+(perfil.nombre||'…')+', y ya tengo una idea de cómo armar tus lecciones.',chips:[perfil.trabajo,perfil.metas,perfil.gustos].filter(Boolean).map(function(x){ return String(x).split(/[,.]/)[0].slice(0,32); })};
+  return Promise.race([
+    fetch(IA_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({accion:'perfilar',datos:datos})})
+      .then(function(r){ return r.ok?r.json():null; })
+      .then(function(j){
+        var x=j&&j.ok&&j.resultado; if(!x) return aMano;
+        perfil.analisis=x;
+        var frase=(perfil.nombre?perfil.nombre+', eres ':'Eres ')+(x.oficio_es||'alguien con mucho por contar')+(x.meta_es?', y quieres el inglés para '+x.meta_es:'')+'.';
+        return {frase:frase,chips:(x.temas||[]).slice(0,5)};
+      }).catch(function(){ return aMano; }),
+    esperar(12000).then(function(){ return aMano; })
+  ]);
+}
+
+/* ── controles de respaldo ── */
+$('orbe').onclick=function(){ if(!arrancado) return arrancar(); if(!AUD.paused){ AUD.pause(); AUD.onended&&AUD.onended(); } try{ speechSynthesis.cancel(); }catch(e){} };
+$('bMic').onclick=function(){
+  MUTE=!MUTE; this.classList.toggle('off',MUTE);
+  if(MUTE){ if(recActual) try{ recActual.abort(); }catch(e){} estado('mute','Micrófono apagado'); $('teclado').classList.add('on'); $('tx').focus(); }
+  else { $('teclado').classList.remove('on'); estado('escucha','Te escucho'); if(escuchar._teclado&&actual&&actual.querySelector('.oye')){ var f=escuchar._teclado; escuchar(actual.querySelector('.oye')).then(f); } }
+};
+$('bTec').onclick=function(){ $('teclado').classList.toggle('on'); if($('teclado').classList.contains('on')) $('tx').focus(); };
+$('teclado').onsubmit=function(e){ e.preventDefault(); var v=$('tx').value.trim(); if(!v) return; $('tx').value=''; if(actual&&actual.querySelector('.oye')) actual.querySelector('.oye').textContent=v; if(escuchar._teclado) escuchar._teclado(v); };
+$('saltar').onclick=function(){ location.href='./'; };
+
+/* en iPhone el sonido arranca solo después de un toque */
+var arrancado=false;
+function arrancar(){ if(arrancado) return; arrancado=true; try{ AUD.play().catch(function(){}); AUD.pause(); }catch(e){} inicio(); }
+lienzo('<div class="etiqueta">English For All</div><p class="dice">Toca la esfera<br><em>para conocer a EFA</em></p>');
+estado('calla','');
+</script>
+</body>
+</html>

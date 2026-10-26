@@ -1756,7 +1756,7 @@ if('serviceWorker' in navigator){
 <script>
 (function(){
 "use strict";
-var VERSION="v162 · 22 oct · asistente de voz: la lección se maneja hablando";
+var VERSION="v163 · 26 oct · el código puede venir dentro del link";
 
 /* ═══════════ almacenamiento ═══════════ */
 var KEY='efa_tutor_v2',mem={};
@@ -18087,6 +18087,23 @@ function pantallaPuerta(vencido,alPasar){
   setTimeout(function(){ try{ caja.focus(); }catch(e){} },300);
 }
 
+/* ── el código puede venir en el link: ...index.html?codigo=EFA-XXXX-XXXX ──
+   Así quien entra desde el mensaje de Facebook o Instagram no tiene que
+   teclear nada. Si el código no es válido, no pasa nada: la app lo pide. */
+(function(){
+  var m=null;
+  try{ m=(location.search+location.hash).match(/[?&#]codigo=([A-Za-z0-9-]+)/i); }catch(e){}
+  if(!m) return;
+  // se guarda cuando la app ya cargó sus datos (antes no existen)
+  window.addEventListener('load',function(){ setTimeout(function(){
+  try{
+    var c=leerCodigo(decodeURIComponent(m[1]));
+    if(c&&c.mes>=_mesEfa()&&estadoPuerta()!=='ok') guardarCodigo(c);
+    // se quita de la dirección para que no se quede a la vista
+    try{ history.replaceState(null,'',location.pathname); }catch(e){}
+  }catch(e){}
+  },0); });
+})();
 /* ── envolver las dos entradas ── */
 (function(){
   if(typeof personalizar==='function'){

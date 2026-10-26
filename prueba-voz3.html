@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<script src="asistente2.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>EFA · Lección que aparece con la voz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --fondo:#0f0e0b; --fondo2:#17150f; --vidrio:rgba(255,255,255,.045); --borde:rgba(232,192,99,.14);
+  --oro:#E8C063; --oro2:#C9A24B; --texto:#f4eedf; --suave:#9d957f; --bien:#5fbf8a; --mal:#d9735a;
+  --curva:cubic-bezier(.2,.8,.2,1);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--fondo);color:var(--texto);font-family:Inter,system-ui,-apple-system,sans-serif}
+body{min-height:100vh;padding:20px 16px 150px;
+  background:radial-gradient(120% 60% at 50% -10%,rgba(232,192,99,.10),transparent 60%),var(--fondo)}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:26px}
+.marca{font-weight:700;letter-spacing:.14em;font-size:12px;color:var(--oro)}
+select{background:var(--vidrio);color:var(--texto);border:1px solid var(--borde);border-radius:12px;padding:8px 10px;font:500 13px Inter,sans-serif}
+#app{max-width:440px;margin:0 auto}
+
+/* lo que aparece */
+.entra{opacity:0;transform:translateY(14px);filter:blur(6px);transition:opacity .7s var(--curva),transform .7s var(--curva),filter .7s var(--curva)}
+.entra.on{opacity:1;transform:none;filter:none}
+.w{display:inline-block;opacity:0;transform:translateY(.35em);filter:blur(5px);transition:opacity .45s var(--curva),transform .45s var(--curva),filter .45s var(--curva),color .3s}
+.w.on{opacity:1;transform:none;filter:none}
+
+.paso{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--suave);margin-bottom:14px}
+.barra{height:3px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden;margin-bottom:22px}
+.barra i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--oro2),var(--oro));transition:width 1s var(--curva)}
+.instr{font-size:22px;line-height:1.35;font-weight:600;letter-spacing:-.01em;min-height:60px;margin:0 0 22px}
+
+.tarjeta{position:relative;border-radius:22px;padding:26px 22px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+  border:1px solid var(--borde);box-shadow:0 20px 50px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.05);margin-bottom:22px;overflow:hidden}
+.tarjeta::before{content:"";position:absolute;inset:-40% -20% auto;height:120%;background:radial-gradient(closest-side,rgba(232,192,99,.16),transparent);opacity:0;transition:opacity 1s}
+.tarjeta.viva::before{opacity:1}
+.frase{position:relative;font-size:30px;line-height:1.25;font-weight:700;letter-spacing:-.02em}
+.frase .w.on{color:#d8cfb6}
+.frase .w.dice{color:var(--oro);text-shadow:0 0 22px rgba(232,192,99,.45)}
+.es{position:relative;margin-top:10px;color:var(--suave);font-size:15px;min-height:20px}
+
+.opts{display:grid;gap:12px;margin-bottom:22px}
+.opt{display:flex;align-items:center;gap:14px;width:100%;text-align:left;border-radius:18px;padding:16px 18px;cursor:pointer;
+  background:var(--vidrio);border:1px solid rgba(255,255,255,.08);color:var(--texto);font:500 17px Inter,sans-serif;
+  transition:opacity .6s var(--curva),transform .6s var(--curva),filter .6s var(--curva),border-color .3s,background .3s,box-shadow .3s}
+.opt .n{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:600;background:rgba(255,255,255,.06);color:var(--suave);transition:all .3s}
+.opt.leyendo{border-color:rgba(232,192,99,.55);box-shadow:0 0 0 4px rgba(232,192,99,.08)}
+.opt.leyendo .n{background:var(--oro);color:#15140F}
+.opt.bien{border-color:var(--bien);background:rgba(95,191,138,.12)}
+.opt.bien .n{background:var(--bien);color:#0f0e0b}
+.opt.mal{border-color:var(--mal);background:rgba(217,115,90,.10);animation:tiembla .4s}
+@keyframes tiembla{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+.acciones{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.sec{border-radius:999px;padding:9px 14px;background:transparent;border:1px solid rgba(255,255,255,.12);color:var(--suave);font:500 13px Inter,sans-serif;cursor:pointer}
+.prim{width:100%;border:0;border-radius:18px;padding:16px;font:700 16px Inter,sans-serif;color:#15140F;cursor:pointer;
+  background:linear-gradient(180deg,#f0cf7a,var(--oro2));box-shadow:0 10px 30px rgba(201,162,75,.25)}
+.mic{width:100%;border:0;border-radius:18px;padding:16px;font:600 16px Inter,sans-serif;color:var(--texto);cursor:pointer;margin-bottom:12px;
+  background:rgba(95,150,191,.18);border:1px solid rgba(95,150,191,.35)}
+.res{min-height:22px;color:var(--suave);margin:-4px 0 14px}
+.fin{text-align:center;padding-top:40px}
+.fin .grande{font-size:56px}
+.ctrl{position:fixed;left:16px;top:auto;bottom:16px;font-size:12px;color:var(--suave)}
+@media (prefers-reduced-motion:reduce){.entra,.w,.opt{transition:none!important;filter:none!important;transform:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="marca">ENGLISH FOR ALL</div>
+  <select id="nivel" aria-label="Nivel">
+    <option value="A1" selected>A1 · voz en español</option>
+    <option value="B2">B2 · voz en inglés</option>
+  </select>
+</header>
+<div id="app"></div>
+
+<script>
+/* ═════════ Motor: la voz manda, la pantalla la sigue ═════════
+   hablar(texto, {lang, rate, palabras}) dice el texto y va
+   prendiendo cada palabra cuando la voz llega a ella. Usa los
+   avisos de "palabra" del navegador; si no llegan, calcula el
+   ritmo por el largo de cada palabra. Devuelve una promesa.   */
+var NIVEL='A1';
+window.nivelDelMapa=function(){ return NIVEL; };
+window.ASISTENTE_LECCION=function(){ return 'Prueba · Tu trabajo'; };
+var ING=function(){ return NIVEL==='B2'; };
+var esperar=function(ms){ return new Promise(function(r){ setTimeout(r,ms); }); };
+var GEN=0;   // si cambia, la secuencia vieja se detiene
+
+function palabrear(el,texto){
+  el.innerHTML=''; var spans=[], inicios=[], pos=0;
+  String(texto).split(/(\s+)/).forEach(function(w){
+    if(w&&!/^\s+$/.test(w)){ var s=document.createElement('span'); s.className='w'; s.textContent=w; el.appendChild(s); spans.push(s); inicios.push(pos); }
+    else if(w) el.appendChild(document.createTextNode(w));
+    pos+=w.length;
+  });
+  return {spans:spans,inicios:inicios};
+}
+function voz(lang){
+  var vs=speechSynthesis.getVoices().filter(function(v){ return v.lang&&v.lang.indexOf(lang.slice(0,2))===0; });
+  return vs.find(function(v){ return v.lang===lang; })||vs.find(function(v){ return /Google|Samantha|Paulina|Monica/.test(v.name); })||vs[0];
+}
+function hablar(texto,op){
+  op=op||{}; var lang=op.lang||'es-MX', rate=op.rate||1, P=op.palabras, gen=GEN;
+  return new Promise(function(listo){
+    var i=0, real=false, tm=null, hecho=false;
+    function prende(n){ if(!P) return; while(i<=n&&i<P.spans.length){ var s=P.spans[i]; s.classList.add('on'); if(op.karaoke){ P.spans.forEach(function(x){x.classList.remove('dice');}); s.classList.add('dice'); } i++; } }
+    function sola(){ if(real||!P||i>=P.spans.length) return; prende(i); tm=setTimeout(sola,Math.max(140,(P.spans[i-1].textContent.length+2)*62/rate)); }
+    function fin(){ if(hecho) return; hecho=true; clearTimeout(tm); if(P){ prende(P.spans.length); if(op.karaoke) setTimeout(function(){ P.spans.forEach(function(x){x.classList.remove('dice');}); },350); } listo(gen===GEN); }
+    try{
+      speechSynthesis.cancel();
+      var u=new SpeechSynthesisUtterance(texto); u.lang=lang; u.rate=rate; var v=voz(lang); if(v) u.voice=v;
+      u.onboundary=function(e){ if(!P||(e.name&&e.name!=='word')) return; real=true; clearTimeout(tm); var k=0; while(k+1<P.inicios.length&&P.inicios[k+1]<=e.charIndex) k++; prende(k); };
+      u.onend=fin; u.onerror=fin;
+      speechSynthesis.speak(u);
+      setTimeout(fin, 2500+String(texto).length*95/rate);    // por si la voz nunca avisa que acabó
+    }catch(e){ fin(); }
+    if(P){ prende(0); tm=setTimeout(sola,280/rate); }
+  });
+}
+function aparece(el,retraso){ return new Promise(function(r){ setTimeout(function(){ el.classList.add('on'); setTimeout(r,450); },retraso||0); }); }
+
+/* ═════════ La lección ═════════ */
+var PANTALLAS=[
+  {instr:{es:'Escucha la frase y elige la que está bien dicha.',en:'Listen to the sentence and choose the correct one.'},
+   frase:'I agree with you.', trad:'Estoy de acuerdo contigo.',
+   ops:['I am agree with you.','I agree with you.','I agreed it with you.'], buena:1},
+  {instr:{es:'Te preguntan dónde trabajas. ¿Qué contestas?',en:'Someone asks where you work. What do you answer?'},
+   frase:'Where do you work?', trad:'¿Dónde trabajas?',
+   ops:['I work in a hotel.','I am twenty-eight.','I like pizza.'], buena:0},
+  {instr:{es:'Ahora tú. Dilo en voz alta, sin miedo.',en:'Your turn. Say it out loud.'},
+   frase:'I work in a hotel.', trad:'Trabajo en un hotel.', decir:true},
+];
+var idx=0;
+
+async function pinta(){
+  var gen=++GEN; speechSynthesis.cancel();
+  var app=document.getElementById('app'), s=PANTALLAS[idx];
+  if(!s){
+    app.innerHTML='<div class="fin entra" id="fin"><div class="grande">✦</div><p class="instr" id="finTx"></p><button class="prim entra" id="otra">Otra vez</button></div>';
+    await aparece(document.getElementById('fin'));
+    var pf=palabrear(document.getElementById('finTx'),ING()?'Great job. That is how a lesson feels when the voice leads.':'¡Muy bien! Así se siente una lección que va al ritmo de la voz.');
+    await hablar(document.getElementById('finTx').textContent,{lang:ING()?'en-US':'es-MX',palabras:pf});
+    var o=document.getElementById('otra'); o.onclick=function(){ idx=0; pinta(); }; aparece(o);
+    return;
+  }
+  var es=!ING();
+  app.innerHTML=
+    '<div class="paso entra" id="paso">'+(es?'Ejercicio ':'Exercise ')+(idx+1)+(es?' de ':' of ')+PANTALLAS.length+'</div>'+
+    '<div class="barra entra" id="barra"><i></i></div>'+
+    '<p class="instr" id="instr"></p>'+
+    '<div class="tarjeta entra" id="tarjeta"><div class="frase" id="frase"></div><div class="es" id="trad"></div></div>'+
+    (s.ops?'<div class="opts" id="opts">'+s.ops.map(function(o,k){ return '<button class="opt entra" data-k="'+k+'"><span class="n">'+(k+1)+'</span><span>'+o+'</span></button>'; }).join('')+'</div>'
+          :'<button class="mic entra" id="mic">🎙️ '+(es?'Decirlo en voz alta':'Say it out loud')+'</button><div class="res" id="res"></div>')+
+    '<div class="acciones entra" id="acciones">'+
+      '<button class="sec" id="bEsc">🔊 '+(es?'Escuchar':'Listen')+'</button>'+
+      '<button class="sec" id="bLento">🐢 '+(es?'Más lento':'Slower')+'</button>'+
+      (es?'<button class="sec" id="bSig">🇲🇽 Qué significa</button>':'')+
+      '<button class="sec" id="bSalta">'+(es?'Saltar esta':'Skip')+'</button>'+
+    '</div>'+
+    '<button class="prim entra" id="siguiente">'+(es?'Siguiente':'Next')+'</button>';
+
+  var $=function(id){ return document.getElementById(id); };
+  // 1. arriba, en silencio
+  aparece($('paso')); await aparece($('barra'),120);
+  $('barra').querySelector('i').style.width=((idx)/PANTALLAS.length*100+8)+'%';
+  if(gen!==GEN) return;
+  // 2. la instrucción se escribe mientras la voz la dice
+  var txt=es?s.instr.es:s.instr.en, pi=palabrear($('instr'),txt);
+  if(!await hablar(txt,{lang:es?'es-MX':'en-US',rate:es?.95:1,palabras:pi})) return;
+  // 3. la tarjeta entra y la frase en inglés se ilumina palabra por palabra
+  await aparece($('tarjeta'),80); $('tarjeta').classList.add('viva');
+  var pf=palabrear($('frase'),s.frase);
+  if(!await hablar(s.frase,{lang:'en-US',rate:.9,palabras:pf,karaoke:true})) return;
+  // 4. las opciones entran una por una, cada una cuando se lee
+  if(s.ops){
+    var bs=[].slice.call(document.querySelectorAll('.opt'));
+    for(var k=0;k<bs.length;k++){
+      bs[k].classList.add('on'); bs[k].classList.add('leyendo');
+      var ok=await hablar((es?['Uno','Dos','Tres'][k]+'. ':['One','Two','Three'][k]+'. ')+s.ops[k],{lang:'en-US',rate:.95});
+      bs[k].classList.remove('leyendo'); if(!ok) return; await esperar(120);
+    }
+    bs.forEach(function(b){ b.onclick=function(){ elige(+b.dataset.k,b); }; });
+  } else {
+    await aparece($('mic')); $('mic').onclick=miTurno;
+  }
+  // 5. al final, suaves, los botones de apoyo
+  aparece($('acciones'),150); aparece($('siguiente'),320);
+  $('siguiente').onclick=sig; $('bSalta').onclick=sig;
+  $('bEsc').onclick=function(){ hablar(s.frase,{lang:'en-US',rate:.9,palabras:{spans:pf.spans,inicios:pf.inicios},karaoke:true}); };
+  $('bLento').onclick=function(){ hablar(s.frase,{lang:'en-US',rate:.65,palabras:{spans:pf.spans,inicios:pf.inicios},karaoke:true}); };
+  if($('bSig')) $('bSig').onclick=function(){ var pt=palabrear($('trad'),s.trad); hablar(s.trad,{lang:'es-MX',palabras:pt}); };
+}
+function elige(k,b){
+  var s=PANTALLAS[idx]; document.querySelectorAll('.opt').forEach(function(x){ x.classList.remove('mal'); });
+  if(k===s.buena){ b.classList.add('bien'); hablar(ING()?'Correct! Well done.':'¡Correcto! Muy bien.',{lang:ING()?'en-US':'es-MX'}); }
+  else { b.classList.add('mal'); hablar(ING()?'Not quite. Listen again and try.':'Casi. Escucha otra vez e inténtalo.',{lang:ING()?'en-US':'es-MX'}); }
+}
+function miTurno(){
+  var R=window.SpeechRecognition||window.webkitSpeechRecognition, res=document.getElementById('res');
+  if(!R){ res.textContent='Aquí no hay micrófono de voz.'; return; }
+  var r=new R(); r.lang='en-US'; res.textContent='🎙️ …';
+  r.onresult=function(e){ var t=e.results[0][0].transcript, bien=/work/i.test(t)&&/hotel/i.test(t); res.innerHTML='“'+t+'” '+(bien?'✅':'— casi'); };
+  r.onerror=function(){ res.textContent='No te oí. Toca otra vez.'; };
+  r.start();
+}
+function sig(){ idx++; pinta(); }
+document.getElementById('nivel').onchange=function(){ NIVEL=this.value; idx=0; pinta(); };
+// en iPhone la voz solo arranca después de un toque
+var arrancado=false;
+function arranca(){ if(arrancado) return; arrancado=true; pinta(); }
+document.getElementById('app').innerHTML='<div class="fin"><div class="grande">✦</div><p class="instr" style="opacity:.8">Toca para empezar</p></div>';
+document.addEventListener('click',function(e){ if(!e.target.closest('#esfera-voz')&&!e.target.closest('select')) arranca(); },{once:false});
+</script>
+</body>
+</html>

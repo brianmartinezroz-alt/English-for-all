@@ -268,7 +268,7 @@ var A={
 
   /* habla la esfera (voz corta, aparte de la de la app) */
   decir:function(t,cb){
-    var m=modo(); this.soltarMic(); this.hablandoYo=true; pintar('hablando'); mostrarBurbuja(t);
+    var m=modo(); this.soltarMic(); this.hablandoYo=true; pintar('hablando');
     var hecho=false;
     var fin=function(){ if(hecho)return; hecho=true; A.hablandoYo=false; pintar(A.activo?'esperando':'apagada'); cb&&cb(); if(A.activo&&!cb) A.reanudarPronto(); };
     try{
@@ -277,6 +277,7 @@ var A={
       var vs=speechSynthesis.getVoices().filter(function(v){ return v.lang&&v.lang.toLowerCase().indexOf(m.lang.slice(0,2))===0; });
       var pref=vs.find(function(v){ return /es-MX|es-US/i.test(v.lang); })||vs.find(function(v){ return /Google|Paulina|Samantha|Monica/i.test(v.name); })||vs[0];
       if(pref) u.voice=pref;
+      burbujaViva(t,u);
       u.onend=fin; u.onerror=function(ev){ if(ev&&!/interrupt|cancel/.test(ev.error||'')){ mostrarBurbuja(t,false,9000); A.audioFallo(true); } fin(); }; speechSynthesis.speak(u);
       setTimeout(function(){ if(A.hablandoYo) fin(); }, 1500+t.length*90);
     }catch(e){ mostrarBurbuja(t,false,9000); fin(); }
@@ -514,6 +515,8 @@ var CSS=''+
   'box-shadow:0 6px 20px rgba(0,0,0,.3);opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s}'+
 '#esfera-voz .vz-burb.ver{opacity:1;transform:none;pointer-events:auto;cursor:pointer}'+
 '#esfera-voz .vz-burb.ver::after{content:"  ✕";opacity:.55;font-size:13px;font-style:normal}'+
+'#esfera-voz .vz-w{opacity:0;filter:blur(4px);transition:opacity .38s cubic-bezier(.2,.8,.2,1),filter .38s cubic-bezier(.2,.8,.2,1)}'+
+'#esfera-voz .vz-w.on{opacity:1;filter:none}'+
 '#esfera-voz .vz-burb.oido{background:rgba(232,192,99,.95);color:#15140F;font-style:italic}'+
 '@keyframes vzPulso{0%{transform:scale(1);opacity:1}100%{transform:scale(1.5);opacity:0}}'+
 '@keyframes vzHabla{from{transform:scale(1)}to{transform:scale(1.08)}}'+
@@ -564,6 +567,25 @@ function abrirTeclado(si){
   if(si===undefined) si=f.hasAttribute('hidden');
   if(si){ f.removeAttribute('hidden'); kb.classList.add('on'); var i=f.querySelector('input'); i.placeholder=modo().ingles?'Type here…':'Escribe aquí…'; setTimeout(function(){ try{i.focus();}catch(e){} },50); }
   else { f.setAttribute('hidden',''); kb.classList.remove('on'); }
+}
+/* la burbuja se va escribiendo al ritmo de la voz */
+function burbujaViva(t,u){
+  if(!BURB) return;
+  var partes=String(t).split(/(\s+)/), spans=[], inicios=[], pos=0;
+  BURB.innerHTML=''; BURB.classList.remove('oido');
+  partes.forEach(function(w){
+    if(w&&!/^\s+$/.test(w)){ var sp=DOC.createElement('span'); sp.className='vz-w'; sp.textContent=w; BURB.appendChild(sp); spans.push(sp); inicios.push(pos); }
+    else if(w) BURB.appendChild(DOC.createTextNode(w));
+    pos+=w.length;
+  });
+  clearTimeout(tBurb); BURB.classList.add('ver');
+  var i=0, real=false, tm=null;
+  function hasta(n){ while(i<=n&&i<spans.length){ spans[i].classList.add('on'); i++; } }
+  function sola(){ if(real||i>=spans.length) return; hasta(i); tm=setTimeout(sola,Math.max(110,(spans[i-1].textContent.length+2)*58/(u.rate||1))); }
+  u.addEventListener('boundary',function(e){ if(e.name&&e.name!=='word') return; real=true; clearTimeout(tm); var k=0; while(k+1<inicios.length&&inicios[k+1]<=e.charIndex) k++; hasta(k); });
+  var acabar=function(){ clearTimeout(tm); hasta(spans.length); clearTimeout(tBurb); tBurb=setTimeout(ocultarBurbuja,Math.max(3500,String(t).length*45)); };
+  u.addEventListener('end',acabar); u.addEventListener('error',acabar);
+  hasta(0); tm=setTimeout(sola,260);
 }
 function ocultarBurbuja(){ if(BURB){ clearTimeout(tBurb); BURB.classList.remove('ver'); } }
 function mostrarBurbuja(t,oido,ms){

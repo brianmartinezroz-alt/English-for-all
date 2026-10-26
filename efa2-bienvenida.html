@@ -50,6 +50,18 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--cafe);color:var(
 .oye{margin-top:34px;min-height:62px;font-size:21px;line-height:1.4;font-weight:300;color:var(--crema);opacity:0;transition:opacity .5s}
 .oye.on{opacity:1}
 .oye .tmp{color:var(--crema3)}
+.ayudas{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.ayudas span,.ayudas button{font:400 13px Inter,sans-serif;color:var(--crema2);padding:8px 13px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);cursor:pointer}
+.ayudas#bt{opacity:0;transition:opacity .8s}.ayudas#bt.on{opacity:1}
+.onda{display:inline-flex;gap:6px;align-items:center;height:46px}
+.onda i{width:6px;border-radius:3px;background:var(--amarillo);opacity:.8;animation:ondita 1.1s ease-in-out infinite}
+.onda i:nth-child(1){height:14px}.onda i:nth-child(2){height:30px;animation-delay:.15s}.onda i:nth-child(3){height:44px;animation-delay:.3s}.onda i:nth-child(4){height:26px;animation-delay:.45s}.onda i:nth-child(5){height:16px;animation-delay:.6s}
+@keyframes ondita{50%{transform:scaleY(.45)}}
+.nivel{display:flex;align-items:baseline;gap:14px;margin-bottom:18px}
+.nivel b{font-weight:600;font-size:clamp(72px,24vw,110px);line-height:1;letter-spacing:-.04em;
+  background:linear-gradient(180deg,#fff3cf,#F2C14E 60%,#c98a2e);-webkit-background-clip:text;background-clip:text;color:transparent}
+.nivel span{font-size:15px;letter-spacing:.18em;text-transform:uppercase;color:var(--crema2)}
+.ayudas.w,.nivel.w{display:flex}
 .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
 .chip{padding:10px 16px;border-radius:999px;font-size:15px;background:rgba(255,255,255,.09);
   border:1px solid rgba(255,255,255,.14);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
@@ -138,32 +150,33 @@ function sincronizar(spans,dur,obtenerT){
 
 /* ── la voz de EFA: primero la voz de Google (mujer), si no, la del celular ── */
 var AUD=new Audio(); AUD.preload='auto';
-function vozGoogle(texto){
+function vozGoogle(texto,idioma){
   return fetch(VOZ_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify({texto:texto,idioma:'es',paquete:'audio-us',sexo:'f'})})
+    body:JSON.stringify({texto:texto,idioma:idioma||'es',paquete:'audio-us',sexo:'f'})})
     .then(function(r){ return r.ok?r.json():null; }).then(function(d){ return d&&d.ok&&d.audio?'data:audio/mpeg;base64,'+d.audio:null; })
     .catch(function(){ return null; });
 }
-function hablar(texto,el){
+function hablar(texto,el,op){
+  op=op||{}; var idioma=op.lang||'es', vel=op.vel||1;
   var t=++TURNO; estado('habla',''); var spans=el?palabrear(el,texto):[];
   return new Promise(function(listo){
     var hecho=false; function fin(){ if(hecho)return; hecho=true; spans.forEach(function(s){ s.classList.add('on'); }); listo(); }
-    var guardia=setTimeout(fin,2500+texto.length*90);
-    Promise.race([vozGoogle(texto),esperar(4000).then(function(){ return null; })]).then(function(url){
+    var guardia=setTimeout(fin,2500+texto.length*90/vel);
+    Promise.race([vozGoogle(texto,idioma),esperar(4000).then(function(){ return null; })]).then(function(url){
       if(t!==TURNO) return fin();
       if(url){
-        AUD.src=url; AUD.playbackRate=1;
-        AUD.onloadedmetadata=function(){ sincronizar(spans,AUD.duration||texto.length/14,function(){ return hecho?-1:AUD.currentTime; }); };
+        AUD.src=url; AUD.playbackRate=vel; AUD.defaultPlaybackRate=vel;
+        AUD.onloadedmetadata=function(){ sincronizar(spans,(AUD.duration||texto.length/14),function(){ return hecho?-1:AUD.currentTime; }); };
         AUD.onended=function(){ clearTimeout(guardia); fin(); }; AUD.onerror=function(){ celular(); };
         AUD.play().catch(celular);
       } else celular();
     });
     function celular(){
       try{
-        speechSynthesis.cancel(); var u=new SpeechSynthesisUtterance(texto); u.lang='es-MX'; u.rate=.95; u.pitch=1.05;
-        var vs=speechSynthesis.getVoices().filter(function(v){ return /^es/.test(v.lang); });
-        u.voice=vs.find(function(v){ return /Paulina|Monica|Mónica|Google español de Estados|female|mujer/i.test(v.name); })||vs[0]||null;
-        var ini=Date.now(), dur=Math.max(1.2,texto.length/13.5);
+        speechSynthesis.cancel(); var u=new SpeechSynthesisUtterance(texto); u.lang=idioma==='en'?'en-US':'es-MX'; u.rate=.95*vel; u.pitch=1.05;
+        var vs=speechSynthesis.getVoices().filter(function(v){ return v.lang.indexOf(idioma)===0; });
+        u.voice=vs.find(function(v){ return /Paulina|Monica|Mónica|Samantha|Google español de Estados|Google US English|female|mujer/i.test(v.name); })||vs[0]||null;
+        var ini=Date.now(), dur=Math.max(1.2,texto.length/13.5/vel);
         sincronizar(spans,dur,function(){ return hecho?-1:(Date.now()-ini)/1000; });
         u.onend=function(){ clearTimeout(guardia); fin(); }; u.onerror=function(){ fin(); };
         speechSynthesis.speak(u);
@@ -174,15 +187,15 @@ function hablar(texto,el){
 
 /* ── escuchar: respuesta abierta, se ve en vivo ── */
 var recActual=null;
-function escuchar(el){
+function escuchar(el,lang){
   return new Promise(function(listo){
     var t=TURNO;
     el.classList.add('on'); el.innerHTML='';
     $('tx').value=''; var porTeclado=function(texto){ cerrar(); listo(texto); };
-    escuchar._teclado=porTeclado;
+    escuchar._teclado=porTeclado; escuchar._lang=lang;
     if(MUTE||!R){ estado('mute','Escríbelo abajo'); $('teclado').classList.add('on'); return; }
     estado('escucha','Te escucho');
-    var r=new R(); recActual=r; r.lang='es-MX'; r.interimResults=true; r.continuous=true; r.maxAlternatives=1;
+    var r=new R(); recActual=r; r.lang=lang||'es-MX'; r.interimResults=true; r.continuous=true; r.maxAlternatives=1;
     var final='', silencio=null, terminado=false;
     function cerrar(){ terminado=true; clearTimeout(silencio); try{ r.onend=null; r.abort(); }catch(e){} recActual=null; }
     r.onresult=function(ev){
@@ -260,8 +273,96 @@ async function inicio(){
   var g=lienzo('<div class="etiqueta">Siguiente paso</div><p class="dice" id="d"></p>');
   await esperar(400);
   await hablar('Ahora vamos a escuchar cómo está tu inglés. Sin presión: es solo para acomodar tus lecciones.', g.querySelector('#d'));
-  estado('calla','');
   try{ localStorage.setItem('efa2_perfil',JSON.stringify(perfil)); }catch(e){}
+  await diagnostico();
+}
+
+/* ═══════════════ diagnóstico de nivel, por voz ═══════════════
+   Preguntas habladas que van subiendo de A1 a C1, y dos de escuchar.
+   El alumno contesta como pueda; si se atora dos veces seguidas, se
+   para ahí. Al final Claude lee todo y propone el nivel.            */
+var DIAG=[
+  {n:'A1',t:'habla',en:"Hi! What's your name, and where are you from?",es:'¿Cómo te llamas y de dónde eres?'},
+  {n:'A1',t:'habla',en:'What do you do on a normal day?',es:'¿Qué haces en un día normal?'},
+  {n:'A2',t:'oye', en:'I usually take the bus to work, but today I walked, because it was sunny.',q:'¿Cómo llegó hoy al trabajo, y por qué?'},
+  {n:'A2',t:'habla',en:'What did you do last weekend?',es:'¿Qué hiciste el fin de semana pasado?'},
+  {n:'B1',t:'habla',en:'Tell me about a problem you had at work, and how you solved it.',es:'Cuéntame un problema que tuviste en el trabajo y cómo lo resolviste.'},
+  {n:'B1',t:'oye', en:"If I had known the meeting was cancelled, I wouldn't have driven all the way downtown.",q:'¿Qué pasó con la junta, y qué hizo la persona?'},
+  {n:'B2',t:'habla',en:'If you could change one thing about your city, what would it be, and why?',es:'Si pudieras cambiar una cosa de tu ciudad, ¿cuál sería y por qué?'},
+  {n:'C1',t:'habla',en:'Some people say technology makes us more connected, but lonelier. What is your view?',es:'Hay quien dice que la tecnología nos conecta más, pero nos deja más solos. ¿Tú qué opinas?'}
+];
+var NOMBRE_NIVEL={'Pre-A1':'Desde cero','A1':'Muy básico','A2':'Básico','B1':'Intermedio','B2':'Intermedio alto','C1':'Avanzado','C2':'Maestría'};
+var RE_REPITE=/\b(repeat|again|repite|repitelo|otra vez|de nuevo|one more time)\b/i,
+    RE_LENTO=/\b(slow|slower|slowly|despacio|lento|calma)\b/i,
+    RE_ESP=/\b(spanish|espanol|español|no entend|no le entend|traduce|translate)\b/i,
+    RE_NOSE=/^(no se|no sé|i don'?t know|idk|paso|skip|next|siguiente|ni idea|no)\.?$/i;
+function vacia(x){ x=String(x||'').trim(); return !x||RE_NOSE.test(x)||x.split(/\s+/).length<2; }
+
+async function diagnostico(){
+  var h=lienzo('<div class="etiqueta">Cómo funciona</div><p class="dice" id="d"></p><div class="ayudas w" id="ay"><span>“repite”</span><span>“más despacio”</span><span>“en español”</span><span>“no sé”</span></div>');
+  await esperar(400);
+  await hablar('Te voy a hablar en inglés. Contesta como puedas, aunque sea con pocas palabras. Si te atoras, dime: repite, más despacio, en español, o no sé.', h.querySelector('#d'));
+  h.querySelector('#ay').classList.add('on'); await esperar(1200);
+  var respuestas=[], fallas=0;
+  for(var i=0;i<DIAG.length;i++){
+    var D=DIAG[i];
+    var l=lienzo('<div class="etiqueta">Tu inglés · '+(i+1)+' de '+DIAG.length+'</div>'+
+      (D.t==='oye'?'<p class="apoyo w" id="pre">Escucha con atención:</p>':'')+
+      '<p class="dice" id="d"></p><p class="apoyo w" id="es"></p><div class="oye" id="oye"></div>'+
+      '<div class="ayudas" id="bt"><button data-a="rep">🔁 Repetir</button><button data-a="lento">🐢 Más despacio</button><button data-a="esp">🇲🇽 En español</button><button data-a="nose">No sé</button></div>');
+    await esperar(450);
+    var d=l.querySelector('#d'), dijo='', vel=1, intentos=0;
+    if(D.t==='oye'){ l.querySelector('#pre').classList.add('on'); await esperar(500); }
+    var oculto=D.t==='oye';                      // en las de escuchar NO se ve el texto: solo se oye
+    if(oculto) d.innerHTML='<span class="onda"><i></i><i></i><i></i><i></i><i></i></span>';
+    await hablar(D.en, oculto?null:d, {lang:'en', vel:.95});
+    if(D.t==='oye'){ var es=l.querySelector('#es'); await hablar(D.q, es, {lang:'es'}); }
+    l.querySelector('#bt').classList.add('on');
+    while(intentos<4){
+      intentos++;
+      var x=await escucharConBotones(l, D.t==='oye'?'es-MX':'en-US');
+      if(x==='\u0001rep'||RE_REPITE.test(x)&&x.split(/\s+/).length<=4){ await hablar(D.en, oculto?null:d, {lang:'en', vel:vel}); continue; }
+      if(x==='\u0001lento'||RE_LENTO.test(x)&&x.split(/\s+/).length<=4){ vel=.75; await hablar(D.en, oculto?null:d, {lang:'en', vel:vel}); continue; }
+      if(x==='\u0001esp'||RE_ESP.test(x)&&x.split(/\s+/).length<=5){ await hablar(D.es||D.q, l.querySelector('#es'), {lang:'es'}); continue; }
+      dijo=(x==='\u0001nose')?'':x; break;
+    }
+    respuestas.push({pregunta:(D.t==='oye'?'[Escuchó: "'+D.en+'"] '+D.q:D.en), dijo:dijo||'(no contestó)', nivel:D.n});
+    fallas=vacia(dijo)?fallas+1:0;
+    if(fallas>=2) break;                       // dos atorones seguidos: hasta aquí
+    await hablar(['Muy bien.','Va.','Perfecto.','Gracias.','Bien.'][i%5], null);
+  }
+  // el resultado
+  var f=lienzo('<div class="etiqueta">Tu punto de partida</div><div class="nivel w" id="nv"></div><p class="dice" id="d"></p>');
+  estado('piensa','Escuchándote de nuevo…');
+  var nivel=await calificar(respuestas);
+  perfil.nivel=nivel; perfil.diagnostico=respuestas;
+  try{ localStorage.setItem('efa2_perfil',JSON.stringify(perfil)); }catch(e){}
+  f.querySelector('#nv').innerHTML='<b>'+nivel+'</b><span>'+(NOMBRE_NIVEL[nivel]||'')+'</span>';
+  f.querySelector('#nv').classList.add('on');
+  await hablar((perfil.nombre?perfil.nombre+', ':'')+'empiezas en '+nivel.replace('-',' ')+'. Ahí vas a sentirte a gusto, pero con reto. Y cada semana te voy a ir subiendo.', f.querySelector('#d'));
+  estado('calla','');
+}
+function escucharConBotones(l,lang){
+  return new Promise(function(listo){
+    var bt=[].slice.call(l.querySelectorAll('#bt button')), ya=false;
+    function una(v){ if(ya) return; ya=true; bt.forEach(function(b){ b.onclick=null; }); listo(v); }
+    bt.forEach(function(b){ b.onclick=function(){ if(recActual) try{ recActual.onend=null; recActual.abort(); }catch(e){} una('\u0001'+b.dataset.a); }; });
+    escuchar(l.querySelector('#oye'),lang).then(una);
+  });
+}
+function calificar(respuestas){
+  // a mano, por si el cerebro no contesta: hasta dónde llegó contestando
+  var hasta='Pre-A1'; respuestas.forEach(function(r){ if(!vacia(r.dijo==='(no contestó)'?'':r.dijo)) hasta=r.nivel; });
+  var datos={nombre:perfil.nombre,trabajo:perfil.trabajo,accion:perfil.trabajo,gustos:perfil.gustos,metas:perfil.metas,enfoque:'',
+             puntos:respuestas.filter(function(r){ return !vacia(r.dijo==='(no contestó)'?'':r.dijo); }).length,
+             respuestas_nivel:respuestas.map(function(r){ return {pregunta:r.pregunta,dijo:r.dijo}; })};
+  return Promise.race([
+    fetch(IA_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({accion:'perfilar',datos:datos})})
+      .then(function(r){ return r.ok?r.json():null; })
+      .then(function(j){ var n=j&&j.ok&&j.resultado&&j.resultado.nivel_sugerido; return NOMBRE_NIVEL[n]?n:hasta; })
+      .catch(function(){ return hasta; }),
+    esperar(14000).then(function(){ return hasta; })
+  ]);
 }
 
 /* el cerebro (Claude) lee las respuestas abiertas; si no contesta, se arma a mano */
@@ -286,7 +387,7 @@ $('orbe').onclick=function(){ if(!arrancado) return arrancar(); if(!AUD.paused){
 $('bMic').onclick=function(){
   MUTE=!MUTE; this.classList.toggle('off',MUTE);
   if(MUTE){ if(recActual) try{ recActual.abort(); }catch(e){} estado('mute','Micrófono apagado'); $('teclado').classList.add('on'); $('tx').focus(); }
-  else { $('teclado').classList.remove('on'); estado('escucha','Te escucho'); if(escuchar._teclado&&actual&&actual.querySelector('.oye')){ var f=escuchar._teclado; escuchar(actual.querySelector('.oye')).then(f); } }
+  else { $('teclado').classList.remove('on'); estado('escucha','Te escucho'); if(escuchar._teclado&&actual&&actual.querySelector('.oye')){ var f=escuchar._teclado; escuchar(actual.querySelector('.oye'),escuchar._lang).then(f); } }
 };
 $('bTec').onclick=function(){ $('teclado').classList.toggle('on'); if($('teclado').classList.contains('on')) $('tx').focus(); };
 $('teclado').onsubmit=function(e){ e.preventDefault(); var v=$('tx').value.trim(); if(!v) return; $('tx').value=''; if(actual&&actual.querySelector('.oye')) actual.querySelector('.oye').textContent=v; if(escuchar._teclado) escuchar._teclado(v); };

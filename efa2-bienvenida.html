@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1c140e">
+<meta name="theme-color" content="#FBF3DE">
 <script src="efa2-mundo.js"></script>
 <title>EFA · Bienvenida</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -225,6 +225,79 @@ body.portada .efa,body.portada .respaldo,body.portada #teacher,body.portada .sal
 .teclado button{border:0;border-radius:16px;width:48px;background:var(--amarillo);color:var(--cafe);font-size:18px;cursor:pointer}
 .saltar{position:fixed;top:calc(18px + env(safe-area-inset-top,0px));right:18px;z-index:6;border:0;background:none;color:var(--crema3);font:500 13px Inter,sans-serif;letter-spacing:.06em;cursor:pointer}
 .marca{position:fixed;top:calc(20px + env(safe-area-inset-top,0px));left:24px;z-index:6;font:600 12px Inter,sans-serif;letter-spacing:.28em;color:var(--amarillo)}
+
+/* ═══════════════ tema PAPEL: la app es la hoja del pasaporte ═══════════════ */
+:root{--crema:#2B1E14;--crema2:rgba(43,30,20,.66);--crema3:rgba(43,30,20,.42);--oro:#A8700F;--papel:#FBF3DE}
+html,body{background:var(--papel);color:var(--crema)}
+.fondo,.grano{display:none}
+.lienzo{background:
+    radial-gradient(130% 55% at 90% 108%,rgba(242,193,78,.30),rgba(242,193,78,0) 62%),
+    radial-gradient(80% 45% at -5% -5%,rgba(247,217,139,.26),rgba(247,217,139,0) 62%),
+    linear-gradient(180deg,#FFFDF8,#FBF3DE);
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+  box-shadow:inset 16px 0 24px -18px rgba(90,60,20,.38);
+  opacity:0;transform:none;filter:none;transform-origin:left center;-webkit-backface-visibility:hidden;backface-visibility:hidden;
+  transition:opacity .45s ease,transform .95s cubic-bezier(.55,.06,.32,1),filter .95s ease}
+.lienzo::before{background:var(--guil) center/cover no-repeat;mix-blend-mode:multiply;opacity:.55}
+.lienzo::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:9;opacity:0;transition:opacity .95s ease;
+  background:linear-gradient(90deg,rgba(90,60,20,.32),rgba(90,60,20,.08) 45%,rgba(90,60,20,0) 80%)}
+.lienzo.dentro{opacity:1;transform:none;filter:none}
+.lienzo.bajo::after{opacity:1;transition:none}
+.lienzo.pasa{opacity:1;transform:perspective(2200px) rotateY(-96deg);filter:brightness(.82)}
+.lienzo.claro{background:
+    radial-gradient(130% 55% at 90% 108%,rgba(242,193,78,.38),rgba(242,193,78,0) 62%),
+    linear-gradient(180deg,#FFFCF2,#FAEFCF)}
+.etiqueta,.lienzo.claro .etiqueta{color:var(--oro);opacity:1}
+.dice em,.enunciado .hueco,.retro b,.correcciones b{color:var(--oro)}
+.enunciado .hueco{border-bottom-color:var(--amarillo)}
+.vidrio{color:var(--crema);background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,249,232,.78));
+  border:1px solid rgba(176,122,18,.26);
+  box-shadow:inset 0 1px 0 #fff,inset 0 -8px 14px rgba(232,178,58,.10),0 8px 22px rgba(120,80,20,.14)}
+.vidrio::before{background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(255,255,255,0))}
+.vidrio.otro{background:rgba(255,255,255,.5);border-color:rgba(43,30,20,.28)}
+.vidrio.chico{color:var(--crema2)}
+.vidrio .letra{background:rgba(43,30,20,.08)}
+.vidrio.brilla{color:#2a1a08}
+.retro{color:var(--crema);background:rgba(255,255,255,.72);border:1px solid rgba(176,122,18,.22);box-shadow:0 8px 22px rgba(120,80,20,.10)}
+.correcciones div{background:rgba(255,255,255,.7);border:1px solid rgba(176,122,18,.18)}
+.correcciones s{color:#b5523a}
+.chip{background:rgba(255,255,255,.75);border:1px solid rgba(176,122,18,.24);color:var(--crema)}
+.chip.ok{border-color:rgba(60,150,90,.5)} .chip.reto{border-color:rgba(232,178,58,.75)}
+.ayudas span,.ayudas button{color:var(--crema2);border:1px solid rgba(43,30,20,.14);background:rgba(255,255,255,.6)}
+.anillo .fondoA{stroke:rgba(43,30,20,.10)}
+.paso i{border-color:rgba(176,122,18,.45)}
+.libro b,.libro i{box-shadow:0 6px 16px rgba(90,60,20,.18),inset -8px 0 12px -8px rgba(0,0,0,.18)}
+.hoja-psp{box-shadow:0 14px 34px rgba(120,80,20,.18),inset 13px 0 18px -13px rgba(0,0,0,.2);border:1px solid rgba(176,122,18,.16)}
+.respaldo{color:var(--crema2);background:rgba(255,255,255,.7);border:1px solid rgba(176,122,18,.18)}
+.teclado{background:rgba(255,255,255,.9);border:1px solid rgba(176,122,18,.22)}
+.teclado button{color:#2a1a08}
+.marca{color:var(--oro)}
+/* la escena (personaje): hoja azul pálido */
+body.modo-escena{background:#E6F0F3}
+body.modo-escena .lienzo{background:radial-gradient(130% 55% at 90% 108%,rgba(110,180,200,.26),rgba(110,180,200,0) 62%),linear-gradient(180deg,#F7FBFC,#E4EFF2)}
+body.modo-escena .etiqueta{color:#2f6f80}
+/* el mapa, en papel */
+.lienzo.mapa{background:var(--papel)}
+.mapa-fade{background:linear-gradient(180deg,rgba(251,243,222,0),var(--papel) 88%)}
+.mapa-cab,.mapa-pie{color:var(--crema);background:rgba(255,253,247,.86);border:1px solid rgba(176,122,18,.22);box-shadow:0 14px 34px rgba(120,80,20,.16)}
+body.en-mapa .saltar,body.en-mapa .marca{background:rgba(255,253,247,.86);color:var(--crema2)}
+body.en-mapa .marca{color:var(--oro)}
+/* portada: la tapa del pasaporte ocupa TODA la pantalla y se abre como puerta */
+html body .pspA.fija{background:transparent!important;padding:0!important;display:block!important}
+html body .pspA.fija .pspA-escena{position:absolute;inset:0;width:auto;aspect-ratio:auto;perspective:2400px;perspective-origin:50% 45%;animation:none}
+html body .pspA.fija .pspA-tapa{inset:0;border-radius:0;display:flex;flex-direction:column;align-items:center;
+  padding:calc(env(safe-area-inset-top,0px) + 11vh) 24px calc(env(safe-area-inset-bottom,0px) + 34px);
+  -webkit-backface-visibility:hidden;backface-visibility:hidden;box-shadow:none;
+  transition:transform 1.3s cubic-bezier(.6,.02,.3,1),box-shadow 1.3s}
+html body .pspA.fija .pspA-tapa::after{inset:14px;border-radius:12px}
+html body .pspA.fija.abre .pspA-tapa{transform:rotateY(-104deg);box-shadow:60px 0 90px rgba(0,0,0,.35)}
+html body .pspA.fija .pspA-et{margin-top:0;font-size:11px;letter-spacing:4.5px}
+html body .pspA.fija .pspA-logo{margin-top:9vh;margin-bottom:22px}
+html body .pspA.fija .pspA-marca{font-size:24px;letter-spacing:3.5px}
+html body .pspA.fija .pspA-nom{font-size:17px;margin-top:10px}
+html body .pspA.fija .pspA-pie{position:relative;margin-top:auto;display:flex;flex-direction:column;align-items:center;width:100%}
+html body .pspA.fija .pspA-rayas{margin-top:0}
+html body .pspA.fija .pspA-chip{margin:22px 0 0}
 @media (prefers-reduced-motion:reduce){.fondo i,.orbe,.orbe::before,.orbe::after{animation:none!important}.lienzo,.w,.chip{transition:opacity .3s!important;transform:none!important;filter:none!important}}
 </style>
 </head>
@@ -297,13 +370,13 @@ var BURBUJA=(function(){
     // cuerpo: miel oscura en la orilla, dorado en medio
     forma(R,amp,sp,0);
     var g1=ctx.createRadialGradient(cx-R*.2,cy-R*.3,R*.05,S/2,S/2,R*1.05);
-    g1.addColorStop(0,'#ffe3a0'); g1.addColorStop(.32,'#F2C14E'); g1.addColorStop(.72,'#C07A22'); g1.addColorStop(1,'#4e2c0e');
+    g1.addColorStop(0,'#fff0c4'); g1.addColorStop(.34,'#F5C850'); g1.addColorStop(.74,'#D99A2E'); g1.addColorStop(1,'#9a5f1a');
     ctx.fillStyle=g1; ctx.fill();
     // corriente oscura que gira por dentro (da profundidad)
     ctx.save(); forma(R,amp,sp,0); ctx.clip();
     forma(R*.62,amp*2.2,sp*1.4,4.1);
     var gx=S/2-Math.cos(tono*.9)*R*.35, gy=S/2-Math.sin(tono*.7)*R*.3;
-    var g4=ctx.createRadialGradient(gx,gy,0,gx,gy,R*.8); g4.addColorStop(0,'rgba(110,60,15,.55)'); g4.addColorStop(1,'rgba(110,60,15,0)');
+    var g4=ctx.createRadialGradient(gx,gy,0,gx,gy,R*.8); g4.addColorStop(0,'rgba(150,90,25,.38)'); g4.addColorStop(1,'rgba(110,60,15,0)');
     ctx.fillStyle=g4; ctx.fill(); ctx.restore();
     // luz líquida que se pasea
     ctx.globalCompositeOperation='screen';
@@ -428,10 +501,13 @@ function esc(s){ return String(s).replace(/[&<>]/g,function(c){ return {'&':'&am
 /* ── lienzos ── */
 var actual=null;
 function lienzo(html){
-  var n=document.createElement('section'); n.className='lienzo'; n.innerHTML=html; $('escena').appendChild(n);
-  if(actual){ var v=actual; v.classList.remove('dentro'); v.classList.add('fuera'); setTimeout(function(){ v.remove(); },950); }
-  actual=n; requestAnimationFrame(function(){ requestAnimationFrame(function(){ n.classList.add('dentro'); }); });
-  return n;
+  var n=document.createElement('section'); n.className='lienzo'; n.innerHTML=html;
+  if(actual){                                   // la hoja nueva ya está debajo; la vieja se voltea como página
+    var v=actual; $('escena').insertBefore(n,v); n.classList.add('dentro','bajo');
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ v.classList.add('pasa'); n.classList.remove('bajo'); }); });
+    setTimeout(function(){ v.remove(); },1000);
+  } else { $('escena').appendChild(n); requestAnimationFrame(function(){ requestAnimationFrame(function(){ n.classList.add('dentro'); }); }); }
+  actual=n; return n;
 }
 
 /* ── el guion ── */
@@ -467,7 +543,7 @@ function nombreDe(x){
 async function inicio(){
   // 1. EFA se presenta
   var a=lienzo('<div class="etiqueta">Hola</div><p class="dice" id="d"></p><p class="apoyo w" id="ap">Toca la esfera cuando quieras pausarme.</p>');
-  await esperar(500);
+  await esperar(1100);
   await hablar('Hola, soy EFA. Voy a acompañarte a hablar inglés, unos minutos cada día.', a.querySelector('#d'));
   a.querySelector('#ap').classList.add('on'); await esperar(500);
   var b=lienzo('<div class="etiqueta">Cómo funciona</div><p class="dice" id="d"></p>');
@@ -986,22 +1062,23 @@ function arrancar(){ if(arrancado) return; arrancado=true; try{ AUD.play().catch
 // la portada: el pasaporte de siempre, que se abre como libro
 (function(){
   var st=document.createElement('style'); st.textContent=MUNDO.css; document.head.appendChild(st);
+  var gp='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 560" preserveAspectRatio="xMidYMid slice">'+MUNDO.roseta(250,470,190,18,7,4,'#C9A24B',0.10,0.5)+MUNDO.roseta(250,470,120,12,9,3,'#C9A24B',0.12,0.5)+'</svg>';
+  document.documentElement.style.setProperty('--guil','url("data:image/svg+xml,'+encodeURIComponent(gp)+'")');
   document.body.classList.add('portada');
   var g=MUNDO.roseta(165,280,150,16,7,4,'#C9A24B',0.16,0.5)+MUNDO.roseta(165,280,96,10,9,3,'#C9A24B',0.20,0.5)+MUNDO.roseta(165,280,54,6,11,2,'#C9A24B',0.22,0.5);
   var ray=''; for(var i=0;i<7;i++) ray+='<i style="background:'+(i===0?'#8C7640':'#2A2822')+'"></i>';
   var d=document.createElement('div'); d.className='pspA fija'; d.id='pspA';
-  d.innerHTML='<div class="pspA-escena"><div class="pspA-hoja"><div class="pspA-hoja-et">PARTE 1 · TUS DATOS</div><div class="pspA-hoja-t">Hola, soy EFA</div><div class="pspA-hoja-x">Antes de viajar, cuéntame quién eres.</div></div>'+
-    '<div class="pspA-tapa" id="pspA-tapa"><svg viewBox="0 0 330 560" preserveAspectRatio="xMidYMid slice" class="pspA-guil">'+g+'</svg>'+
-    '<div class="pspA-et">PASSPORT · PASAPORTE</div><svg width="80" height="46" viewBox="0 -14 80 60" class="pspA-logo"><text x="0" y="36" font-size="40" font-weight="800" fill="#C9A24B">E</text><text x="26" y="24" font-size="40" font-weight="800" fill="#C9A24B">F</text><text x="50" y="12" font-size="40" font-weight="800" fill="#E8C063">A</text></svg>'+
+  d.innerHTML='<div class="pspA-escena"><div class="pspA-tapa" id="pspA-tapa"><svg viewBox="0 0 330 560" preserveAspectRatio="xMidYMid slice" class="pspA-guil">'+g+'</svg>'+
+    '<div class="pspA-et">PASSPORT · PASAPORTE</div><svg width="124" height="72" viewBox="0 -14 80 60" class="pspA-logo"><text x="0" y="36" font-size="40" font-weight="800" fill="#C9A24B">E</text><text x="26" y="24" font-size="40" font-weight="800" fill="#C9A24B">F</text><text x="50" y="12" font-size="40" font-weight="800" fill="#E8C063">A</text></svg>'+
     '<div class="pspA-marca">ENGLISH FOR ALL</div><div class="pspA-nom">Tu pasaporte</div>'+
-    '<svg width="34" height="24" viewBox="0 0 34 24" class="pspA-chip"><rect x="1" y="1" width="32" height="22" rx="4" fill="none" stroke="#C9A24B" stroke-width="1.4"></rect><circle cx="17" cy="12" r="5" fill="none" stroke="#C9A24B" stroke-width="1.4"></circle></svg></div></div>'+
-    '<div class="pspA-rayas">'+ray+'</div><div class="pspA-sub">Siete visas por sellar. Tu inglés decide dónde empiezas.</div>'+
-    '<button class="pspA-btn" id="pspA-abrir">Abrir mi pasaporte</button>';
+    '<div class="pspA-pie"><div class="pspA-rayas">'+ray+'</div><div class="pspA-sub">Siete visas por sellar. Tu inglés decide dónde empiezas.</div>'+
+    '<button class="pspA-btn" id="pspA-abrir">Abrir mi pasaporte</button>'+
+    '<svg width="34" height="24" viewBox="0 0 34 24" class="pspA-chip"><rect x="1" y="1" width="32" height="22" rx="4" fill="none" stroke="#C9A24B" stroke-width="1.4"></rect><circle cx="17" cy="12" r="5" fill="none" stroke="#C9A24B" stroke-width="1.4"></circle></svg></div></div></div>';
   document.body.appendChild(d);
   document.getElementById('pspA-abrir').onclick=function(){
-    this.disabled=true; d.classList.add('abre');
-    setTimeout(function(){ d.classList.add('entra'); },1100);           // la hoja crece hasta llenar la pantalla
-    setTimeout(function(){ d.remove(); document.body.classList.remove('portada'); arrancar(); },1900);
+    this.disabled=true; d.classList.add('abre'); document.body.classList.remove('portada');
+    arrancar();                                    // la primera hoja ya está debajo de la tapa
+    setTimeout(function(){ d.remove(); },1400);
   };
 })();
 estado('calla','');

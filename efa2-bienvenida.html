@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1c140e">
+<script src="efa2-mundo.js"></script>
 <title>EFA · Bienvenida</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
@@ -28,8 +29,8 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--cafe);color:var(
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
 /* ── lienzo: cada pregunta ocupa toda la pantalla, sin bordes ── */
-.lienzo{position:fixed;inset:0;z-index:2;display:flex;flex-direction:column;justify-content:center;
-  padding:calc(70px + env(safe-area-inset-top,0px)) 28px calc(175px + env(safe-area-inset-bottom,0px));overflow-y:auto;
+.lienzo{position:fixed;inset:0;z-index:2;display:flex;flex-direction:column;justify-content:flex-start;
+  padding:calc(70px + env(safe-area-inset-top,0px)) 28px calc(200px + env(safe-area-inset-bottom,0px));overflow-y:auto;
   background:linear-gradient(180deg,rgba(255,240,215,.07),rgba(255,240,215,.02) 40%,rgba(0,0,0,.08));
   -webkit-backdrop-filter:blur(26px) saturate(140%);backdrop-filter:blur(26px) saturate(140%);
   opacity:0;transform:translateY(60px);filter:blur(10px);
@@ -37,6 +38,8 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--cafe);color:var(
 .lienzo::before{content:"";position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(180deg,rgba(255,255,255,.10),transparent 18%);mix-blend-mode:soft-light}
 .lienzo.dentro{opacity:1;transform:none;filter:none}
+.lienzo>:first-child{margin-top:auto}.lienzo>:last-child{margin-bottom:auto}
+.dice.media{font-size:clamp(24px,6.6vw,30px);line-height:1.22}.dice.larga{font-size:clamp(20px,5.6vw,24px);line-height:1.3}
 .lienzo.fuera{opacity:0;transform:translateY(-70px);filter:blur(12px)}
 
 .etiqueta{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--amarillo);opacity:.85;margin-bottom:22px}
@@ -135,6 +138,54 @@ body.en-mision #teacher{display:inline-flex}
 .correcciones{margin-top:20px;display:grid;gap:10px}
 .correcciones div{padding:12px 16px;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);font-size:15px;line-height:1.4}
 .correcciones s{color:#e6a08a} .correcciones b{color:var(--amarillo);font-weight:500}
+.pspA.fija{background:radial-gradient(ellipse at 50% 36%,#2b1e14 0%,#120c08 70%)!important;z-index:20!important;display:flex;flex-direction:column;align-items:center}
+.pspA.fija.entra .pspA-escena{transition:transform .8s cubic-bezier(.6,0,.2,1),opacity .8s;transform:scale(3.2);opacity:0}
+body.en-mapa .saltar,body.en-mapa .marca{background:rgba(28,20,14,.66);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);padding:5px 10px;border-radius:999px;color:var(--crema)}
+body.en-mapa .marca{color:var(--amarillo);left:16px}
+body.portada .efa,body.portada .respaldo,body.portada #teacher,body.portada .saltar,body.portada .marca{display:none!important}
+/* armando el pasaporte */
+.libro{position:relative;width:150px;height:104px;margin:0 0 26px;perspective:600px}
+.libro b{position:absolute;left:0;top:0;width:75px;height:104px;border-radius:6px 0 0 6px;background:linear-gradient(118deg,#FDF9EF,#F1E9D4);box-shadow:inset -8px 0 12px -8px rgba(0,0,0,.35)}
+.libro i{position:absolute;left:75px;top:0;width:75px;height:104px;border-radius:0 6px 6px 0;background:linear-gradient(242deg,#FDF9EF,#E8DCBF);transform-origin:left center;animation:hojea 2.4s ease-in-out infinite;box-shadow:inset 8px 0 12px -8px rgba(0,0,0,.25)}
+.libro i:nth-child(2){animation-delay:.8s}.libro i:nth-child(3){animation-delay:1.6s}
+@keyframes hojea{0%{transform:rotateY(0)}45%,100%{transform:rotateY(-178deg)}}
+.pasos{display:grid;gap:10px;margin-top:22px}
+.paso{display:flex;align-items:center;gap:12px;font-size:15px;color:var(--crema2)}
+.paso i{width:18px;height:18px;border-radius:50%;border:1.5px solid rgba(242,193,78,.5);flex:none;position:relative}
+.paso:not(.hecho) i{border-top-color:var(--amarillo);animation:gira .9s linear infinite}
+.paso.hecho{color:var(--crema)} .paso.hecho i{background:var(--amarillo);border-color:var(--amarillo)}
+.paso.hecho i:after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;font-size:11px;color:#2a1a08;font-weight:700}
+@keyframes gira{to{transform:rotate(360deg)}}
+/* hoja del pasaporte (visa y sellos) */
+.hoja-psp{position:relative;margin:0 auto 22px;width:min(300px,78vw);padding:20px 20px 10px;border-radius:12px 18px 18px 12px;
+  background:linear-gradient(118deg,#FDF9EF,#F1E9D4);color:#1F1B16;box-shadow:0 24px 60px rgba(0,0,0,.45),inset 13px 0 18px -13px rgba(0,0,0,.3)}
+.hoja-et{font:600 10px ui-monospace,Menlo,monospace;letter-spacing:2.5px;color:#B23A48}
+.hoja-pais{font-size:28px;font-weight:600;letter-spacing:-.02em;margin-top:6px}
+.hoja-lema{font-size:13px;color:#6E624C}
+.visa-sello{display:block;width:72%;margin:6px auto 0;transform:scale(2.2) rotate(-14deg);opacity:0;transition:transform .55s cubic-bezier(.3,1.6,.5,1),opacity .3s}
+.visa-sello.on{transform:scale(1) rotate(-10deg);opacity:1}
+.chip.ok{border-color:rgba(150,230,170,.45)} .chip.reto{border-color:rgba(242,193,78,.5)}
+.hoja-psp.visa{display:grid;grid-template-columns:1fr 118px;align-items:center;gap:6px;width:min(330px,86vw);padding:16px 14px 16px 20px;margin-bottom:20px}
+.hoja-psp.visa .visa-sello{width:118px;margin:0}
+.chips.chicos{gap:8px;margin-top:16px}.chips.chicos .chip{font-size:13.5px;padding:7px 12px}
+.chips#reto{margin-top:10px}
+/* el mapa real de la ciudad */
+.lienzo.mapa{padding:0;-webkit-backdrop-filter:none;backdrop-filter:none;background:#1c140e;justify-content:flex-end}
+.lienzo.mapa::before{display:none}
+.mapa-img,.mapa-pins{position:absolute;left:0;top:-34px;width:100%;height:min(600px,72vh)}.mapa-img{object-fit:cover}
+.mapa-fade{position:absolute;left:0;right:0;top:calc(min(600px,72vh) - 144px);height:112px;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(28,20,14,0),#1c140e 92%)}
+.mapa-osm{position:absolute;right:10px;top:calc(40px + env(safe-area-inset-top,0px));font-size:9px;color:#4a3b28;background:rgba(251,246,234,.8);padding:2px 6px;border-radius:6px;z-index:4}
+.mapa-cab,.mapa-pie{position:absolute;left:12px;right:12px;z-index:3;border-radius:24px;padding:16px 18px;color:var(--crema);
+  background:linear-gradient(180deg,rgba(43,30,20,.72),rgba(28,20,14,.62));border:1px solid rgba(255,255,255,.16);
+  -webkit-backdrop-filter:blur(20px) saturate(150%);backdrop-filter:blur(20px) saturate(150%);box-shadow:0 18px 40px rgba(0,0,0,.35)}
+.mapa-cab{top:calc(46px + env(safe-area-inset-top,0px));right:auto;padding:12px 20px 12px 16px;border-radius:20px} .mapa-cab .etiqueta{margin-bottom:2px}
+.mapa-ciu{font-size:26px;font-weight:300;letter-spacing:-.03em}
+.mapa-pie{bottom:calc(196px + env(safe-area-inset-bottom,0px));padding:14px 16px}.mapa-pie .oye{margin:0;min-height:0}.mapa-pie .oye:empty{display:none}
+.mapa-pie .etiqueta{margin-bottom:8px}
+.dice.chica{font-size:20px;line-height:1.3}
+.mapa-pie .flotan{margin-top:14px}.mapa-hoy{font-size:22px;font-weight:400;letter-spacing:-.02em;line-height:1.2}
+.mapa-pins .pinciu{opacity:0;transform:translateY(-14px) scale(.6);transform-box:fill-box;transform-origin:50% 100%;transition:opacity .45s,transform .6s cubic-bezier(.3,1.5,.5,1)}
+.mapa-pins .pinciu.on{opacity:1;transform:none}.mapa-pins polyline{stroke-dashoffset:0;opacity:0;transition:opacity 1.2s}.mapa-pins.trazo polyline{opacity:.75}
 .ayudas{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
 .ayudas span,.ayudas button{font:400 13px Inter,sans-serif;color:var(--crema2);padding:8px 13px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);cursor:pointer}
 .ayudas#bt{opacity:0;transition:opacity .8s}.ayudas#bt.on{opacity:1}
@@ -153,28 +204,18 @@ body.en-mision #teacher{display:inline-flex}
   opacity:0;transform:translateY(12px);transition:all .6s var(--curva)}
 .chip.on{opacity:1;transform:none}
 
-/* ── EFA: la esfera abajo, con su anillo de voz ── */
-.efa{position:fixed;left:50%;bottom:calc(46px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:5;
-  display:flex;flex-direction:column;align-items:center;gap:12px}
-.orbe{position:relative;width:84px;height:84px;border-radius:50%;border:0;padding:0;cursor:pointer;
-  background:radial-gradient(circle at 34% 28%,#fff6dc 0,#F7D98B 18%,#F2C14E 42%,#b9822a 75%,#6e4618 100%);
-  box-shadow:0 18px 50px rgba(242,193,78,.28),0 0 0 1px rgba(255,255,255,.18) inset,inset 0 -10px 20px rgba(90,50,10,.35);
-  transition:transform .5s var(--curva)}
-.orbe::before,.orbe::after{content:"";position:absolute;inset:-10px;border-radius:50%;border:1.5px solid rgba(242,193,78,.0)}
-.efa[data-e=habla] .orbe{animation:respira 1.6s ease-in-out infinite}
-.efa[data-e=escucha] .orbe::before{border-color:rgba(242,193,78,.55);animation:onda 2s ease-out infinite}
-.efa[data-e=escucha] .orbe::after{border-color:rgba(242,193,78,.35);animation:onda 2s ease-out .7s infinite}
-.efa[data-e=piensa] .orbe{animation:piensa 1.4s ease-in-out infinite}
-.efa[data-e=mute] .orbe{filter:grayscale(.75) brightness(.75)}
-@keyframes respira{50%{transform:scale(1.07)}}
-@keyframes onda{from{transform:scale(1);opacity:1}to{transform:scale(1.55);opacity:0}}
-@keyframes piensa{50%{filter:brightness(1.25) saturate(1.2)}}
+/* ── EFA: burbuja líquida viva (canvas) ── */
+.efa{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:5;
+  display:flex;flex-direction:column;align-items:center;gap:6px}
+.orbe{position:relative;width:132px;height:132px;border:0;padding:0;cursor:pointer;background:none;-webkit-tap-highlight-color:transparent}
+.orbe canvas{position:absolute;inset:-34px;width:200px;height:200px;pointer-events:none}
+.efa[data-e=mute] .orbe canvas{filter:grayscale(.8) brightness(.7)}
 .estado{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--crema3);min-height:15px}
 
 /* respaldo discreto: micrófono y teclado */
-.respaldo{position:fixed;bottom:calc(66px + env(safe-area-inset-bottom,0px));z-index:5;width:44px;height:44px;border-radius:50%;border:0;cursor:pointer;
+.respaldo{position:fixed;bottom:calc(82px + env(safe-area-inset-bottom,0px));z-index:5;width:44px;height:44px;border-radius:50%;border:0;cursor:pointer;
   display:grid;place-items:center;color:var(--crema2);background:rgba(255,255,255,.07);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
-.respaldo.izq{left:calc(50% - 120px)} .respaldo.der{left:calc(50% + 76px)}
+.respaldo.izq{left:calc(50% - 132px)} .respaldo.der{left:calc(50% + 88px)}
 .respaldo.off{color:#fff;background:rgba(201,90,60,.55)}
 .teclado{position:fixed;left:16px;right:16px;bottom:calc(160px + env(safe-area-inset-bottom,0px));z-index:6;display:none;gap:8px;
   padding:6px;border-radius:22px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
@@ -211,7 +252,91 @@ var esperar=function(ms){ return new Promise(function(r){ setTimeout(r,ms); }); 
 var R=window.SpeechRecognition||window.webkitSpeechRecognition;
 var MUTE=!R, TURNO=0, perfil={};
 
-function estado(e,tx){ $('efa').dataset.e=e; $('estado').textContent=tx||''; }
+function estado(e,tx){ $('efa').dataset.e=e; $('estado').textContent=tx||''; if(window.BURBUJA) BURBUJA.modo(e); }
+
+/* ═══════════ la burbuja líquida de EFA ═══════════
+   Una gota de luz que respira. Su forma sale de varias ondas que giran a
+   distinto ritmo; con la voz (de EFA o del alumno) las ondas crecen.   */
+var BURBUJA=(function(){
+  var cv=document.createElement('canvas'), ctx=cv.getContext('2d'), S=200, dpr=Math.min(2,window.devicePixelRatio||1);
+  cv.width=S*dpr; cv.height=S*dpr; ctx.scale(dpr,dpr);
+  var modoAct='calla', nivel=0, meta=0, t=0, ultimo=performance.now(), golpes=0, an=null, datos=null, tono=0;
+  var ARM=[[2,.9,0.0],[3,1.3,1.7],[4,-1.1,3.1],[5,1.7,.6],[7,-2.3,2.2]];   // [onda, velocidad, fase]
+  var CFG={ calla:{a:.035,v:.35,base:1}, habla:{a:.07,v:1.1,base:1.03}, escucha:{a:.06,v:.9,base:1.05},
+            piensa:{a:.09,v:1.8,base:.97}, mute:{a:.02,v:.2,base:.92} };
+  function radio(th,R,amp,sp,k){
+    var r=0; for(var i=0;i<ARM.length;i++){ var h=ARM[i]; r+=Math.sin(h[0]*th+h[2]+k+t*h[1]*sp)/(i+1.4); }
+    return R*(1+amp*r);
+  }
+  function forma(R,amp,sp,k){
+    ctx.beginPath(); var N=64;
+    for(var i=0;i<=N;i++){ var th=i/N*Math.PI*2, r=radio(th,R,amp,sp,k), x=S/2+r*Math.cos(th), y=S/2+r*Math.sin(th);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); }
+    ctx.closePath();
+  }
+  function cuadro(ahora){
+    var dt=Math.min(.05,(ahora-ultimo)/1000); ultimo=ahora; t+=dt;
+    var c=CFG[modoAct]||CFG.calla;
+    // nivel de voz: del audio de EFA, de los golpes del micrófono, o simulado
+    if(an&&modoAct==='habla'){ an.getByteFrequencyData(datos); var sm=0; for(var i=2;i<40;i++) sm+=datos[i]; meta=Math.min(1,sm/(38*150)); }
+    else if(modoAct==='habla'){ meta=.35+.35*Math.abs(Math.sin(t*7.3)*Math.sin(t*2.9)); }
+    else if(modoAct==='escucha'){ golpes*=.92; meta=Math.min(1,.12+golpes); }
+    else meta=0;
+    nivel+= (meta-nivel)*.18;
+    var amp=c.a+nivel*.16, sp=c.v+nivel*1.4, R=50*c.base*(1+nivel*.10);
+    tono+= dt*(modoAct==='piensa'?1.6:.15);
+    ctx.clearRect(0,0,S,S);
+    // halo
+    ctx.save(); ctx.filter='blur(18px)'; ctx.globalAlpha=.32+nivel*.35;
+    forma(R*1.08,amp*1.2,sp,1.3);
+    var g0=ctx.createRadialGradient(S/2,S/2,R*.2,S/2,S/2,R*1.3); g0.addColorStop(0,'rgba(247,217,139,.9)'); g0.addColorStop(1,'rgba(201,138,46,0)');
+    ctx.fillStyle=g0; ctx.fill(); ctx.restore();
+    // cuerpo líquido: dos capas que se cruzan
+    ctx.save();
+    var cx=S/2+Math.cos(tono)*R*.28, cy=S/2+Math.sin(tono*1.3)*R*.22;
+    // cuerpo: miel oscura en la orilla, dorado en medio
+    forma(R,amp,sp,0);
+    var g1=ctx.createRadialGradient(cx-R*.2,cy-R*.3,R*.05,S/2,S/2,R*1.05);
+    g1.addColorStop(0,'#ffe3a0'); g1.addColorStop(.32,'#F2C14E'); g1.addColorStop(.72,'#C07A22'); g1.addColorStop(1,'#4e2c0e');
+    ctx.fillStyle=g1; ctx.fill();
+    // corriente oscura que gira por dentro (da profundidad)
+    ctx.save(); forma(R,amp,sp,0); ctx.clip();
+    forma(R*.62,amp*2.2,sp*1.4,4.1);
+    var gx=S/2-Math.cos(tono*.9)*R*.35, gy=S/2-Math.sin(tono*.7)*R*.3;
+    var g4=ctx.createRadialGradient(gx,gy,0,gx,gy,R*.8); g4.addColorStop(0,'rgba(110,60,15,.55)'); g4.addColorStop(1,'rgba(110,60,15,0)');
+    ctx.fillStyle=g4; ctx.fill(); ctx.restore();
+    // luz líquida que se pasea
+    ctx.globalCompositeOperation='screen';
+    forma(R*.8,amp*1.6,sp*1.25,2.4);
+    var g2=ctx.createRadialGradient(S/2+Math.sin(tono)*R*.38,S/2+Math.cos(tono*.8)*R*.38,0,S/2,S/2,R*.9);
+    g2.addColorStop(0,'rgba(255,236,180,.75)'); g2.addColorStop(.45,'rgba(242,193,78,.25)'); g2.addColorStop(1,'rgba(160,90,30,0)');
+    ctx.globalAlpha=.75+nivel*.25; ctx.fillStyle=g2; ctx.fill();
+    ctx.restore();
+    // brillo de vidrio
+    ctx.save(); forma(R,amp,sp,0); ctx.clip();
+    var g3=ctx.createLinearGradient(0,S/2-R,0,S/2); g3.addColorStop(0,'rgba(255,255,255,.42)'); g3.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=g3; ctx.beginPath(); ctx.ellipse(S/2-R*.18,S/2-R*.48,R*.55,R*.28,-.35,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+    requestAnimationFrame(cuadro);
+  }
+  function montar(){ var o=document.getElementById('orbe'); if(o&&!cv.parentNode){ o.appendChild(cv); requestAnimationFrame(cuadro); } }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',montar); else montar();
+  return {
+    modo:function(m){ modoAct=CFG[m]?m:'calla'; },
+    golpe:function(f){ golpes=Math.min(1,golpes+(f||.35)); },          // el alumno dijo algo
+    conectar:function(audio){                                          // oír la voz de EFA para moverse con ella
+      try{ if(an) return; var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
+        var ac=new AC(); BURBUJA._ac=ac;
+        // solo se engancha si el audio quedó despierto: si no, la voz se oiría muda en iPhone
+        Promise.resolve(ac.resume&&ac.resume()).then(function(){
+          if(ac.state!=='running'||an) return;
+          var src=ac.createMediaElementSource(audio), a2=ac.createAnalyser(); a2.fftSize=128;
+          datos=new Uint8Array(a2.frequencyBinCount); src.connect(a2); a2.connect(ac.destination); an=a2;
+        }).catch(function(){}); }catch(e){ an=null; }
+    },
+    despertar:function(){ try{ if(BURBUJA._ac&&BURBUJA._ac.state==='suspended') BURBUJA._ac.resume(); }catch(e){} }
+  };
+})();
 
 /* ── palabras que aparecen ── */
 function palabrear(el,texto){
@@ -244,7 +369,9 @@ function vozGoogle(texto,idioma,sexo){
 }
 function hablar(texto,el,op){
   op=op||{}; var idioma=op.lang||'es', vel=op.vel||1;
-  var t=++TURNO; estado('habla',''); var spans=el?palabrear(el,texto):[];
+  var t=++TURNO; estado('habla','');
+  if(el&&el.classList.contains('dice')&&!el.classList.contains('chica')) { var n=String(texto).length; el.classList.toggle('media',n>110&&n<=180); el.classList.toggle('larga',n>180); }
+  var spans=el?palabrear(el,texto):[];
   return new Promise(function(listo){
     var hecho=false; function fin(){ if(hecho)return; hecho=true; spans.forEach(function(s){ s.classList.add('on'); }); listo(); }
     var guardia=setTimeout(fin,2500+texto.length*90/vel);
@@ -284,7 +411,7 @@ function escuchar(el,lang){
     var r=new R(); recActual=r; r.lang=lang||'es-MX'; r.interimResults=true; r.continuous=true; r.maxAlternatives=1;
     var final='', silencio=null, terminado=false;
     function cerrar(){ terminado=true; clearTimeout(silencio); try{ r.onend=null; r.abort(); }catch(e){} recActual=null; }
-    r.onresult=function(ev){
+    r.onresult=function(ev){ BURBUJA.golpe(.4);
       var tmp=''; for(var i=ev.resultIndex;i<ev.results.length;i++){ if(ev.results[i].isFinal) final+=ev.results[i][0].transcript+' '; else tmp+=ev.results[i][0].transcript; }
       el.innerHTML=esc(final)+'<span class="tmp">'+esc(tmp)+'</span>';
       clearTimeout(silencio);
@@ -382,84 +509,98 @@ async function inicio(){
   await hablar('Ahora vamos a escuchar cómo está tu inglés. Sin presión: es solo para acomodar tus lecciones.', g.querySelector('#d'));
   try{ localStorage.setItem('efa2_perfil',JSON.stringify(perfil)); }catch(e){}
   await diagnostico();
-  await mapaInicial();
+  await armarPasaporte();
+  await visa();
+  await mapaCiudad();
   await primeraLeccion();
 }
 
-/* ═══════════════ diagnóstico de nivel, por voz ═══════════════
-   Preguntas habladas que van subiendo de A1 a C1, y dos de escuchar.
-   El alumno contesta como pueda; si se atora dos veces seguidas, se
-   para ahí. Al final Claude lee todo y propone el nivel.            */
-var DIAG=[
-  {n:'A1',t:'habla',en:"Hi! What's your name, and where are you from?",es:'¿Cómo te llamas y de dónde eres?'},
-  {n:'A1',t:'habla',en:'What do you do on a normal day?',es:'¿Qué haces en un día normal?'},
-  {n:'A2',t:'oye', en:'I usually take the bus to work, but today I walked, because it was sunny.',q:'¿Cómo llegó hoy al trabajo, y por qué?',
-   ops:[{t:'En autobús, porque llovía',k:/autobus|camion|llov/},{t:'Caminando, porque hacía sol',k:/camin|a pie|sol/},{t:'En coche, porque iba tarde',k:/coche|carro|auto\b|tarde/}],ok:1},
-  {n:'A2',t:'habla',en:'What did you do last weekend?',es:'¿Qué hiciste el fin de semana pasado?'},
-  {n:'B1',t:'habla',en:'Tell me about a problem you had at work, and how you solved it.',es:'Cuéntame un problema que tuviste en el trabajo y cómo lo resolviste.'},
-  {n:'B1',t:'oye', en:"If I had known the meeting was cancelled, I wouldn't have driven all the way downtown.",q:'¿Qué pasó con la junta, y qué hizo la persona?',
-   ops:[{t:'Llegó tarde a la junta',k:/tarde/},{t:'Se canceló y aun así manejó al centro',k:/cancel|de balde|para nada|sin saber/},{t:'No fue porque se canceló',k:/no fue|no llego|se quedo/}],ok:1},
-  {n:'B2',t:'habla',en:'If you could change one thing about your city, what would it be, and why?',es:'Si pudieras cambiar una cosa de tu ciudad, ¿cuál sería y por qué?'},
-  {n:'C1',t:'habla',en:'Some people say technology makes us more connected, but lonelier. What is your view?',es:'Hay quien dice que la tecnología nos conecta más, pero nos deja más solos. ¿Tú qué opinas?'}
-];
+/* ═══════════════ diagnóstico adaptativo, por voz ═══════════════
+   Arranca según lo que el alumno dijo de sí mismo. En cada nivel hay una
+   pregunta para hablar y una para escuchar (opción múltiple, tipo
+   Cambridge). Si las dos salen bien, sube; si las dos salen mal, baja; si
+   queda a medias, ahí se queda. Al final Claude lee TODO y decide.      */
+var BANCO={
+ 'A1':[{t:'habla',en:'What do you do on a normal day?',es:'¿Qué haces en un día normal?',min:4},
+       {t:'oye',en:'My sister works at a bank. She starts at nine and finishes at five.',q:'¿Dónde trabaja la hermana y a qué hora termina?',
+        ops:[{t:'En un banco, a las cinco',k:/banco.*cinco|cinco.*banco/},{t:'En una tienda, a las nueve',k:/tienda/},{t:'En un banco, a las nueve',k:/banco.*nueve|nueve.*banco/}],ok:0}],
+ 'A2':[{t:'habla',en:'What did you do last weekend?',es:'¿Qué hiciste el fin de semana pasado?',min:7},
+       {t:'oye',en:'I usually take the bus to work, but today I walked, because it was sunny.',q:'¿Cómo llegó hoy al trabajo, y por qué?',
+        ops:[{t:'En autobús, porque llovía',k:/autobus|camion|llov/},{t:'Caminando, porque hacía sol',k:/camin|a pie|sol/},{t:'En coche, porque iba tarde',k:/coche|carro|auto\b|tarde/}],ok:1}],
+ 'B1':[{t:'habla',en:'Tell me about a problem you had at work, and how you solved it.',es:'Cuéntame un problema que tuviste en el trabajo y cómo lo resolviste.',min:12},
+       {t:'oye',en:"If I had known the meeting was cancelled, I wouldn't have driven all the way downtown.",q:'¿Qué pasó con la junta, y qué hizo la persona?',
+        ops:[{t:'Llegó tarde a la junta',k:/tarde/},{t:'Se canceló y aun así manejó al centro',k:/cancel|de balde|para nada|sin saber/},{t:'No fue porque se canceló',k:/no fue|no llego|se quedo/}],ok:1}],
+ 'B2':[{t:'habla',en:'If you could change one thing about the way your line of work operates, what would it be, and why?',es:'Si pudieras cambiar una cosa de cómo funciona tu trabajo, ¿cuál sería y por qué?',min:16},
+       {t:'oye',en:'Had the supplier flagged the delay earlier, we could have rerouted the shipment and kept the client.',q:'¿Qué pasó con el cliente?',
+        ops:[{t:'Lo perdieron porque el proveedor avisó tarde',k:/perd|se fue|avis|tarde/},{t:'El cliente canceló el envío',k:/cancel/},{t:'Cambiaron la ruta a tiempo',k:/a tiempo|cambi/}],ok:0}],
+ 'C1':[{t:'habla',en:'Some say technology makes us more connected but lonelier. Where do you stand, and what would change your mind?',es:'Hay quien dice que la tecnología nos conecta más pero nos deja más solos. ¿Tú dónde estás y qué te haría cambiar de opinión?',min:20},
+       {t:'oye',en:"Frankly, the proposal isn't bad per se; it's just that nobody seems willing to stick their neck out for it.",q:'¿Qué opina de verdad la persona sobre la propuesta?',
+        ops:[{t:'Está bien, pero nadie se arriesga a apoyarla',k:/nadie|arriesg|apoy/},{t:'Es una mala propuesta',k:/mala/},{t:'Todos la apoyan',k:/todos/}],ok:0}]
+};
+var ORDEN_DIAG=['A1','A2','B1','B2','C1'];
 var NOMBRE_NIVEL={'Pre-A1':'Desde cero','A1':'Muy básico','A2':'Básico','B1':'Intermedio','B2':'Intermedio alto','C1':'Avanzado','C2':'Maestría'};
 var RE_REPITE=/\b(repeat|again|repite|repitelo|otra vez|de nuevo|one more time)\b/i,
     RE_LENTO=/\b(slow|slower|slowly|despacio|lento|calma)\b/i,
     RE_ESP=/\b(spanish|espanol|español|no entend|no le entend|traduce|translate)\b/i,
     RE_NOSE=/^(no se|no sé|i don'?t know|idk|paso|skip|next|siguiente|ni idea|no)\.?$/i;
 function vacia(x){ x=String(x||'').trim(); return !x||RE_NOSE.test(x)||x.split(/\s+/).length<2; }
-
+function puntajeHabla(x,min){
+  x=String(x||'').trim(); if(vacia(x)) return 0;
+  var ws=x.split(/\s+/), ing=ws.filter(function(w){ return /^[a-z'’.,!?]+$/i.test(w); }).length/ws.length;
+  if(ing<.6) return 0;                               // contestó en español
+  return ws.length>=min?1:(ws.length>=Math.ceil(min*.6)?.5:0);
+}
+async function preguntaDiag(D,n,total,L){
+  var l=lienzo('<div class="etiqueta">Tu inglés · '+n+'</div>'+
+    (D.t==='oye'?'<p class="apoyo w" id="pre">Escucha con atención:</p>':'')+
+    '<p class="dice" id="d"></p><p class="apoyo w" id="es"></p><div class="oye" id="oye"></div><div class="flotan" id="fl"></div>'+
+    '<div class="ayudas" id="bt"><button class="vidrio chico on" data-a="rep">🔁 Repetir</button><button class="vidrio chico on" data-a="lento">🐢 Más despacio</button><button class="vidrio chico on" data-a="esp">🇲🇽 En español</button><button class="vidrio chico on" data-a="nose">No sé</button></div>');
+  await esperar(450);
+  var d=l.querySelector('#d'), vel=1, dijo='', pts=0, nota='';
+  var oculto=D.t==='oye';
+  if(oculto){ l.querySelector('#pre').classList.add('on'); d.innerHTML='<span class="onda"><i></i><i></i><i></i><i></i><i></i></span>'; await esperar(400); }
+  await hablar(D.en, oculto?null:d, {lang:'en', vel:.95});
+  if(oculto) await hablar(D.q, l.querySelector('#es'), {lang:'es'});
+  l.querySelector('#bt').classList.add('on');
+  for(var intentos=0;intentos<4;intentos++){
+    var x;
+    if(D.ops){
+      var rr=await Promise.race([elegir(l,D.ops,'es-MX',{otro:false}), ayudaTocada(l)]);
+      if(rr.ayuda) x='\u0001'+rr.ayuda;
+      else if(rr.opcion){ var bien=D.ops[D.ok].t===rr.opcion; pts=bien?1:0; nota=bien?'correcta':'incorrecta'; x=rr.opcion+(rr.texto&&rr.texto!==rr.opcion?' ('+rr.texto+')':''); }
+      else { x=rr.texto||''; if(!(RE_REPITE.test(x)||RE_LENTO.test(x)||RE_ESP.test(x))){ pts=.3; nota='respuesta libre'; } }
+    } else x=await escucharConBotones(l, 'en-US');
+    if(x==='\u0001rep'||RE_REPITE.test(x)&&x.split(/\s+/).length<=4){ await hablar(D.en, oculto?null:d, {lang:'en', vel:vel}); continue; }
+    if(x==='\u0001lento'||RE_LENTO.test(x)&&x.split(/\s+/).length<=4){ vel=.75; nota=(nota?nota+', ':'')+'pidió más despacio'; await hablar(D.en, oculto?null:d, {lang:'en', vel:vel}); continue; }
+    if(x==='\u0001esp'||RE_ESP.test(x)&&x.split(/\s+/).length<=5){ nota=(nota?nota+', ':'')+'pidió en español'; await hablar(D.es||D.q, l.querySelector('#es'), {lang:'es'}); continue; }
+    dijo=(x==='\u0001nose')?'':x;
+    if(!D.ops) pts=puntajeHabla(dijo,D.min);
+    break;
+  }
+  return {pregunta:(oculto?'[Escuchó: "'+D.en+'"] '+D.q:D.en), dijo:dijo||'(no contestó)', nivel:L, tipo:D.t, puntos:pts, nota:nota};
+}
 async function diagnostico(){
   var h=lienzo('<div class="etiqueta">Cómo funciona</div><p class="dice" id="d"></p><div class="ayudas w" id="ay"><span>“repite”</span><span>“más despacio”</span><span>“en español”</span><span>“no sé”</span></div>');
   await esperar(400);
-  await hablar('Te voy a hablar en inglés. Contesta como puedas, aunque sea con pocas palabras. Si te atoras, dime: repite, más despacio, en español, o no sé.', h.querySelector('#d'));
-  h.querySelector('#ay').classList.add('on'); await esperar(1200);
-  var respuestas=[], fallas=0;
-  for(var i=0;i<DIAG.length;i++){
-    var D=DIAG[i];
-    var l=lienzo('<div class="etiqueta">Tu inglés · '+(i+1)+' de '+DIAG.length+'</div>'+
-      (D.t==='oye'?'<p class="apoyo w" id="pre">Escucha con atención:</p>':'')+
-      '<p class="dice" id="d"></p><p class="apoyo w" id="es"></p><div class="oye" id="oye"></div><div class="flotan" id="fl"></div>'+
-      '<div class="ayudas" id="bt"><button class="vidrio chico on" data-a="rep">🔁 Repetir</button><button class="vidrio chico on" data-a="lento">🐢 Más despacio</button><button class="vidrio chico on" data-a="esp">🇲🇽 En español</button><button class="vidrio chico on" data-a="nose">No sé</button></div>');
-    await esperar(450);
-    var d=l.querySelector('#d'), dijo='', vel=1, intentos=0;
-    if(D.t==='oye'){ l.querySelector('#pre').classList.add('on'); await esperar(500); }
-    var oculto=D.t==='oye';                      // en las de escuchar NO se ve el texto: solo se oye
-    if(oculto) d.innerHTML='<span class="onda"><i></i><i></i><i></i><i></i><i></i></span>';
-    await hablar(D.en, oculto?null:d, {lang:'en', vel:.95});
-    if(D.t==='oye'){ var es=l.querySelector('#es'); await hablar(D.q, es, {lang:'es'}); }
-    l.querySelector('#bt').classList.add('on');
-    while(intentos<4){
-      intentos++;
-      var x;
-      if(D.ops){                                    // de opción: se toca, se dice, o se explica
-        var rr=await Promise.race([elegir(l,D.ops,'es-MX',{otro:false}), ayudaTocada(l)]);
-        if(rr.ayuda) x='\u0001'+rr.ayuda;
-        else if(rr.opcion){ x=rr.opcion+(rr.texto&&rr.texto!==rr.opcion?' ('+rr.texto+')':'')+(D.ops[D.ok].t===rr.opcion?' [correcta]':' [incorrecta]'); }
-        else x=rr.texto||'';
-        if(x.charAt(0)!=='\u0001'&&!rr.opcion&&!(RE_REPITE.test(x)||RE_LENTO.test(x)||RE_ESP.test(x))) x=x+' [respuesta libre]';
-      } else x=await escucharConBotones(l, 'en-US');
-      if(x==='\u0001rep'||RE_REPITE.test(x)&&x.split(/\s+/).length<=4){ await hablar(D.en, oculto?null:d, {lang:'en', vel:vel}); continue; }
-      if(x==='\u0001lento'||RE_LENTO.test(x)&&x.split(/\s+/).length<=4){ vel=.75; await hablar(D.en, oculto?null:d, {lang:'en', vel:vel}); continue; }
-      if(x==='\u0001esp'||RE_ESP.test(x)&&x.split(/\s+/).length<=5){ await hablar(D.es||D.q, l.querySelector('#es'), {lang:'es'}); continue; }
-      dijo=(x==='\u0001nose')?'':x; break;
-    }
-    respuestas.push({pregunta:(D.t==='oye'?'[Escuchó: "'+D.en+'"] '+D.q:D.en), dijo:dijo||'(no contestó)', nivel:D.n});
-    fallas=vacia(dijo)?fallas+1:0;
-    if(fallas>=2) break;                       // dos atorones seguidos: hasta aquí
-    await hablar(['Muy bien.','Va.','Perfecto.','Gracias.','Bien.'][i%5], null);
+  await hablar('Te voy a hablar en inglés. Las preguntas se van a ir acomodando a ti: si vas bien, subimos. Contesta como puedas, y si te atoras dime: repite, más despacio, en español, o no sé.', h.querySelector('#d'));
+  h.querySelector('#ay').classList.add('on'); await esperar(1000);
+  var dicho=perfil.nivel_opcion||'';
+  var k=dicho==='Nada'||dicho==='Poquito'?0:(dicho==='Bastante'?2:1);
+  var respuestas=[], piso=-1, techo=null, final=null, n=0;
+  for(var ronda=0;ronda<5;ronda++){
+    var L=ORDEN_DIAG[k], pts=0;
+    for(var q=0;q<BANCO[L].length;q++){ n++; var r=await preguntaDiag(BANCO[L][q],n,0,L); respuestas.push(r); pts+=r.puntos;
+      if(q===0&&r.puntos===0&&vacia(r.dijo==='(no contestó)'?'':r.dijo)&&k>0&&techo===null){ break; } }   // ni intentó: no hace falta la segunda
+    if(pts>=1.5){ piso=k; if(k===ORDEN_DIAG.length-1||(techo!==null&&k+1>=techo)){ final=ORDEN_DIAG[k]; break; } k++; }
+    else if(pts<1){ techo=k; if(k===0){ final='Pre-A1'; break; } if(piso>=k-1){ final=ORDEN_DIAG[k-1]; break; } k--; }
+    else { final=ORDEN_DIAG[k]; break; }                  // a medias: ese es su nivel
+    if(ronda<4) await hablar(['Muy bien.','Va.','Perfecto.','Bien.'][ronda%4], null);
   }
-  // el resultado
-  var f=lienzo('<div class="etiqueta">Tu punto de partida</div><div class="nivel w" id="nv"></div><p class="dice" id="d"></p>');
-  estado('piensa','Escuchándote de nuevo…');
-  var nivel=await calificar(respuestas);
-  perfil.nivel=nivel; perfil.diagnostico=respuestas;
+  if(!final) final=piso>=0?ORDEN_DIAG[piso]:'A1';
+  perfil.diagnostico=respuestas; perfil.nivel_app=final;
   try{ localStorage.setItem('efa2_perfil',JSON.stringify(perfil)); }catch(e){}
-  f.querySelector('#nv').innerHTML='<b>'+nivel+'</b><span>'+(NOMBRE_NIVEL[nivel]||'')+'</span>';
-  f.querySelector('#nv').classList.add('on');
-  await hablar((perfil.nombre?perfil.nombre+', ':'')+'empiezas en '+nivel.replace('-',' ')+'. Ahí vas a sentirte a gusto, pero con reto. Y cada semana te voy a ir subiendo.', f.querySelector('#d'));
-  estado('calla','');
 }
+
 /* opciones de vidrio que flotan: se tocan o se dicen. Si dice otra cosa,
    también vale: regresa lo que dijo, sin opción. */
 function sinAcentos(t){ return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
@@ -508,102 +649,160 @@ function escucharConBotones(l,lang){
     escuchar(l.querySelector('#oye'),lang).then(una);
   });
 }
-function calificar(respuestas){
-  // a mano, por si el cerebro no contesta: hasta dónde llegó contestando
-  var hasta='Pre-A1'; respuestas.forEach(function(r){ if(!vacia(r.dijo==='(no contestó)'?'':r.dijo)) hasta=r.nivel; });
-  var datos={nombre:perfil.nombre,trabajo:perfil.trabajo,accion:perfil.trabajo,gustos:perfil.gustos,metas:perfil.metas,enfoque:'',
-             puntos:respuestas.filter(function(r){ return !vacia(r.dijo==='(no contestó)'?'':r.dijo); }).length,
-             respuestas_nivel:respuestas.map(function(r){ return {pregunta:r.pregunta,dijo:r.dijo}; })};
+/* ═══════════════ "armando tu pasaporte": Claude arma su ruta ═══════════════ */
+function ciudadesPorNivel(){
+  var o={}; Object.keys(window.EFA_CIU||{}).forEach(function(nv){ var c=EFA_CIU[nv][0], pa=MUNDO.pais(nv);
+    o[nv]={k:c.k,n:c.n,pais:pa.pais,t:c.t,m:c.es||c.m,paradas:c.p.map(function(x){ return x[1]; })}; });
+  return o;
+}
+function planLocal(nv){
+  var c=(EFA_CIU[nv]||EFA_CIU.A1)[0], trabajo=perfil.trabajo||'tu trabajo';
+  return {nivel:nv, ciudad:c.k, local:true, habilidades:{}, ya_puede:[], le_cuesta:[], saltar:[],
+    resumen_es:'Ya tengo una idea clara de dónde estás. Vamos a practicar situaciones reales, un paso arriba de lo que ya sabes.',
+    paradas:c.p.map(function(x){ return x[1]; }),
+    parada1:{titulo_es:'Atender a un cliente', situacion_es:'Un cliente extranjero llega con una pregunta sobre '+trabajo+'.',
+      pizarra:{titulo:'Helping a customer',lineas:[{en:'How can I help you?',es:'¿En qué te puedo ayudar?'},{en:'Let me check that for you.',es:'Déjame revisarlo.'},{en:'It will be ready tomorrow.',es:'Estará listo mañana.'}],
+        explica_es:['Para abrir, ofrece ayuda: How can I help you?','Si necesitas tiempo, di: Let me check that for you.','Y para prometer algo: It will be ready, y cuándo.']},
+      opcion:{enunciado:'It ___ ready tomorrow.',opciones:['is being','will be','be','were'],correcta:1,explica_es:'Para algo que va a pasar, usamos will be.'},
+      conversacion:{pregunta_en:'Hi! Can you help me with something?',meta_en:'Sure! How can I help you?'},
+      repetir:'Let me check that for you.',
+      mision:{quien_es:'Cliente', personaje:'a customer from out of town', lugar:'your workplace', escena:'A customer comes in with a problem and is in a hurry.', objetivo:'Understand the problem and say when it will be ready',
+        sorpresas:['"Can you do it today?"','"How much will it cost?"'], gancho:"the student's real job", prep_es:'Llega un cliente con prisa. Tu misión: entender qué necesita y decirle cuándo estará listo.', frases:['How can I help you?','Let me check that for you.','It will be ready tomorrow.']}}};
+}
+function pedirPlan(){
+  var datos={perfil:{nombre:perfil.nombre,trabajo:perfil.trabajo,metas:perfil.metas,gustos:perfil.gustos,nivel_dicho:perfil.nivel_opcion||perfil.nivel||''},
+    diagnostico:perfil.diagnostico||[], nivel_app:perfil.nivel_app, ciudades:ciudadesPorNivel()};
   return Promise.race([
-    fetch(IA_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({accion:'perfilar',datos:datos})})
-      .then(function(r){ return r.ok?r.json():null; })
-      .then(function(j){ var n=j&&j.ok&&j.resultado&&j.resultado.nivel_sugerido; return NOMBRE_NIVEL[n]?n:hasta; })
-      .catch(function(){ return hasta; }),
-    esperar(14000).then(function(){ return hasta; })
+    fetch(IA_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({accion:'plan',datos:datos})})
+      .then(function(r){ return r.ok?r.json():null; }).then(function(j){ return j&&j.ok&&j.resultado&&j.resultado.parada1?j.resultado:null; }).catch(function(){ return null; }),
+    esperar(180000).then(function(){ return null; })
   ]);
 }
-
-/* ═══════════════ el mapa: primera pantalla sencilla ═══════════════ */
-async function mapaInicial(){
-  var l=lienzo('<div class="ciudad"><small>Tu viaje empieza en</small>El aeropuerto</div>'+
-    '<svg class="ruta" viewBox="0 0 340 120"><path d="M20 90 C90 20,150 120,210 60 S320 30,320 30"/><path class="hecho" id="tramo" d="M20 90" />'+
-    '<circle class="hoy" cx="20" cy="90" r="10"/><circle cx="110" cy="62" r="8"/><circle cx="210" cy="60" r="8"/><circle cx="320" cy="30" r="8"/></svg>'+
-    '<p class="dice" id="d"></p><div class="oye" id="oye"></div><div class="flotan" id="fl"></div>');
-  await esperar(600);
-  await hablar('Este es tu mapa. Cada parada es una lección de unos diez minutos. Hoy empiezas en el aeropuerto, presentándote.', l.querySelector('#d'));
-  var r=await elegir(l,[{t:'¡Vamos!',k:/vamos|si|dale|va|empez|listo|ok|claro|sale/},{t:'¿Cómo funciona?',k:/como|funciona|explica|que es/}],'es-MX',{});
-  if(r.opcion==='¿Cómo funciona?'||(!r.opcion&&/\?|como|que/.test(sinAcentos(r.texto)))){
-    l.querySelector('#fl').classList.add('fuera');
-    await hablar('Primero te explico el tema en un pizarrón, luego practicamos con tres ejercicios cortos. Al terminar, te pongo un sello en tu pasaporte.', l.querySelector('#d'));
+async function armarPasaporte(){
+  var nv=perfil.nivel_app||'A1';
+  var l=lienzo('<div class="etiqueta">Un momento</div><div class="libro" id="li"><i></i><i></i><i></i><b></b></div><p class="dice" id="d"></p><div class="pasos" id="ps"></div>');
+  await esperar(500);
+  var plan=null, listo=false;
+  var pide=pedirPlan().then(function(x){ plan=x; listo=true; });
+  await hablar('Dame un momento. Estoy armando tu pasaporte con todo lo que me dijiste. Puede tardar un par de minutos.', l.querySelector('#d'));
+  estado('piensa','Armando tu pasaporte…');
+  var PASOS=['Leyendo todo lo que me contaste','Escuchando de nuevo tus respuestas','Midiendo tu inglés en cada habilidad','Quitando lo que ya dominas','Escogiendo situaciones de tu vida','Escribiendo tu primera misión','Sellando tu visa'];
+  for(var i=0;i<PASOS.length;i++){
+    var p=document.createElement('div'); p.className='paso w'; p.innerHTML='<i></i>'+PASOS[i]; l.querySelector('#ps').appendChild(p);
+    requestAnimationFrame(function(x){ return function(){ x.classList.add('on'); }; }(p));
+    // cada paso espera un poco; si Claude ya contestó, los demás pasan rápido
+    for(var t=0;t<(listo?6:40)&&!(listo&&t>=4);t++) await esperar(250);
+    p.classList.add('hecho');
   }
+  await pide;
+  if(!plan) plan=planLocal(nv);
+  perfil.plan=plan; perfil.nivel=NOMBRE_NIVEL[plan.nivel]?plan.nivel:nv;
+  var lista=EFA_CIU[perfil.nivel]||EFA_CIU.A1;
+  perfil.ciudad=lista.filter(function(c){ return c.k===plan.ciudad; })[0]||lista[0];
+  try{ localStorage.setItem('efa2_perfil',JSON.stringify(perfil)); }catch(e){}
+  estado('calla','');
 }
 
-/* ═══════════════ primera lección ═══════════════ */
-function oficioEn(){ var a=perfil.analisis||{}; return (a.oficio_en||'').replace(/^\s+|\.$/g,'')||'a mechanic'; }
+/* ═══════════════ la visa: hoja del pasaporte con su nivel ═══════════════ */
+async function visa(){
+  var nv=perfil.nivel, pa=MUNDO.pais(nv), c=perfil.ciudad, P=perfil.plan||{};
+  var sello='<svg viewBox="0 0 300 300" class="visa-sello" id="vs">'+MUNDO.selloRedondo(150,150,118,pa.pais,'VISA '+nv,MUNDO.fecha(),pa.col||'#B23A48','')+'</svg>';
+  var l=lienzo('<div class="hoja-psp visa"><div><div class="hoja-et">VISA · '+esc(nv)+'</div><div class="hoja-pais">'+esc(MUNDO.titulo(pa.pais))+'</div>'+
+    '<div class="hoja-lema">'+esc(pa.lema||'')+'</div></div>'+sello+'</div><p class="dice" id="d"></p>'+
+    '<div class="chips chicos" id="ya"></div><div class="chips chicos" id="reto"></div>');
+  await esperar(700); l.querySelector('#vs').classList.add('on');
+  await esperar(900);
+  var ya=(P.ya_puede||[]).slice(0,2), reto=(P.le_cuesta||[]).slice(0,2);
+  ya.forEach(function(t,k){ var s=document.createElement('span'); s.className='chip ok'; s.textContent='✓ '+t; l.querySelector('#ya').appendChild(s); setTimeout(function(){ s.classList.add('on'); },200*k); });
+  reto.forEach(function(t,k){ var s=document.createElement('span'); s.className='chip reto'; s.textContent='↗ '+t; l.querySelector('#reto').appendChild(s); setTimeout(function(){ s.classList.add('on'); },600+200*k); });
+  await hablar((perfil.nombre?perfil.nombre+', ':'')+(P.resumen_es||('tu visa es '+nv+'.'))+' Tu viaje empieza en '+MUNDO.titulo(pa.pais)+', en '+MUNDO.titulo(c.n)+'.', l.querySelector('#d'));
+  await esperar(600);
+}
+
+/* ═══════════════ el mapa de su ciudad (el de la app, con SUS paradas) ═══════════════ */
+async function mapaCiudad(){
+  var nv=perfil.nivel, c=perfil.ciudad, P=perfil.plan||{}, col=(window.CIU_COL||{})[nv]||'#B23A48';
+  var mio=JSON.parse(JSON.stringify(c));
+  (P.paradas||[]).slice(0,7).forEach(function(t,i){ if(mio.p[i]&&t) mio.p[i][1]=String(t).slice(0,22); });
+  var l=lienzo('<img class="mapa-img" alt="" src="mapas/img/'+esc(c.k)+'.webp">'+
+    '<svg class="mapa-pins" viewBox="0 0 358 600" preserveAspectRatio="xMidYMid slice">'+MUNDO.pinesCiuSVG(mio,0,1,col)+'</svg>'+
+    '<div class="mapa-fade"></div><div class="mapa-osm">Map data © OpenStreetMap contributors</div>'+
+    '<div class="mapa-cab"><div class="etiqueta">'+esc(MUNDO.titulo(MUNDO.pais(nv).pais))+' · '+esc(nv)+'</div><div class="mapa-ciu">'+esc(MUNDO.titulo(c.n))+'</div></div>'+
+    '<div class="mapa-pie"><div class="etiqueta">Parada 1 · hoy</div><div class="mapa-hoy w" id="hoy"></div><p class="dice chica" id="d" style="display:none"></p><div class="oye" id="oye"></div><div class="flotan" id="fl"></div></div>');
+  l.classList.add('mapa'); document.body.classList.add('en-mapa');
+  await esperar(900);
+  var t1=(P.parada1&&P.parada1.titulo_es)||'tu primera parada';
+  l.querySelector('#hoy').textContent=t1;
+  var pins=[].slice.call(l.querySelectorAll('.mapa-pins .pinciu'));
+  // las paradas van cayendo mientras EFA habla; la primera, al final, cuando dice "hoy empiezas aquí"
+  pins.slice(1).forEach(function(g,i){ setTimeout(function(){ g.classList.add('on'); },1400+i*420); });
+  setTimeout(function(){ l.querySelector('.mapa-pins').classList.add('trazo'); },1400+pins.length*420);
+  var habla=hablar('Este es tu mapa de '+MUNDO.titulo(c.n)+'. Cada parada es una situación de tu vida, en inglés. Hoy empiezas aquí: '+t1+'.', null);
+  setTimeout(function(){ if(pins[0]) pins[0].classList.add('on'); l.querySelector('#hoy').classList.add('on'); },4600);
+  await habla; if(pins[0]) pins[0].classList.add('on'); l.querySelector('#hoy').classList.add('on');
+  var r=await elegir(l,[{t:'Empezar',k:/empez|vamos|dale|listo|\bsi\b|va\b|ok/},{t:'¿Cómo funciona?',k:/como|funciona|explica/}],'es-MX',{});
+  if(r.opcion==='¿Cómo funciona?'||(!r.opcion&&/como|que es|explica/.test(sinAcentos(r.texto)))){
+    await hablar('En cada parada te explico el tema en un pizarrón, practicas con tres ejercicios y al final haces una misión hablando. Cuando la pasas, te pongo el sello. Siete sellos y terminas la ciudad.', null);
+  }
+  document.body.classList.remove('en-mapa');
+}
+
+/* ═══════════════ la parada: todo sale de su plan ═══════════════ */
+function P1(){ return (perfil.plan&&perfil.plan.parada1)||planLocal(perfil.nivel||'A1').parada1; }
 async function pizarron(){
-  var nom=perfil.nombre||'Caleb', of=oficioEn();
-  var l=lienzo('<div class="etiqueta">Parada 1 · Presentarte</div>'+
-    '<svg class="pizarra" viewBox="0 0 340 300">'+
-      '<text x="6" y="52" font-size="40" class="oro" id="t0">Hi! I\'m '+nom+'.</text>'+
-      '<path id="p0" d="M8 64 Q 110 74 220 62"/>'+
-      '<text x="6" y="128" font-size="34" id="t1">I work as '+of+'.</text>'+
-      '<text x="20" y="168" font-size="24" id="t2">(trabajo como…)</text>'+
-      '<path id="p1" d="M250 150 q 40 -10 50 -60 m -12 8 l 12 -8 l 6 14"/>'+
-      '<text x="6" y="236" font-size="34" id="t3">I\'m from Mexico.</text>'+
-      '<text x="20" y="276" font-size="24" id="t4">(soy de México)</text>'+
-    '</svg><p class="apoyo w" id="ap"></p>');
-  l.classList.add('claro');
-  await esperar(500);
-  // la longitud de cada trazo, para que se "escriba"
+  var p=P1(), pz=p.pizarra||{}, ls=(pz.lineas||[]).slice(0,3);
+  var y=[118,198,278], svg='<text x="6" y="48" font-size="34" class="oro" id="t0">'+esc(pz.titulo||p.titulo_es||'')+'</text><path id="p0" d="M8 60 Q 110 70 220 58"/>';
+  ls.forEach(function(x,i){ svg+='<text x="6" y="'+y[i]+'" font-size="'+(x.en.length>24?24:29)+'" id="e'+i+'">'+esc(x.en)+'</text><text x="18" y="'+(y[i]+30)+'" font-size="20" id="s'+i+'">('+esc(x.es)+')</text>'; });
+  var l=lienzo('<div class="etiqueta">Parada 1 · '+esc(p.titulo_es||'')+'</div><svg class="pizarra" viewBox="0 0 340 330">'+svg+'</svg><p class="apoyo w" id="ap"></p>');
+  l.classList.add('claro'); await esperar(500);
   [].forEach.call(l.querySelectorAll('.pizarra text'),function(t){ try{ t.style.setProperty('--l',Math.ceil(t.getComputedTextLength()*3.2)); }catch(e){} });
   var ve=function(id){ var e=l.querySelector('#'+id); if(e) e.classList.add('ve'); };
-  var ap=l.querySelector('#ap');
   ve('t0'); setTimeout(function(){ ve('p0'); },900);
-  await hablar('Para presentarte en inglés, empieza con tu nombre: Hi, I\'m '+nom+'.', ap);
-  ve('t1'); setTimeout(function(){ ve('t2'); },1000); setTimeout(function(){ ve('p1'); },1500);
-  await hablar('Para decir a qué te dedicas, usa I work as, y tu trabajo. Fíjate: work, sin ing.', ap);
-  ve('t3'); setTimeout(function(){ ve('t4'); },1000);
-  await hablar('Y de dónde eres: I\'m from Mexico. Con eso ya te puedes presentar. Vamos a practicarlo.', ap);
-  await esperar(500);
+  if(p.situacion_es) await hablar(p.situacion_es, l.querySelector('#ap'));
+  var ex=pz.explica_es||[];
+  for(var i=0;i<ls.length;i++){ ve('e'+i); (function(k){ setTimeout(function(){ ve('s'+k); },1000); })(i); await hablar(ex[i]||ls[i].es, l.querySelector('#ap')); }
+  await esperar(400);
 }
 async function ejercicioOpcion(){
-  var of=oficioEn();
-  var ops=[{t:'am work',k:/am work|i am work/},{t:'work',k:/^(la )?(b|work)$|\bwork\b(?! ?ing)/},{t:'working',k:/working/},{t:'works',k:/works/}];
-  var l=lienzo('<div class="etiqueta">Ejercicio 1 de 3 · Gramática</div><p class="enunciado" id="en">I <span class="hueco">___</span> as '+of+'.</p>'+
+  var o=P1().opcion||{}, letras=['A','B','C','D'];
+  var ops=(o.opciones||[]).map(function(t,i){ return {t:t,k:new RegExp('^(la |el |option |opcion )?'+letras[i].toLowerCase()+'$|^'+sinAcentos(t).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'$')}; });
+  var enun=esc(o.enunciado||'').replace(/_{2,}/,'<span class="hueco">___</span>');
+  var l=lienzo('<div class="etiqueta">Ejercicio 1 de 3 · Gramática</div><p class="enunciado" id="en">'+enun+'</p>'+
     '<p class="apoyo w" id="ap">Elige la que completa la frase.</p><div class="oye" id="oye"></div><div class="flotan" id="fl"></div><div class="retro" id="re"></div>');
   await esperar(500);
   await hablar('¿Cuál completa la frase? Tócala o dímela.', l.querySelector('#ap'));
   for(var intento=0;intento<3;intento++){
-    var r=await elegir(l,ops,'es-MX',{});
+    var r=await elegir(l,ops,'en-US',{});
     var b=[].slice.call(l.querySelectorAll('#fl .vidrio')).find(function(x){ return x.textContent===r.opcion; });
-    if(r.opcion==='work'){
+    if(r.opcion===ops[o.correcta||0].t){
       if(b){ b.classList.remove('brilla'); b.classList.add('bien'); }
-      l.querySelector('.hueco').textContent='work';
-      var re=l.querySelector('#re'); re.innerHTML='<b>¡Eso!</b> Con <b>I</b> el verbo va solito: <b>I work</b>. Nada de <i>am</i> ni <i>-ing</i>.'; re.classList.add('on');
-      await hablar('¡Eso! Con I, el verbo va solito: I work.', null); await esperar(600); return true;
+      var hu=l.querySelector('.hueco'); if(hu) hu.textContent=r.opcion;
+      var re=l.querySelector('#re'); re.innerHTML='<b>¡Eso!</b> '+esc(o.explica_es||''); re.classList.add('on');
+      await hablar('¡Eso! '+(o.explica_es||''), null); await esperar(500); return true;
     }
     if(b){ b.classList.remove('brilla'); b.classList.add('mal'); }
-    await hablar(r.opcion?'Casi. Fíjate en la pizarra: decimos I work, sin am. Intenta otra vez.':'Mmm, no la escuché entre las opciones. ¿Cuál de las cuatro?', null);
+    await hablar(r.opcion?'Casi. Fíjate bien en la frase e intenta otra vez.':'No la escuché entre las opciones. ¿Cuál de las cuatro?', null);
     if(b) b.classList.remove('mal');
   }
   return false;
 }
 async function ejercicioConversacion(){
+  var cv=P1().conversacion||{};
   var l=lienzo('<div class="etiqueta">Ejercicio 2 de 3 · Conversación</div><p class="dice" id="d"></p><p class="apoyo w" id="ap">Contéstale en inglés, como puedas.</p><div class="oye" id="oye"></div><div class="retro" id="re"></div>');
   await esperar(500);
-  await hablar('So, '+(perfil.nombre||'')+', what do you do?', l.querySelector('#d'), {lang:'en', vel:.95});
+  await hablar(cv.pregunta_en||'What do you do?', l.querySelector('#d'), {lang:'en', vel:.95});
   l.querySelector('#ap').classList.add('on');
   var x=await escuchar(l.querySelector('#oye'),'en-US');
-  var bien=/\bi(\'| a)?m\b|\bi work\b/i.test(x);
-  var fb=await revisar(x,'I work as '+oficioEn()+'.');
+  var fb=await revisar(x,cv.meta_en||'');
   var re=l.querySelector('#re');
-  re.innerHTML=(fb&&fb.que)?((fb.bien?'<b>¡Bien dicho!</b> ':'')+esc(fb.que)+(fb.como?'<br><b>Tip:</b> '+esc(fb.como):'')):(bien?'<b>¡Bien dicho!</b> Te entendí perfecto.':'<b>Casi.</b> Prueba así: <b>I work as '+oficioEn()+'.</b>');
+  re.innerHTML=(fb&&fb.que)?((fb.bien?'<b>¡Bien dicho!</b> ':'')+esc(fb.que)+(fb.como?'<br><b>Tip:</b> '+esc(fb.como):'')):('<b>Así suena natural:</b> '+esc(cv.meta_en||''));
   re.classList.add('on');
-  await hablar(fb&&fb.que?fb.que:(bien?'¡Bien dicho! Te entendí perfecto.':'Casi. Prueba así: I work as '+oficioEn()+'.'), null);
+  await hablar(fb&&fb.que?fb.que:'Así suena natural.', null);
+  if(!(fb&&fb.que)&&cv.meta_en) await hablar(cv.meta_en, null, {lang:'en', vel:.9});
   await esperar(500);
 }
 async function ejercicioRepetir(){
-  var frase='Hi! I\'m '+(perfil.nombre||'Caleb')+'. I work as '+oficioEn()+'.';
+  var frase=P1().repetir||'How can I help you?';
   var l=lienzo('<div class="etiqueta">Ejercicio 3 de 3 · Pronunciación</div><p class="apoyo w on">Escúchala y dila tú:</p><p class="dice" id="d"></p><div class="oye" id="oye"></div>'+
     '<div class="anillo" id="an" style="opacity:0;transition:opacity .6s"><svg viewBox="0 0 76 76"><circle class="fondoA" cx="38" cy="38" r="32"/><circle class="valor" id="val" cx="38" cy="38" r="32"/></svg><div><b id="pct">0%</b><div class="apoyo" style="margin:0" id="pt"></div></div></div>');
   await esperar(500);
@@ -614,7 +813,7 @@ async function ejercicioRepetir(){
   setTimeout(function(){ l.querySelector('#val').style.strokeDashoffset=201*(1-p/100); },100);
   var n=0, iv=setInterval(function(){ n=Math.min(p,n+3); l.querySelector('#pct').textContent=n+'%'; if(n>=p) clearInterval(iv); },25);
   l.querySelector('#pt').textContent=p>=80?'Se entiende muy bien':'Vamos a pulirla';
-  await hablar(p>=80?'¡Suena muy bien! Se te entiende clarito.':'Va bien. Alarga un poquito la o de work, como uórk.', null);
+  await hablar(p>=80?'¡Suena muy bien! Se te entiende clarito.':'Va bien. Escúchala otra vez y fíjate en cada palabra.', null);
   await esperar(600);
 }
 function parecidoFrase(a,b){
@@ -628,16 +827,24 @@ function revisar(dijo,meta){
     esperar(9000).then(function(){ return null; })
   ]);
 }
+function misionDelPlan(){
+  var m=JSON.parse(JSON.stringify(P1().mision||MISION_1)), c=perfil.ciudad||{}, pa=MUNDO.pais(perfil.nivel||'A1');
+  m.id='p1-'+(c.k||'ciudad'); m.ciudad=MUNDO.titulo(c.n||''); m.pais=MUNDO.titulo(pa.pais||'');
+  m.quien_es=m.quien_es||'Personaje'; m.frases=m.frases||[]; m.prep=m.prep_es||m.prep||''; m.sorpresas=m.sorpresas||[];
+  return m;
+}
 async function primeraLeccion(){
   await pizarron();
   await ejercicioOpcion();
   await ejercicioConversacion();
   await ejercicioRepetir();
-  await mision(MISION_1);
+  var rep=await mision(misionDelPlan());
   modoPantalla('efa');
-  var l=lienzo('<div class="etiqueta">Parada 1 · completada</div><div class="sello" id="se">Aeropuerto<span>✓</span>Parada 1</div><p class="dice" id="d"></p>');
+  var c=perfil.ciudad||{n:''}, pa=MUNDO.pais(perfil.nivel||'A1');
+  var l=lienzo('<div class="hoja-psp"><div class="hoja-et">PARADA 1 · '+esc(MUNDO.titulo(c.n))+'</div>'+
+    '<svg viewBox="0 0 300 300" class="visa-sello" id="se">'+MUNDO.selloRedondo(150,150,118,c.n,'ADMITTED',MUNDO.fecha(),'#B23A48','')+'</svg></div><p class="dice" id="d"></p>');
   await esperar(500); l.querySelector('#se').classList.add('on');
-  await hablar('¡Listo, '+(perfil.nombre||'')+'! Ya te sabes presentar en inglés. Te pongo tu primer sello. Mañana seguimos con la siguiente parada.', l.querySelector('#d'));
+  await hablar('¡Listo, '+(perfil.nombre||'')+'! Primera parada de '+MUNDO.titulo(c.n)+' sellada en tu pasaporte. Mañana seguimos con la siguiente.', l.querySelector('#d'));
   estado('calla','');
 }
 
@@ -775,8 +982,28 @@ $('saltar').onclick=function(){ location.href='./'; };
 
 /* en iPhone el sonido arranca solo después de un toque */
 var arrancado=false;
-function arrancar(){ if(arrancado) return; arrancado=true; try{ AUD.play().catch(function(){}); AUD.pause(); }catch(e){} inicio(); }
-lienzo('<div class="etiqueta">English For All</div><p class="dice">Toca la esfera<br><em>para conocer a EFA</em></p>');
+function arrancar(){ if(arrancado) return; arrancado=true; try{ AUD.play().catch(function(){}); AUD.pause(); }catch(e){} BURBUJA.conectar(AUD); BURBUJA.despertar(); inicio(); }
+// la portada: el pasaporte de siempre, que se abre como libro
+(function(){
+  var st=document.createElement('style'); st.textContent=MUNDO.css; document.head.appendChild(st);
+  document.body.classList.add('portada');
+  var g=MUNDO.roseta(165,280,150,16,7,4,'#C9A24B',0.16,0.5)+MUNDO.roseta(165,280,96,10,9,3,'#C9A24B',0.20,0.5)+MUNDO.roseta(165,280,54,6,11,2,'#C9A24B',0.22,0.5);
+  var ray=''; for(var i=0;i<7;i++) ray+='<i style="background:'+(i===0?'#8C7640':'#2A2822')+'"></i>';
+  var d=document.createElement('div'); d.className='pspA fija'; d.id='pspA';
+  d.innerHTML='<div class="pspA-escena"><div class="pspA-hoja"><div class="pspA-hoja-et">PARTE 1 · TUS DATOS</div><div class="pspA-hoja-t">Hola, soy EFA</div><div class="pspA-hoja-x">Antes de viajar, cuéntame quién eres.</div></div>'+
+    '<div class="pspA-tapa" id="pspA-tapa"><svg viewBox="0 0 330 560" preserveAspectRatio="xMidYMid slice" class="pspA-guil">'+g+'</svg>'+
+    '<div class="pspA-et">PASSPORT · PASAPORTE</div><svg width="80" height="46" viewBox="0 -14 80 60" class="pspA-logo"><text x="0" y="36" font-size="40" font-weight="800" fill="#C9A24B">E</text><text x="26" y="24" font-size="40" font-weight="800" fill="#C9A24B">F</text><text x="50" y="12" font-size="40" font-weight="800" fill="#E8C063">A</text></svg>'+
+    '<div class="pspA-marca">ENGLISH FOR ALL</div><div class="pspA-nom">Tu pasaporte</div>'+
+    '<svg width="34" height="24" viewBox="0 0 34 24" class="pspA-chip"><rect x="1" y="1" width="32" height="22" rx="4" fill="none" stroke="#C9A24B" stroke-width="1.4"></rect><circle cx="17" cy="12" r="5" fill="none" stroke="#C9A24B" stroke-width="1.4"></circle></svg></div></div>'+
+    '<div class="pspA-rayas">'+ray+'</div><div class="pspA-sub">Siete visas por sellar. Tu inglés decide dónde empiezas.</div>'+
+    '<button class="pspA-btn" id="pspA-abrir">Abrir mi pasaporte</button>';
+  document.body.appendChild(d);
+  document.getElementById('pspA-abrir').onclick=function(){
+    this.disabled=true; d.classList.add('abre');
+    setTimeout(function(){ d.classList.add('entra'); },1100);           // la hoja crece hasta llenar la pantalla
+    setTimeout(function(){ d.remove(); document.body.classList.remove('portada'); arrancar(); },1900);
+  };
+})();
 estado('calla','');
 </script>
 </body>

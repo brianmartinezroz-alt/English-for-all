@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#1c140e">
 <title>EFA · Bienvenida</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --cafe:#1c140e; --cafe2:#2b1e14; --cafe3:#4a3322;
@@ -29,7 +29,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--cafe);color:var(
 
 /* ── lienzo: cada pregunta ocupa toda la pantalla, sin bordes ── */
 .lienzo{position:fixed;inset:0;z-index:2;display:flex;flex-direction:column;justify-content:center;
-  padding:calc(70px + env(safe-area-inset-top,0px)) 28px calc(150px + env(safe-area-inset-bottom,0px));
+  padding:calc(70px + env(safe-area-inset-top,0px)) 28px calc(175px + env(safe-area-inset-bottom,0px));overflow-y:auto;
   background:linear-gradient(180deg,rgba(255,240,215,.07),rgba(255,240,215,.02) 40%,rgba(0,0,0,.08));
   -webkit-backdrop-filter:blur(26px) saturate(140%);backdrop-filter:blur(26px) saturate(140%);
   opacity:0;transform:translateY(60px);filter:blur(10px);
@@ -50,6 +50,74 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--cafe);color:var(
 .oye{margin-top:34px;min-height:62px;font-size:21px;line-height:1.4;font-weight:300;color:var(--crema);opacity:0;transition:opacity .5s}
 .oye.on{opacity:1}
 .oye .tmp{color:var(--crema3)}
+.flotan{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px;transition:opacity .6s}
+.flotan.fuera{opacity:0;pointer-events:none}
+.vidrio{position:relative;overflow:hidden;cursor:pointer;border-radius:999px;padding:12px 18px;
+  font:500 15px Inter,sans-serif;color:var(--crema);letter-spacing:.005em;
+  background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.04));
+  border:1px solid rgba(255,255,255,.22);
+  -webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -10px 18px rgba(0,0,0,.18),0 10px 28px rgba(0,0,0,.28);
+  opacity:0;transform:translateY(22px) scale(.96);filter:blur(6px);
+  transition:opacity .7s var(--curva),transform .7s var(--curva),filter .7s var(--curva),box-shadow .45s,background .45s,border-color .45s,color .45s}
+.vidrio::before{content:"";position:absolute;left:10%;right:10%;top:1px;height:46%;border-radius:999px;
+  background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,0));pointer-events:none}
+.vidrio.on{opacity:1;transform:none;filter:none;animation:flotar 5.5s ease-in-out var(--d,0s) infinite}
+@keyframes flotar{0%,100%{translate:0 0}50%{translate:0 -5px}}
+.vidrio:active{scale:.96}
+.vidrio .rizo{position:absolute;width:12px;height:12px;border-radius:50%;margin:-6px 0 0 -6px;pointer-events:none;
+  background:radial-gradient(circle,rgba(255,236,170,.9),rgba(242,193,78,.35) 45%,transparent 70%);animation:rizo .8s ease-out forwards}
+@keyframes rizo{to{transform:scale(26);opacity:0}}
+.vidrio.brilla{color:#2a1a08;border-color:rgba(255,226,150,.95);
+  background:linear-gradient(180deg,rgba(255,226,150,.95),rgba(242,193,78,.85));
+  box-shadow:0 0 0 1px rgba(255,226,150,.6),0 0 26px rgba(242,193,78,.75),0 0 70px rgba(242,193,78,.45),inset 0 1px 0 rgba(255,255,255,.6);
+  animation:latido 1.2s ease-in-out}
+@keyframes latido{30%{scale:1.06}}
+.flotan.elegido .vidrio:not(.brilla){opacity:.25;filter:blur(2px)}
+.vidrio.otro{border-style:dashed;background:rgba(255,255,255,.05)}
+.vidrio.chico{padding:9px 14px;font-size:13px;color:var(--crema2)}
+.ruta{margin:34px 0 8px;width:100%;height:120px}
+.ruta path{fill:none;stroke:rgba(251,243,228,.25);stroke-width:2;stroke-dasharray:4 7}
+.ruta .hecho{stroke:var(--amarillo);stroke-dasharray:none;stroke-width:3;filter:drop-shadow(0 0 6px rgba(242,193,78,.6))}
+.ruta circle{fill:rgba(255,255,255,.12);stroke:rgba(255,255,255,.3)}
+.ruta circle.hoy{fill:var(--amarillo);stroke:#fff3cf;filter:drop-shadow(0 0 12px rgba(242,193,78,.9));animation:latidoP 2s ease-in-out infinite}
+@keyframes latidoP{50%{r:13}}
+.ciudad{font-weight:300;font-size:clamp(44px,13vw,64px);letter-spacing:-.035em;line-height:1}
+.ciudad small{display:block;font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--amarillo);margin-bottom:10px}
+/* pizarrón: lienzo claro donde EFA escribe a mano */
+.lienzo.claro{background:linear-gradient(180deg,#fbf3e4,#f6e3b5);color:#3a2614;-webkit-backdrop-filter:none;backdrop-filter:none}
+.lienzo.claro .etiqueta{color:#a06a12}
+.pizarra{width:100%;height:auto;margin-top:6px;overflow:visible}
+.pizarra text{font-family:Caveat,"Segoe Print","Bradley Hand",cursive;fill:transparent;stroke:#3a2614;stroke-width:.9;
+  stroke-dasharray:var(--l,900);stroke-dashoffset:var(--l,900);transition:stroke-dashoffset 1.4s ease-in-out,fill .6s ease .9s}
+.pizarra text.ve{stroke-dashoffset:0;fill:#3a2614}
+.pizarra text.oro{stroke:#b5780f} .pizarra text.oro.ve{fill:#b5780f}
+.pizarra path{fill:none;stroke:#c98a2e;stroke-width:3;stroke-linecap:round;stroke-dasharray:400;stroke-dashoffset:400;transition:stroke-dashoffset 1s ease-in-out}
+.pizarra path.ve{stroke-dashoffset:0}
+.lienzo.claro .dice{color:#3a2614}
+.lienzo.claro ~ .efa .estado{color:#7a5a30}
+/* ejercicios */
+.enunciado{font-weight:300;font-size:clamp(26px,7.4vw,34px);line-height:1.2;letter-spacing:-.02em}
+.enunciado .hueco{display:inline-block;min-width:3.2em;border-bottom:2px solid var(--amarillo);text-align:center;color:var(--amarillo);font-weight:500}
+.vidrio .letra{display:inline-grid;place-items:center;width:24px;height:24px;margin-right:10px;border-radius:50%;font-size:12px;font-weight:600;background:rgba(255,255,255,.14)}
+.vidrio.mal{border-color:rgba(230,120,90,.9);box-shadow:0 0 30px rgba(230,120,90,.45);animation:tiemblaV .45s}
+@keyframes tiemblaV{25%{translate:-6px 0}75%{translate:6px 0}}
+.vidrio.bien{color:#0f2a18;border-color:rgba(150,230,170,.95);background:linear-gradient(180deg,rgba(170,240,190,.95),rgba(95,191,138,.85));box-shadow:0 0 30px rgba(95,191,138,.7),0 0 70px rgba(95,191,138,.35)}
+.retro{margin-top:24px;padding:16px 18px;border-radius:20px;font-size:16px;line-height:1.45;color:var(--crema);
+  background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.18);
+  -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);opacity:0;transform:translateY(12px);transition:all .6s var(--curva)}
+.retro.on{opacity:1;transform:none}
+.retro b{color:var(--amarillo);font-weight:600}
+.anillo{display:flex;align-items:center;gap:16px;margin-top:22px}
+.anillo svg{width:76px;height:76px;transform:rotate(-90deg)}
+.anillo circle{fill:none;stroke-width:7}
+.anillo .fondoA{stroke:rgba(255,255,255,.12)} .anillo .valor{stroke:var(--amarillo);stroke-linecap:round;stroke-dasharray:201;stroke-dashoffset:201;transition:stroke-dashoffset 1.2s var(--curva)}
+.anillo b{font-size:30px;font-weight:500}
+.sello{position:relative;margin:10px 0 26px;width:176px;height:176px;padding:18px;border-radius:50%;display:grid;place-items:center;text-align:center;
+  border:3px solid var(--amarillo);color:var(--amarillo);font:600 12px Inter,sans-serif;letter-spacing:.14em;text-transform:uppercase;
+  transform:scale(2.2) rotate(-18deg);opacity:0;transition:transform .5s cubic-bezier(.3,1.6,.5,1),opacity .3s;box-shadow:0 0 40px rgba(242,193,78,.35),inset 0 0 0 6px rgba(242,193,78,.15)}
+.sello.on{transform:scale(1) rotate(-12deg);opacity:1}
+.sello span{display:block;font-size:34px;letter-spacing:0;margin:2px 0}
 .ayudas{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
 .ayudas span,.ayudas button{font:400 13px Inter,sans-serif;color:var(--crema2);padding:8px 13px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);cursor:pointer}
 .ayudas#bt{opacity:0;transition:opacity .8s}.ayudas#bt.on{opacity:1}
@@ -225,13 +293,25 @@ function lienzo(html){
 var PREGUNTAS=[
   {k:'nombre', et:'Para empezar', q:'¿Cómo te llamas?', apoyo:'Con tu nombre basta.',
    eco:function(x){ var n=nombreDe(x); perfil.nombre=n; return 'Mucho gusto, '+n+'.'; }},
-  {k:'trabajo', et:'Tu día', q:'¿A qué te dedicas, y cómo es un día normal para ti?', apoyo:'Cuéntamelo como se lo contarías a un amigo.',
+  {k:'trabajo', et:'Tu día', q:'¿A qué te dedicas, y cómo es un día normal para ti?', apoyo:'Toca una, dímela, o cuéntamelo con tus palabras.',
+   ops:[{t:'Oficina',k:/oficina|administra|contad|recepci|godin/},{t:'Fábrica o taller',k:/fabrica|taller|planta|maquila|mecanic|obrer|operador|soldad/},
+        {t:'Ventas o negocio',k:/venta|vend|tienda|negocio|comercio|cliente/},{t:'Salud',k:/enfermer|doctor|medic|hospital|salud|dentist|clinica/},
+        {t:'Educación',k:/maestr|profe|escuela|docente|clases/},{t:'Manejo o reparto',k:/chofer|taxi|uber|maneja|transporte|repart|camion/},
+        {t:'Estudio',k:/estudi|universidad|prepa/},{t:'Por mi cuenta',k:/mi cuenta|independiente|freelance|emprend|mi propio/}],
    eco:function(){ return 'Va, con eso armo ejemplos de tu propio trabajo.'; }},
-  {k:'metas', et:'Tu motivo', q:'¿Para qué quieres el inglés?', apoyo:'Un viaje, tu chamba, tus hijos, o simplemente porque te gusta.',
+  {k:'metas', et:'Tu motivo', q:'¿Para qué quieres el inglés?', apoyo:'Toca una, dímela, o explícame tu razón.',
+   ops:[{t:'Mi trabajo',k:/trabajo|chamba|empleo|ascenso|jefe|entrevista/},{t:'Viajar',k:/viaj|vacacion|conocer/},
+        {t:'Irme a vivir fuera',k:/vivir|mudar|irme|estados unidos|canada|extranjero|el norte/},{t:'Mis hijos',k:/hij|niñ|ayudar a mis/},
+        {t:'Estudiar',k:/estudi|universidad|maestria|beca|examen|certifica/},{t:'Porque me gusta',k:/me gusta|hobby|series|musica|entender/}],
    eco:function(){ return 'Me encanta. Lo vamos a tener presente en cada lección.'; }},
   {k:'gustos', et:'Lo tuyo', q:'¿Qué te gusta hacer cuando no estás trabajando?', apoyo:'Así las lecciones hablan de cosas que te importan.',
+   ops:[{t:'Música',k:/music|cantar|banda|concierto/},{t:'Deporte',k:/futbol|deporte|gym|gimnas|correr|box|bici|nadar/},
+        {t:'Series y pelis',k:/serie|peli|netflix|cine/},{t:'Cocinar',k:/cocin|comida/},{t:'Videojuegos',k:/videojueg|juegos|play|xbox|nintendo/},
+        {t:'Salir y viajar',k:/viaj|pasear|salir/},{t:'Leer',k:/leer|libro|lectura/},{t:'Mi familia',k:/familia|hijos|esposa|pareja/}],
    eco:function(){ return 'Anotado.'; }},
-  {k:'nivel', et:'Con honestidad', q:'¿Cuánto inglés sientes que hablas hoy?', apoyo:'Nada, poquito, algo, o bastante. Aquí no se califica.',
+  {k:'nivel', et:'Con honestidad', q:'¿Cuánto inglés sientes que hablas hoy?', apoyo:'Aquí no se califica.',
+   ops:[{t:'Nada',k:/\bnada\b|\bcero\b|ningun/},{t:'Poquito',k:/poquit|\bpoco\b|basico|\b(10|20|veinte|diez)\b/},
+        {t:'Algo',k:/\balgo\b|mas o menos|regular|\b(30|40|50|treinta|cuarenta|cincuenta)\b/},{t:'Bastante',k:/bastante|mucho|avanzado|fluido|\b(60|70|80|90)\b/}],
    eco:function(){ return 'Gracias por decírmelo así.'; }}
 ];
 function nombreDe(x){
@@ -255,13 +335,22 @@ async function inicio(){
   // 2. las preguntas, una por lienzo
   for(var i=0;i<PREGUNTAS.length;i++){
     var P=PREGUNTAS[i];
-    var l=lienzo('<div class="etiqueta">'+P.et+' · '+(i+1)+' de '+PREGUNTAS.length+'</div><p class="dice" id="d"></p><p class="apoyo w" id="ap">'+P.apoyo+'</p><div class="oye" id="oye"></div>');
+    var l=lienzo('<div class="etiqueta">'+P.et+' · '+(i+1)+' de '+PREGUNTAS.length+'</div><p class="dice" id="d"></p><p class="apoyo w" id="ap">'+P.apoyo+'</p><div class="oye" id="oye"></div><div class="flotan" id="fl"></div>');
     await esperar(450);
     await hablar(P.q, l.querySelector('#d'));
     l.querySelector('#ap').classList.add('on');
-    var resp=await escuchar(l.querySelector('#oye'));
-    perfil[P.k]=resp;
-    estado('habla',''); await hablar(P.eco(resp), null);
+    var r;
+    if(P.ops){
+      r=await elegir(l,P.ops,'es-MX',{otro:true});
+      if(r.otro){                                      // "Otro…": que lo explique con sus palabras
+        l.querySelector('#fl').classList.add('fuera');
+        await hablar('Va, cuéntame con tus palabras.', null);
+        r={texto:await escuchar(l.querySelector('#oye'),'es-MX'), opcion:null};
+      }
+    } else r={texto:await escuchar(l.querySelector('#oye'),'es-MX'), opcion:null};
+    perfil[P.k]=r.texto; if(r.opcion) perfil[P.k+'_opcion']=r.opcion;
+    // si dijo algo que no estaba en las opciones, EFA lo nota y lo toma igual
+    estado('habla',''); await hablar((P.ops&&!r.opcion?'Ah, ok. ':'')+P.eco(r.texto), null);
   }
   // 3. lo que entendió
   var f=lienzo('<div class="etiqueta">Esto entendí de ti</div><p class="dice" id="d"></p><div class="chips" id="chips"></div>');
@@ -275,6 +364,8 @@ async function inicio(){
   await hablar('Ahora vamos a escuchar cómo está tu inglés. Sin presión: es solo para acomodar tus lecciones.', g.querySelector('#d'));
   try{ localStorage.setItem('efa2_perfil',JSON.stringify(perfil)); }catch(e){}
   await diagnostico();
+  await mapaInicial();
+  await primeraLeccion();
 }
 
 /* ═══════════════ diagnóstico de nivel, por voz ═══════════════
@@ -284,10 +375,12 @@ async function inicio(){
 var DIAG=[
   {n:'A1',t:'habla',en:"Hi! What's your name, and where are you from?",es:'¿Cómo te llamas y de dónde eres?'},
   {n:'A1',t:'habla',en:'What do you do on a normal day?',es:'¿Qué haces en un día normal?'},
-  {n:'A2',t:'oye', en:'I usually take the bus to work, but today I walked, because it was sunny.',q:'¿Cómo llegó hoy al trabajo, y por qué?'},
+  {n:'A2',t:'oye', en:'I usually take the bus to work, but today I walked, because it was sunny.',q:'¿Cómo llegó hoy al trabajo, y por qué?',
+   ops:[{t:'En autobús, porque llovía',k:/autobus|camion|llov/},{t:'Caminando, porque hacía sol',k:/camin|a pie|sol/},{t:'En coche, porque iba tarde',k:/coche|carro|auto\b|tarde/}],ok:1},
   {n:'A2',t:'habla',en:'What did you do last weekend?',es:'¿Qué hiciste el fin de semana pasado?'},
   {n:'B1',t:'habla',en:'Tell me about a problem you had at work, and how you solved it.',es:'Cuéntame un problema que tuviste en el trabajo y cómo lo resolviste.'},
-  {n:'B1',t:'oye', en:"If I had known the meeting was cancelled, I wouldn't have driven all the way downtown.",q:'¿Qué pasó con la junta, y qué hizo la persona?'},
+  {n:'B1',t:'oye', en:"If I had known the meeting was cancelled, I wouldn't have driven all the way downtown.",q:'¿Qué pasó con la junta, y qué hizo la persona?',
+   ops:[{t:'Llegó tarde a la junta',k:/tarde/},{t:'Se canceló y aun así manejó al centro',k:/cancel|de balde|para nada|sin saber/},{t:'No fue porque se canceló',k:/no fue|no llego|se quedo/}],ok:1},
   {n:'B2',t:'habla',en:'If you could change one thing about your city, what would it be, and why?',es:'Si pudieras cambiar una cosa de tu ciudad, ¿cuál sería y por qué?'},
   {n:'C1',t:'habla',en:'Some people say technology makes us more connected, but lonelier. What is your view?',es:'Hay quien dice que la tecnología nos conecta más, pero nos deja más solos. ¿Tú qué opinas?'}
 ];
@@ -308,8 +401,8 @@ async function diagnostico(){
     var D=DIAG[i];
     var l=lienzo('<div class="etiqueta">Tu inglés · '+(i+1)+' de '+DIAG.length+'</div>'+
       (D.t==='oye'?'<p class="apoyo w" id="pre">Escucha con atención:</p>':'')+
-      '<p class="dice" id="d"></p><p class="apoyo w" id="es"></p><div class="oye" id="oye"></div>'+
-      '<div class="ayudas" id="bt"><button data-a="rep">🔁 Repetir</button><button data-a="lento">🐢 Más despacio</button><button data-a="esp">🇲🇽 En español</button><button data-a="nose">No sé</button></div>');
+      '<p class="dice" id="d"></p><p class="apoyo w" id="es"></p><div class="oye" id="oye"></div><div class="flotan" id="fl"></div>'+
+      '<div class="ayudas" id="bt"><button class="vidrio chico on" data-a="rep">🔁 Repetir</button><button class="vidrio chico on" data-a="lento">🐢 Más despacio</button><button class="vidrio chico on" data-a="esp">🇲🇽 En español</button><button class="vidrio chico on" data-a="nose">No sé</button></div>');
     await esperar(450);
     var d=l.querySelector('#d'), dijo='', vel=1, intentos=0;
     if(D.t==='oye'){ l.querySelector('#pre').classList.add('on'); await esperar(500); }
@@ -320,7 +413,14 @@ async function diagnostico(){
     l.querySelector('#bt').classList.add('on');
     while(intentos<4){
       intentos++;
-      var x=await escucharConBotones(l, D.t==='oye'?'es-MX':'en-US');
+      var x;
+      if(D.ops){                                    // de opción: se toca, se dice, o se explica
+        var rr=await Promise.race([elegir(l,D.ops,'es-MX',{otro:false}), ayudaTocada(l)]);
+        if(rr.ayuda) x='\u0001'+rr.ayuda;
+        else if(rr.opcion){ x=rr.opcion+(rr.texto&&rr.texto!==rr.opcion?' ('+rr.texto+')':'')+(D.ops[D.ok].t===rr.opcion?' [correcta]':' [incorrecta]'); }
+        else x=rr.texto||'';
+        if(x.charAt(0)!=='\u0001'&&!rr.opcion&&!(RE_REPITE.test(x)||RE_LENTO.test(x)||RE_ESP.test(x))) x=x+' [respuesta libre]';
+      } else x=await escucharConBotones(l, 'en-US');
       if(x==='\u0001rep'||RE_REPITE.test(x)&&x.split(/\s+/).length<=4){ await hablar(D.en, oculto?null:d, {lang:'en', vel:vel}); continue; }
       if(x==='\u0001lento'||RE_LENTO.test(x)&&x.split(/\s+/).length<=4){ vel=.75; await hablar(D.en, oculto?null:d, {lang:'en', vel:vel}); continue; }
       if(x==='\u0001esp'||RE_ESP.test(x)&&x.split(/\s+/).length<=5){ await hablar(D.es||D.q, l.querySelector('#es'), {lang:'es'}); continue; }
@@ -341,6 +441,46 @@ async function diagnostico(){
   f.querySelector('#nv').classList.add('on');
   await hablar((perfil.nombre?perfil.nombre+', ':'')+'empiezas en '+nivel.replace('-',' ')+'. Ahí vas a sentirte a gusto, pero con reto. Y cada semana te voy a ir subiendo.', f.querySelector('#d'));
   estado('calla','');
+}
+/* opciones de vidrio que flotan: se tocan o se dicen. Si dice otra cosa,
+   también vale: regresa lo que dijo, sin opción. */
+function sinAcentos(t){ return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+var ORDINAL=[/\b(la |el )?(primera|primero|uno|una|1|a)\b/,/\b(la |el )?(segunda|segundo|dos|2|b)\b/,/\b(la |el )?(tercera|tercero|tres|3|c)\b/,/\b(la |el )?(cuarta|cuarto|cuatro|4|d)\b/];
+function coincide(x,ops){
+  var t=sinAcentos(x).replace(/[^a-z0-9ñ\s]/g,' ').replace(/\s+/g,' ').trim(); if(!t) return -1;
+  for(var i=0;i<ops.length;i++){ if(ops[i].otro) continue;
+    if(ops[i].k&&ops[i].k.test(t)) return i;
+    var w=sinAcentos(ops[i].t).replace(/[^a-z0-9ñ\s]/g,' ').replace(/\s+/g,' ').trim(); if(w&&(' '+t+' ').indexOf(' '+w+' ')>=0) return i; }
+  if(t.split(' ').length<=3){ for(var j=0;j<ORDINAL.length&&j<ops.length;j++){ if(ORDINAL[j].test(t)&&/^(la |el |opcion |option )?\S+$/.test(t)) return j; } }
+  return -1;
+}
+function elegir(l,ops,lang,op){
+  op=op||{}; var cont=l.querySelector('#fl'); cont.innerHTML=''; cont.classList.remove('elegido','fuera');
+  var todas=ops.slice(); if(op.otro) todas.push({t:'Otro…',otro:true});
+  var btns=todas.map(function(o,i){
+    var b=document.createElement('button'); b.type='button'; b.className='vidrio'+(o.otro?' otro':''); b.textContent=o.t;
+    b.style.setProperty('--d',(i*.4)+'s'); cont.appendChild(b);
+    setTimeout(function(){ b.classList.add('on'); },140*i+80); return b;
+  });
+  return new Promise(function(listo){
+    var ya=false;
+    function brillar(b,ev){ var rz=document.createElement('span'); rz.className='rizo'; var R=b.getBoundingClientRect();
+      rz.style.left=((ev&&ev.clientX?ev.clientX:R.left+R.width/2)-R.left)+'px'; rz.style.top=((ev&&ev.clientY?ev.clientY:R.top+R.height/2)-R.top)+'px';
+      b.appendChild(rz); b.classList.add('brilla'); cont.classList.add('elegido'); }
+    function fin(r,espera){ if(ya) return; ya=true; if(recActual) try{ recActual.onend=null; recActual.abort(); }catch(e){} setTimeout(function(){ listo(r); },espera||0); }
+    btns.forEach(function(b,i){ b.onclick=function(ev){ if(ya) return; brillar(b,ev); var o=todas[i];
+      if(l.querySelector('#oye')) l.querySelector('#oye').textContent='';
+      fin(o.otro?{otro:true}:{texto:o.t,opcion:o.t},750); }; });
+    escuchar(l.querySelector('#oye'),lang).then(function(x){
+      if(ya) return; var i=coincide(x,todas);
+      if(i>=0){ brillar(btns[i]); fin({texto:x,opcion:todas[i].t},750); }
+      else fin({texto:x,opcion:null});
+    });
+  });
+}
+function ayudaTocada(l){
+  return new Promise(function(listo){ [].slice.call(l.querySelectorAll('#bt button')).forEach(function(b){
+    b.onclick=function(){ if(recActual) try{ recActual.onend=null; recActual.abort(); }catch(e){} listo({ayuda:b.dataset.a}); }; }); });
 }
 function escucharConBotones(l,lang){
   return new Promise(function(listo){
@@ -363,6 +503,122 @@ function calificar(respuestas){
       .catch(function(){ return hasta; }),
     esperar(14000).then(function(){ return hasta; })
   ]);
+}
+
+/* ═══════════════ el mapa: primera pantalla sencilla ═══════════════ */
+async function mapaInicial(){
+  var l=lienzo('<div class="ciudad"><small>Tu viaje empieza en</small>El aeropuerto</div>'+
+    '<svg class="ruta" viewBox="0 0 340 120"><path d="M20 90 C90 20,150 120,210 60 S320 30,320 30"/><path class="hecho" id="tramo" d="M20 90" />'+
+    '<circle class="hoy" cx="20" cy="90" r="10"/><circle cx="110" cy="62" r="8"/><circle cx="210" cy="60" r="8"/><circle cx="320" cy="30" r="8"/></svg>'+
+    '<p class="dice" id="d"></p><div class="oye" id="oye"></div><div class="flotan" id="fl"></div>');
+  await esperar(600);
+  await hablar('Este es tu mapa. Cada parada es una lección de unos diez minutos. Hoy empiezas en el aeropuerto, presentándote.', l.querySelector('#d'));
+  var r=await elegir(l,[{t:'¡Vamos!',k:/vamos|si|dale|va|empez|listo|ok|claro|sale/},{t:'¿Cómo funciona?',k:/como|funciona|explica|que es/}],'es-MX',{});
+  if(r.opcion==='¿Cómo funciona?'||(!r.opcion&&/\?|como|que/.test(sinAcentos(r.texto)))){
+    l.querySelector('#fl').classList.add('fuera');
+    await hablar('Primero te explico el tema en un pizarrón, luego practicamos con tres ejercicios cortos. Al terminar, te pongo un sello en tu pasaporte.', l.querySelector('#d'));
+  }
+}
+
+/* ═══════════════ primera lección ═══════════════ */
+function oficioEn(){ var a=perfil.analisis||{}; return (a.oficio_en||'').replace(/^\s+|\.$/g,'')||'a mechanic'; }
+async function pizarron(){
+  var nom=perfil.nombre||'Caleb', of=oficioEn();
+  var l=lienzo('<div class="etiqueta">Parada 1 · Presentarte</div>'+
+    '<svg class="pizarra" viewBox="0 0 340 300">'+
+      '<text x="6" y="52" font-size="40" class="oro" id="t0">Hi! I\'m '+nom+'.</text>'+
+      '<path id="p0" d="M8 64 Q 110 74 220 62"/>'+
+      '<text x="6" y="128" font-size="34" id="t1">I work as '+of+'.</text>'+
+      '<text x="20" y="168" font-size="24" id="t2">(trabajo como…)</text>'+
+      '<path id="p1" d="M250 150 q 40 -10 50 -60 m -12 8 l 12 -8 l 6 14"/>'+
+      '<text x="6" y="236" font-size="34" id="t3">I\'m from Mexico.</text>'+
+      '<text x="20" y="276" font-size="24" id="t4">(soy de México)</text>'+
+    '</svg><p class="apoyo w" id="ap"></p>');
+  l.classList.add('claro');
+  await esperar(500);
+  // la longitud de cada trazo, para que se "escriba"
+  [].forEach.call(l.querySelectorAll('.pizarra text'),function(t){ try{ t.style.setProperty('--l',Math.ceil(t.getComputedTextLength()*3.2)); }catch(e){} });
+  var ve=function(id){ var e=l.querySelector('#'+id); if(e) e.classList.add('ve'); };
+  var ap=l.querySelector('#ap');
+  ve('t0'); setTimeout(function(){ ve('p0'); },900);
+  await hablar('Para presentarte en inglés, empieza con tu nombre: Hi, I\'m '+nom+'.', ap);
+  ve('t1'); setTimeout(function(){ ve('t2'); },1000); setTimeout(function(){ ve('p1'); },1500);
+  await hablar('Para decir a qué te dedicas, usa I work as, y tu trabajo. Fíjate: work, sin ing.', ap);
+  ve('t3'); setTimeout(function(){ ve('t4'); },1000);
+  await hablar('Y de dónde eres: I\'m from Mexico. Con eso ya te puedes presentar. Vamos a practicarlo.', ap);
+  await esperar(500);
+}
+async function ejercicioOpcion(){
+  var of=oficioEn();
+  var ops=[{t:'am work',k:/am work|i am work/},{t:'work',k:/^(la )?(b|work)$|\bwork\b(?! ?ing)/},{t:'working',k:/working/},{t:'works',k:/works/}];
+  var l=lienzo('<div class="etiqueta">Ejercicio 1 de 3 · Gramática</div><p class="enunciado" id="en">I <span class="hueco">___</span> as '+of+'.</p>'+
+    '<p class="apoyo w" id="ap">Elige la que completa la frase.</p><div class="oye" id="oye"></div><div class="flotan" id="fl"></div><div class="retro" id="re"></div>');
+  await esperar(500);
+  await hablar('¿Cuál completa la frase? Tócala o dímela.', l.querySelector('#ap'));
+  for(var intento=0;intento<3;intento++){
+    var r=await elegir(l,ops,'es-MX',{});
+    var b=[].slice.call(l.querySelectorAll('#fl .vidrio')).find(function(x){ return x.textContent===r.opcion; });
+    if(r.opcion==='work'){
+      if(b){ b.classList.remove('brilla'); b.classList.add('bien'); }
+      l.querySelector('.hueco').textContent='work';
+      var re=l.querySelector('#re'); re.innerHTML='<b>¡Eso!</b> Con <b>I</b> el verbo va solito: <b>I work</b>. Nada de <i>am</i> ni <i>-ing</i>.'; re.classList.add('on');
+      await hablar('¡Eso! Con I, el verbo va solito: I work.', null); await esperar(600); return true;
+    }
+    if(b){ b.classList.remove('brilla'); b.classList.add('mal'); }
+    await hablar(r.opcion?'Casi. Fíjate en la pizarra: decimos I work, sin am. Intenta otra vez.':'Mmm, no la escuché entre las opciones. ¿Cuál de las cuatro?', null);
+    if(b) b.classList.remove('mal');
+  }
+  return false;
+}
+async function ejercicioConversacion(){
+  var l=lienzo('<div class="etiqueta">Ejercicio 2 de 3 · Conversación</div><p class="dice" id="d"></p><p class="apoyo w" id="ap">Contéstale en inglés, como puedas.</p><div class="oye" id="oye"></div><div class="retro" id="re"></div>');
+  await esperar(500);
+  await hablar('So, '+(perfil.nombre||'')+', what do you do?', l.querySelector('#d'), {lang:'en', vel:.95});
+  l.querySelector('#ap').classList.add('on');
+  var x=await escuchar(l.querySelector('#oye'),'en-US');
+  var bien=/\bi(\'| a)?m\b|\bi work\b/i.test(x);
+  var fb=await revisar(x,'I work as '+oficioEn()+'.');
+  var re=l.querySelector('#re');
+  re.innerHTML=(fb&&fb.que)?((fb.bien?'<b>¡Bien dicho!</b> ':'')+esc(fb.que)+(fb.como?'<br><b>Tip:</b> '+esc(fb.como):'')):(bien?'<b>¡Bien dicho!</b> Te entendí perfecto.':'<b>Casi.</b> Prueba así: <b>I work as '+oficioEn()+'.</b>');
+  re.classList.add('on');
+  await hablar(fb&&fb.que?fb.que:(bien?'¡Bien dicho! Te entendí perfecto.':'Casi. Prueba así: I work as '+oficioEn()+'.'), null);
+  await esperar(500);
+}
+async function ejercicioRepetir(){
+  var frase='Hi! I\'m '+(perfil.nombre||'Caleb')+'. I work as '+oficioEn()+'.';
+  var l=lienzo('<div class="etiqueta">Ejercicio 3 de 3 · Pronunciación</div><p class="apoyo w on">Escúchala y dila tú:</p><p class="dice" id="d"></p><div class="oye" id="oye"></div>'+
+    '<div class="anillo" id="an" style="opacity:0;transition:opacity .6s"><svg viewBox="0 0 76 76"><circle class="fondoA" cx="38" cy="38" r="32"/><circle class="valor" id="val" cx="38" cy="38" r="32"/></svg><div><b id="pct">0%</b><div class="apoyo" style="margin:0" id="pt"></div></div></div>');
+  await esperar(500);
+  await hablar(frase, l.querySelector('#d'), {lang:'en', vel:.9});
+  var x=await escuchar(l.querySelector('#oye'),'en-US');
+  var p=Math.round(parecidoFrase(x,frase)*100);
+  l.querySelector('#an').style.opacity=1;
+  setTimeout(function(){ l.querySelector('#val').style.strokeDashoffset=201*(1-p/100); },100);
+  var n=0, iv=setInterval(function(){ n=Math.min(p,n+3); l.querySelector('#pct').textContent=n+'%'; if(n>=p) clearInterval(iv); },25);
+  l.querySelector('#pt').textContent=p>=80?'Se entiende muy bien':'Vamos a pulirla';
+  await hablar(p>=80?'¡Suena muy bien! Se te entiende clarito.':'Va bien. Alarga un poquito la o de work, como uórk.', null);
+  await esperar(600);
+}
+function parecidoFrase(a,b){
+  var A=sinAcentos(a).replace(/[^a-z\s]/g,' ').split(/\s+/).filter(Boolean), B=sinAcentos(b).replace(/[^a-z\s]/g,' ').split(/\s+/).filter(Boolean);
+  if(!B.length) return 0; var hay=B.filter(function(w){ return A.indexOf(w)>=0; }).length; return hay/B.length;
+}
+function revisar(dijo,meta){
+  return Promise.race([
+    fetch(IA_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({accion:'corregir',datos:{nivel:perfil.nivel||'A1',trabajo:perfil.trabajo,meta:meta,dijo:dijo}})})
+      .then(function(r){ return r.ok?r.json():null; }).then(function(j){ return j&&j.ok?j.resultado:null; }).catch(function(){ return null; }),
+    esperar(9000).then(function(){ return null; })
+  ]);
+}
+async function primeraLeccion(){
+  await pizarron();
+  await ejercicioOpcion();
+  await ejercicioConversacion();
+  await ejercicioRepetir();
+  var l=lienzo('<div class="etiqueta">Parada 1 · completada</div><div class="sello" id="se">Aeropuerto<span>✓</span>Parada 1</div><p class="dice" id="d"></p>');
+  await esperar(500); l.querySelector('#se').classList.add('on');
+  await hablar('¡Listo, '+(perfil.nombre||'')+'! Ya te sabes presentar en inglés. Te pongo tu primer sello. Mañana seguimos con la siguiente parada.', l.querySelector('#d'));
+  estado('calla','');
 }
 
 /* el cerebro (Claude) lee las respuestas abiertas; si no contesta, se arma a mano */

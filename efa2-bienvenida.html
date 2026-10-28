@@ -169,6 +169,7 @@ body.portada .efa,body.portada .respaldo,body.portada #teacher,body.portada .sal
 .hoja-psp.visa .visa-sello{width:118px;margin:0}
 .chips.chicos{gap:8px;margin-top:16px}.chips.chicos .chip{font-size:13.5px;padding:7px 12px}
 .chips#reto{margin-top:10px}
+.hoja-psp.sellito{width:min(232px,62vw);padding:14px 14px 6px}
 /* el mapa real de la ciudad */
 .lienzo.mapa{padding:0;-webkit-backdrop-filter:none;backdrop-filter:none;background:#1c140e;justify-content:flex-end}
 .lienzo.mapa::before{display:none}
@@ -298,6 +299,18 @@ html body .pspA.fija .pspA-nom{font-size:17px;margin-top:10px}
 html body .pspA.fija .pspA-pie{position:relative;margin-top:auto;display:flex;flex-direction:column;align-items:center;width:100%}
 html body .pspA.fija .pspA-rayas{margin-top:0}
 html body .pspA.fija .pspA-chip{margin:22px 0 0}
+/* modo caminata: pantalla negra, solo la burbuja tenue */
+.camBtn{position:fixed;top:calc(13px + env(safe-area-inset-top,0px));right:84px;z-index:6;border:1px solid rgba(176,122,18,.22);background:rgba(255,253,247,.8);color:var(--crema2);font:500 12px Inter,sans-serif;padding:6px 11px;border-radius:999px;cursor:pointer}
+.camBtn.on{background:var(--amarillo);color:#2a1a08;border-color:transparent}
+.camVelo{position:fixed;inset:0;z-index:8;background:#000;display:none}
+body.caminata .camVelo{display:block}
+body.caminata .efa{z-index:9;opacity:.55} body.caminata .estado{color:rgba(255,255,255,.4)}
+body.caminata .respaldo,body.caminata .saltar,body.caminata .marca,body.caminata #teacher,body.caminata .camBtn{display:none}
+.camNota{position:absolute;left:24px;right:24px;top:calc(80px + env(safe-area-inset-top,0px));color:rgba(255,255,255,.75);font:300 17px/1.5 Inter,sans-serif;transition:opacity 1.2s}
+.camNota b{font-weight:600;color:var(--amarillo)} .camNota.fuera{opacity:0}
+.camSalir{position:absolute;top:calc(16px + env(safe-area-inset-top,0px));right:16px;background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.5);border-radius:999px;padding:6px 12px;font:500 12px Inter,sans-serif}
+body.portada .camBtn{display:none}
+body.en-mision .camBtn{right:auto;left:64px}
 @media (prefers-reduced-motion:reduce){.fondo i,.orbe,.orbe::before,.orbe::after{animation:none!important}.lienzo,.w,.chip{transition:opacity .3s!important;transform:none!important;filter:none!important}}
 </style>
 </head>
@@ -305,6 +318,8 @@ html body .pspA.fija .pspA-chip{margin:22px 0 0}
 <div class="fondo"><i></i><i></i><i></i></div><div class="grano"></div>
 <div class="marca">EFA</div>
 <button class="saltar" id="saltar">Saltar</button>
+<button class="camBtn" id="bCam" type="button" aria-label="Modo caminata">🎧 Caminar</button>
+<div class="camVelo" id="caminata"><div class="camNota" id="camNota"><b>Modo caminata</b><br>EFA sigue platicando contigo por los audífonos.<br>Toca dos veces para salir.</div><button class="camSalir" id="camSalir" type="button">Salir</button></div>
 <button class="vidrio chico on" id="teacher" type="button">🙋 Teacher</button>
 <div id="escena"></div>
 
@@ -480,7 +495,7 @@ function escuchar(el,lang){
     $('tx').value=''; var porTeclado=function(texto){ cerrar(); listo(texto); };
     escuchar._teclado=porTeclado; escuchar._lang=lang;
     if(MUTE||!R){ estado('mute','Escríbelo abajo'); $('teclado').classList.add('on'); return; }
-    estado('escucha','Te escucho');
+    estado('escucha',window.ING&&ING()?'Listening':'Te escucho');
     var r=new R(); recActual=r; r.lang=lang||'es-MX'; r.interimResults=true; r.continuous=true; r.maxAlternatives=1;
     var final='', silencio=null, terminado=false;
     function cerrar(){ terminado=true; clearTimeout(silencio); try{ r.onend=null; r.abort(); }catch(e){} recActual=null; }
@@ -491,8 +506,11 @@ function escuchar(el,lang){
       // 1.8 s callado después de hablar = terminó (aguanta pausas para pensar)
       silencio=setTimeout(function(){ if(final.trim()||tmp.trim()){ var x=(final+tmp).trim(); cerrar(); el.textContent=x; listo(x); } },1800);
     };
-    r.onerror=function(e){ if(e.error==='not-allowed'||e.error==='service-not-allowed'||e.error==='audio-capture'){ cerrar(); MUTE=true; $('bMic').classList.add('off'); estado('mute','Escríbelo abajo'); $('teclado').classList.add('on'); } };
-    r.onend=function(){ if(!terminado&&t===TURNO){ try{ r.start(); }catch(e){} } };   // iOS corta solo: se vuelve a prender
+    r.onerror=function(e){ if(document.hidden) return;   // al salir de la app el navegador corta: no es que no haya permiso
+      if(e.error==='not-allowed'||e.error==='service-not-allowed'||e.error==='audio-capture'){ cerrar(); MUTE=true; $('bMic').classList.add('off'); estado('mute','Escríbelo abajo'); $('teclado').classList.add('on'); } };
+    r.onend=function(){ if(terminado||t!==TURNO) return;
+      if(document.hidden){ alVolver(function(){ if(!terminado&&t===TURNO){ try{ r.start(); }catch(e){} } }); return; }   // regresa y sigue la plática
+      try{ r.start(); }catch(e){} };   // iOS corta solo: se vuelve a prender
     try{ r.start(); }catch(e){}
   });
 }
@@ -706,7 +724,7 @@ function elegir(l,ops,lang,op){
     btns.forEach(function(b,i){ b.onclick=function(ev){ if(ya) return; brillar(b,ev); var o=todas[i];
       if(l.querySelector('#oye')) l.querySelector('#oye').textContent='';
       fin(o.otro?{otro:true}:{texto:o.t,opcion:o.t},750); }; });
-    escuchar(l.querySelector('#oye'),lang).then(function(x){
+    (CAM&&!op.callar?hablar(G('Opciones: ','Options: ')+ops.map(function(o){ return o.t; }).join(', ')+'.',null,/^en/.test(lang||'')?{lang:'en',vel:.95}:{}):Promise.resolve()).then(function(){ return ya?'':escuchar(l.querySelector('#oye'),lang); }).then(function(x){
       if(ya) return; var i=coincide(x,todas);
       if(i>=0){ brillar(btns[i]); fin({texto:x,opcion:todas[i].t},750); }
       else fin({texto:x,opcion:null});
@@ -733,6 +751,17 @@ function ciudadesPorNivel(){
 }
 function planLocal(nv){
   var c=(EFA_CIU[nv]||EFA_CIU.A1)[0], trabajo=perfil.trabajo||'tu trabajo';
+  if(/^(A2|B1|B2|C1|C2)$/.test(nv)) return {nivel:nv, ciudad:c.k, local:true, habilidades:{}, ya_puede:[], le_cuesta:[], saltar:[],
+    resumen_es:'I have a clear idea of where you are. We are going to practice real situations, one step above what you already know.',
+    paradas:c.p.map(function(x){ return x[1]; }),
+    parada1:{titulo_es:'Helping a customer', situacion_es:'A customer from another country comes in with a question.',
+      pizarra:{titulo:'Helping a customer',lineas:[{en:'How can I help you?',es:''},{en:'Let me check that for you.',es:''},{en:'It will be ready tomorrow.',es:''}],
+        explica_es:['To start, offer help: How can I help you?','If you need time, say: Let me check that for you.','To promise something, say: It will be ready, and when.']},
+      opcion:{enunciado:'It ___ ready tomorrow.',opciones:['is being','will be','be','were'],correcta:1,explica_es:'For something in the future, we say will be.'},
+      conversacion:{pregunta_en:'Hi! Can you help me with something?',meta_en:'Sure! How can I help you?'},
+      repetir:'Let me check that for you.',
+      mision:{quien_es:'Customer', personaje:'a customer from out of town', lugar:'your workplace', escena:'A customer comes in with a problem and is in a hurry.', objetivo:'Understand the problem and say when it will be ready',
+        sorpresas:['"Can you do it today?"','"How much will it cost?"'], gancho:"the student's real job", prep_es:'A customer comes in. He is in a hurry. Your mission: understand what he needs and tell him when it will be ready.', frases:['How can I help you?','Let me check that for you.','It will be ready tomorrow.']}}};
   return {nivel:nv, ciudad:c.k, local:true, habilidades:{}, ya_puede:[], le_cuesta:[], saltar:[],
     resumen_es:'Ya tengo una idea clara de dónde estás. Vamos a practicar situaciones reales, un paso arriba de lo que ya sabes.',
     paradas:c.p.map(function(x){ return x[1]; }),
@@ -756,13 +785,13 @@ function pedirPlan(){
 }
 async function armarPasaporte(){
   var nv=perfil.nivel_app||'A1';
-  var l=lienzo('<div class="etiqueta">Un momento</div><div class="libro" id="li"><i></i><i></i><i></i><b></b></div><p class="dice" id="d"></p><div class="pasos" id="ps"></div>');
+  var l=lienzo('<div class="etiqueta">'+G('Un momento','One moment')+'</div><div class="libro" id="li"><i></i><i></i><i></i><b></b></div><p class="dice" id="d"></p><div class="pasos" id="ps"></div>');
   await esperar(500);
   var plan=null, listo=false;
   var pide=pedirPlan().then(function(x){ plan=x; listo=true; });
-  await hablar('Dame un momento. Estoy armando tu pasaporte con todo lo que me dijiste. Puede tardar un par de minutos.', l.querySelector('#d'));
-  estado('piensa','Armando tu pasaporte…');
-  var PASOS=['Leyendo todo lo que me contaste','Escuchando de nuevo tus respuestas','Midiendo tu inglés en cada habilidad','Quitando lo que ya dominas','Escogiendo situaciones de tu vida','Escribiendo tu primera misión','Sellando tu visa'];
+  await hablar(G('Dame un momento. Estoy armando tu pasaporte con todo lo que me dijiste. Puede tardar un par de minutos.','Give me a moment. I am making your passport with everything you told me. It can take a minute or two.'), l.querySelector('#d'), GL());
+  estado('piensa',G('Armando tu pasaporte…','Making your passport…'));
+  var PASOS=ING()?['Reading everything you told me','Listening to your answers again','Checking each skill','Taking out what you already know','Choosing situations from your life','Writing your first mission','Stamping your visa']:['Leyendo todo lo que me contaste','Escuchando de nuevo tus respuestas','Midiendo tu inglés en cada habilidad','Quitando lo que ya dominas','Escogiendo situaciones de tu vida','Escribiendo tu primera misión','Sellando tu visa'];
   for(var i=0;i<PASOS.length;i++){
     var p=document.createElement('div'); p.className='paso w'; p.innerHTML='<i></i>'+PASOS[i]; l.querySelector('#ps').appendChild(p);
     requestAnimationFrame(function(x){ return function(){ x.classList.add('on'); }; }(p));
@@ -786,12 +815,13 @@ async function visa(){
   var l=lienzo('<div class="hoja-psp visa"><div><div class="hoja-et">VISA · '+esc(nv)+'</div><div class="hoja-pais">'+esc(MUNDO.titulo(pa.pais))+'</div>'+
     '<div class="hoja-lema">'+esc(pa.lema||'')+'</div></div>'+sello+'</div><p class="dice" id="d"></p>'+
     '<div class="chips chicos" id="ya"></div><div class="chips chicos" id="reto"></div>');
+  $('bCam').textContent=G('🎧 Caminar','🎧 Walk'); $('camSalir').textContent=G('Salir','Exit'); $('saltar').textContent=G('Saltar','Skip');
   await esperar(700); l.querySelector('#vs').classList.add('on');
   await esperar(900);
   var ya=(P.ya_puede||[]).slice(0,2), reto=(P.le_cuesta||[]).slice(0,2);
   ya.forEach(function(t,k){ var s=document.createElement('span'); s.className='chip ok'; s.textContent='✓ '+t; l.querySelector('#ya').appendChild(s); setTimeout(function(){ s.classList.add('on'); },200*k); });
   reto.forEach(function(t,k){ var s=document.createElement('span'); s.className='chip reto'; s.textContent='↗ '+t; l.querySelector('#reto').appendChild(s); setTimeout(function(){ s.classList.add('on'); },600+200*k); });
-  await hablar((perfil.nombre?perfil.nombre+', ':'')+(P.resumen_es||('tu visa es '+nv+'.'))+' Tu viaje empieza en '+MUNDO.titulo(pa.pais)+', en '+MUNDO.titulo(c.n)+'.', l.querySelector('#d'));
+  await hablar((perfil.nombre?perfil.nombre+', ':'')+(P.resumen_es||G('tu visa es '+nv+'.','your visa is '+nv+'.'))+G(' Tu viaje empieza en '+MUNDO.titulo(pa.pais)+', en '+MUNDO.titulo(c.n)+'.',' Your trip starts in '+MUNDO.titulo(pa.pais)+', in '+MUNDO.titulo(c.n)+'.'), l.querySelector('#d'), GL());
   await esperar(600);
 }
 
@@ -804,82 +834,89 @@ async function mapaCiudad(){
     '<svg class="mapa-pins" viewBox="0 0 358 600" preserveAspectRatio="xMidYMid slice">'+MUNDO.pinesCiuSVG(mio,0,1,col)+'</svg>'+
     '<div class="mapa-fade"></div><div class="mapa-osm">Map data © OpenStreetMap contributors</div>'+
     '<div class="mapa-cab"><div class="etiqueta">'+esc(MUNDO.titulo(MUNDO.pais(nv).pais))+' · '+esc(nv)+'</div><div class="mapa-ciu">'+esc(MUNDO.titulo(c.n))+'</div></div>'+
-    '<div class="mapa-pie"><div class="etiqueta">Parada 1 · hoy</div><div class="mapa-hoy w" id="hoy"></div><p class="dice chica" id="d" style="display:none"></p><div class="oye" id="oye"></div><div class="flotan" id="fl"></div></div>');
+    '<div class="mapa-pie"><div class="etiqueta">'+G('Parada 1 · hoy','Stop 1 · today')+'</div><div class="mapa-hoy w" id="hoy"></div><p class="dice chica" id="d" style="display:none"></p><div class="oye" id="oye"></div><div class="flotan" id="fl"></div></div>');
   l.classList.add('mapa'); document.body.classList.add('en-mapa');
   await esperar(900);
-  var t1=(P.parada1&&P.parada1.titulo_es)||'tu primera parada';
+  var t1=(P.parada1&&P.parada1.titulo_es)||G('tu primera parada','your first stop');
   l.querySelector('#hoy').textContent=t1;
   var pins=[].slice.call(l.querySelectorAll('.mapa-pins .pinciu'));
   // las paradas van cayendo mientras EFA habla; la primera, al final, cuando dice "hoy empiezas aquí"
   pins.slice(1).forEach(function(g,i){ setTimeout(function(){ g.classList.add('on'); },1400+i*420); });
   setTimeout(function(){ l.querySelector('.mapa-pins').classList.add('trazo'); },1400+pins.length*420);
-  var habla=hablar('Este es tu mapa de '+MUNDO.titulo(c.n)+'. Cada parada es una situación de tu vida, en inglés. Hoy empiezas aquí: '+t1+'.', null);
+  var habla=hablar(G('Este es tu mapa de '+MUNDO.titulo(c.n)+'. Cada parada es una situación de tu vida, en inglés. Hoy empiezas aquí: '+t1+'.','This is your map of '+MUNDO.titulo(c.n)+'. Every stop is a real situation from your life. Today you start here: '+t1+'.'), null, GL());
   setTimeout(function(){ if(pins[0]) pins[0].classList.add('on'); l.querySelector('#hoy').classList.add('on'); },4600);
   await habla; if(pins[0]) pins[0].classList.add('on'); l.querySelector('#hoy').classList.add('on');
-  var r=await elegir(l,[{t:'Empezar',k:/empez|vamos|dale|listo|\bsi\b|va\b|ok/},{t:'¿Cómo funciona?',k:/como|funciona|explica/}],'es-MX',{});
-  if(r.opcion==='¿Cómo funciona?'||(!r.opcion&&/como|que es|explica/.test(sinAcentos(r.texto)))){
-    await hablar('En cada parada te explico el tema en un pizarrón, practicas con tres ejercicios y al final haces una misión hablando. Cuando la pasas, te pongo el sello. Siete sellos y terminas la ciudad.', null);
+  var r=await elegir(l,[{t:G('Empezar','Start'),k:/empez|vamos|dale|listo|\bsi\b|va\b|ok|start|let'?s go|ready|yes/},{t:G('¿Cómo funciona?','How does it work?'),k:/como|funciona|explica|how|work|explain/}],OYE(),{});
+  if(r.opcion===G('¿Cómo funciona?','How does it work?')||(!r.opcion&&/como|que es|explica|how|explain/.test(sinAcentos(r.texto)))){
+    await hablar(G('En cada parada te explico el tema en un pizarrón, practicas con tres ejercicios y al final haces una misión hablando. Cuando la pasas, te pongo el sello. Siete sellos y terminas la ciudad.','At every stop I explain the topic on a board. You practice with three exercises, and then you do a speaking mission. When you pass it, I stamp your passport. Seven stamps and you finish the city.'), null, GL());
   }
   document.body.classList.remove('en-mapa');
 }
 
 /* ═══════════════ la parada: todo sale de su plan ═══════════════ */
+/* Desde A2, EFA ya explica en inglés sencillo (regla de Brian). Pre-A1 y A1 siguen en español. */
+var RE_NV=/^(Pre-A1|A1|A2|B1|B2|C1|C2)$/;
+function nivelReal(){ return RE_NV.test(perfil.nivel||'')?perfil.nivel:(perfil.nivel_app||''); }   // perfil.nivel trae lo que el alumno DIJO hasta que hay plan
+function ING(){ return /^(A2|B1|B2|C1|C2)$/.test(nivelReal()); }
+function G(es,en){ return ING()?en:es; }
+function GL(){ return ING()?{lang:'en',vel:nivelReal()==='A2'?.9:1}:{}; }
+function OYE(){ return ING()?'en-US':'es-MX'; }
 function P1(){ return (perfil.plan&&perfil.plan.parada1)||planLocal(perfil.nivel||'A1').parada1; }
 async function pizarron(){
   var p=P1(), pz=p.pizarra||{}, ls=(pz.lineas||[]).slice(0,3);
   var y=[118,198,278], svg='<text x="6" y="48" font-size="34" class="oro" id="t0">'+esc(pz.titulo||p.titulo_es||'')+'</text><path id="p0" d="M8 60 Q 110 70 220 58"/>';
-  ls.forEach(function(x,i){ svg+='<text x="6" y="'+y[i]+'" font-size="'+(x.en.length>24?24:29)+'" id="e'+i+'">'+esc(x.en)+'</text><text x="18" y="'+(y[i]+30)+'" font-size="20" id="s'+i+'">('+esc(x.es)+')</text>'; });
-  var l=lienzo('<div class="etiqueta">Parada 1 · '+esc(p.titulo_es||'')+'</div><svg class="pizarra" viewBox="0 0 340 330">'+svg+'</svg><p class="apoyo w" id="ap"></p>');
+  ls.forEach(function(x,i){ svg+='<text x="6" y="'+y[i]+'" font-size="'+(x.en.length>24?24:29)+'" id="e'+i+'">'+esc(x.en)+'</text>'+(!ING()&&x.es?'<text x="18" y="'+(y[i]+30)+'" font-size="20" id="s'+i+'">('+esc(x.es)+')</text>':''); });
+  var l=lienzo('<div class="etiqueta">'+G('Parada 1','Stop 1')+' · '+esc(p.titulo_es||'')+'</div><svg class="pizarra" viewBox="0 0 340 330">'+svg+'</svg><p class="apoyo w" id="ap"></p>');
   l.classList.add('claro'); await esperar(500);
   [].forEach.call(l.querySelectorAll('.pizarra text'),function(t){ try{ t.style.setProperty('--l',Math.ceil(t.getComputedTextLength()*3.2)); }catch(e){} });
   var ve=function(id){ var e=l.querySelector('#'+id); if(e) e.classList.add('ve'); };
   ve('t0'); setTimeout(function(){ ve('p0'); },900);
-  if(p.situacion_es) await hablar(p.situacion_es, l.querySelector('#ap'));
+  if(p.situacion_es) await hablar(p.situacion_es, l.querySelector('#ap'), GL());
   var ex=pz.explica_es||[];
-  for(var i=0;i<ls.length;i++){ ve('e'+i); (function(k){ setTimeout(function(){ ve('s'+k); },1000); })(i); await hablar(ex[i]||ls[i].es, l.querySelector('#ap')); }
+  for(var i=0;i<ls.length;i++){ ve('e'+i); (function(k){ setTimeout(function(){ ve('s'+k); },1000); })(i); await hablar(ex[i]||(ING()?ls[i].en:ls[i].es), l.querySelector('#ap'), GL()); }
   await esperar(400);
 }
 async function ejercicioOpcion(){
   var o=P1().opcion||{}, letras=['A','B','C','D'];
   var ops=(o.opciones||[]).map(function(t,i){ return {t:t,k:new RegExp('^(la |el |option |opcion )?'+letras[i].toLowerCase()+'$|^'+sinAcentos(t).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'$')}; });
   var enun=esc(o.enunciado||'').replace(/_{2,}/,'<span class="hueco">___</span>');
-  var l=lienzo('<div class="etiqueta">Ejercicio 1 de 3 · Gramática</div><p class="enunciado" id="en">'+enun+'</p>'+
-    '<p class="apoyo w" id="ap">Elige la que completa la frase.</p><div class="oye" id="oye"></div><div class="flotan" id="fl"></div><div class="retro" id="re"></div>');
+  var l=lienzo('<div class="etiqueta">'+G('Ejercicio 1 de 3 · Gramática','Exercise 1 of 3 · Grammar')+'</div><p class="enunciado" id="en">'+enun+'</p>'+
+    '<p class="apoyo w" id="ap">'+G('Elige la que completa la frase.','Choose the one that completes the sentence.')+'</p><div class="oye" id="oye"></div><div class="flotan" id="fl"></div><div class="retro" id="re"></div>');
   await esperar(500);
-  await hablar('¿Cuál completa la frase? Tócala o dímela.', l.querySelector('#ap'));
+  await hablar(G('¿Cuál completa la frase? Tócala o dímela.','Which one completes the sentence? Tap it or say it.'), l.querySelector('#ap'), GL());
   for(var intento=0;intento<3;intento++){
     var r=await elegir(l,ops,'en-US',{});
     var b=[].slice.call(l.querySelectorAll('#fl .vidrio')).find(function(x){ return x.textContent===r.opcion; });
     if(r.opcion===ops[o.correcta||0].t){
       if(b){ b.classList.remove('brilla'); b.classList.add('bien'); }
       var hu=l.querySelector('.hueco'); if(hu) hu.textContent=r.opcion;
-      var re=l.querySelector('#re'); re.innerHTML='<b>¡Eso!</b> '+esc(o.explica_es||''); re.classList.add('on');
-      await hablar('¡Eso! '+(o.explica_es||''), null); await esperar(500); return true;
+      var re=l.querySelector('#re'); re.innerHTML='<b>'+G('¡Eso!','That\'s it!')+'</b> '+esc(o.explica_es||''); re.classList.add('on');
+      await hablar(G('¡Eso! ','That\'s it! ')+(o.explica_es||''), null, GL()); await esperar(500); return true;
     }
     if(b){ b.classList.remove('brilla'); b.classList.add('mal'); }
-    await hablar(r.opcion?'Casi. Fíjate bien en la frase e intenta otra vez.':'No la escuché entre las opciones. ¿Cuál de las cuatro?', null);
+    await hablar(r.opcion?G('Casi. Fíjate bien en la frase e intenta otra vez.','Almost. Look at the sentence again and try one more time.'):G('No la escuché entre las opciones. ¿Cuál de las cuatro?','I didn\'t hear one of the options. Which of the four?'), null, GL());
     if(b) b.classList.remove('mal');
   }
   return false;
 }
 async function ejercicioConversacion(){
   var cv=P1().conversacion||{};
-  var l=lienzo('<div class="etiqueta">Ejercicio 2 de 3 · Conversación</div><p class="dice" id="d"></p><p class="apoyo w" id="ap">Contéstale en inglés, como puedas.</p><div class="oye" id="oye"></div><div class="retro" id="re"></div>');
+  var l=lienzo('<div class="etiqueta">'+G('Ejercicio 2 de 3 · Conversación','Exercise 2 of 3 · Conversation')+'</div><p class="dice" id="d"></p><p class="apoyo w" id="ap">'+G('Contéstale en inglés, como puedas.','Answer in English, any way you can.')+'</p><div class="oye" id="oye"></div><div class="retro" id="re"></div>');
   await esperar(500);
   await hablar(cv.pregunta_en||'What do you do?', l.querySelector('#d'), {lang:'en', vel:.95});
   l.querySelector('#ap').classList.add('on');
   var x=await escuchar(l.querySelector('#oye'),'en-US');
   var fb=await revisar(x,cv.meta_en||'');
   var re=l.querySelector('#re');
-  re.innerHTML=(fb&&fb.que)?((fb.bien?'<b>¡Bien dicho!</b> ':'')+esc(fb.que)+(fb.como?'<br><b>Tip:</b> '+esc(fb.como):'')):('<b>Así suena natural:</b> '+esc(cv.meta_en||''));
+  re.innerHTML=(fb&&fb.que)?((fb.bien?'<b>'+G('¡Bien dicho!','Well said!')+'</b> ':'')+esc(fb.que)+(fb.como?'<br><b>Tip:</b> '+esc(fb.como):'')):('<b>'+G('Así suena natural:','This sounds natural:')+'</b> '+esc(cv.meta_en||''));
   re.classList.add('on');
-  await hablar(fb&&fb.que?fb.que:'Así suena natural.', null);
+  await hablar(fb&&fb.que?fb.que:G('Así suena natural.','This sounds natural.'), null, GL());
   if(!(fb&&fb.que)&&cv.meta_en) await hablar(cv.meta_en, null, {lang:'en', vel:.9});
   await esperar(500);
 }
 async function ejercicioRepetir(){
   var frase=P1().repetir||'How can I help you?';
-  var l=lienzo('<div class="etiqueta">Ejercicio 3 de 3 · Pronunciación</div><p class="apoyo w on">Escúchala y dila tú:</p><p class="dice" id="d"></p><div class="oye" id="oye"></div>'+
+  var l=lienzo('<div class="etiqueta">'+G('Ejercicio 3 de 3 · Pronunciación','Exercise 3 of 3 · Pronunciation')+'</div><p class="apoyo w on">'+G('Escúchala y dila tú:','Listen and say it:')+'</p><p class="dice" id="d"></p><div class="oye" id="oye"></div>'+
     '<div class="anillo" id="an" style="opacity:0;transition:opacity .6s"><svg viewBox="0 0 76 76"><circle class="fondoA" cx="38" cy="38" r="32"/><circle class="valor" id="val" cx="38" cy="38" r="32"/></svg><div><b id="pct">0%</b><div class="apoyo" style="margin:0" id="pt"></div></div></div>');
   await esperar(500);
   await hablar(frase, l.querySelector('#d'), {lang:'en', vel:.9});
@@ -888,8 +925,8 @@ async function ejercicioRepetir(){
   l.querySelector('#an').style.opacity=1;
   setTimeout(function(){ l.querySelector('#val').style.strokeDashoffset=201*(1-p/100); },100);
   var n=0, iv=setInterval(function(){ n=Math.min(p,n+3); l.querySelector('#pct').textContent=n+'%'; if(n>=p) clearInterval(iv); },25);
-  l.querySelector('#pt').textContent=p>=80?'Se entiende muy bien':'Vamos a pulirla';
-  await hablar(p>=80?'¡Suena muy bien! Se te entiende clarito.':'Va bien. Escúchala otra vez y fíjate en cada palabra.', null);
+  l.querySelector('#pt').textContent=p>=80?G('Se entiende muy bien','Very clear'):G('Vamos a pulirla','Let\'s polish it');
+  await hablar(p>=80?G('¡Suena muy bien! Se te entiende clarito.','That sounds great! I can understand you very well.'):G('Va bien. Escúchala otra vez y fíjate en cada palabra.','Good. Listen again and pay attention to every word.'), null, GL());
   await esperar(600);
 }
 function parecidoFrase(a,b){
@@ -898,7 +935,7 @@ function parecidoFrase(a,b){
 }
 function revisar(dijo,meta){
   return Promise.race([
-    fetch(IA_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({accion:'corregir',datos:{nivel:perfil.nivel||'A1',trabajo:perfil.trabajo,meta:meta,dijo:dijo}})})
+    fetch(IA_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({accion:'corregir',datos:{nivel:perfil.nivel||'A1',trabajo:perfil.trabajo,meta:meta,dijo:dijo,idioma:ING()?'en':'es'}})})
       .then(function(r){ return r.ok?r.json():null; }).then(function(j){ return j&&j.ok?j.resultado:null; }).catch(function(){ return null; }),
     esperar(9000).then(function(){ return null; })
   ]);
@@ -917,10 +954,10 @@ async function primeraLeccion(){
   var rep=await mision(misionDelPlan());
   modoPantalla('efa');
   var c=perfil.ciudad||{n:''}, pa=MUNDO.pais(perfil.nivel||'A1');
-  var l=lienzo('<div class="hoja-psp"><div class="hoja-et">PARADA 1 · '+esc(MUNDO.titulo(c.n))+'</div>'+
+  var l=lienzo('<div class="hoja-psp sellito"><div class="hoja-et">'+G('PARADA 1','STOP 1')+' · '+esc(MUNDO.titulo(c.n))+'</div>'+
     '<svg viewBox="0 0 300 300" class="visa-sello" id="se">'+MUNDO.selloRedondo(150,150,118,c.n,'ADMITTED',MUNDO.fecha(),'#B23A48','')+'</svg></div><p class="dice" id="d"></p>');
   await esperar(500); l.querySelector('#se').classList.add('on');
-  await hablar('¡Listo, '+(perfil.nombre||'')+'! Primera parada de '+MUNDO.titulo(c.n)+' sellada en tu pasaporte. Mañana seguimos con la siguiente.', l.querySelector('#d'));
+  await hablar(G('¡Listo, '+(perfil.nombre||'')+'! Primera parada de '+MUNDO.titulo(c.n)+' sellada en tu pasaporte. Mañana seguimos con la siguiente.','Done, '+(perfil.nombre||'')+'! Your first stop in '+MUNDO.titulo(c.n)+' is stamped in your passport. Tomorrow we go to the next one.'), l.querySelector('#d'), GL());
   estado('calla','');
 }
 
@@ -974,7 +1011,7 @@ function teacherTocado(){
 async function decirParte(M,p,dijoAntes){
   modoPantalla(p.quien);
   var enEscena=p.quien==='scene';
-  var l=lienzo('<div class="etiqueta"><span class="quien"><i></i>'+(enEscena?M.quien_es:'EFA · tu maestra')+'</span></div><p class="dice" id="d"></p>'+
+  var l=lienzo('<div class="etiqueta"><span class="quien"><i></i>'+(enEscena?M.quien_es:G('EFA · tu maestra','EFA · your teacher'))+'</span></div><p class="dice" id="d"></p>'+
     (dijoAntes&&dijoAntes.charAt(0)!=='('&&dijoAntes!=='Terminar'?'<p class="alumno">'+esc(dijoAntes)+'</p>':'')+'<div class="oye" id="oye"></div><div class="flotan" id="fl"></div><div class="correcciones" id="co"></div>');
   await esperar(450);
   var lento=/^(Pre-A1|A1|A2)$/.test(perfil.nivel||'A1')?.9:1;
@@ -984,13 +1021,13 @@ async function decirParte(M,p,dijoAntes){
 async function mision(M){
   document.body.classList.remove('en-mision'); modoPantalla('efa');
   // 1. preparación (con la voz de EFA)
-  var l=lienzo('<div class="etiqueta">Misión de speaking</div><p class="dice" id="d"></p><div class="frases" id="fr"></div><div class="oye" id="oye"></div><div class="flotan" id="fl"></div>');
+  var l=lienzo('<div class="etiqueta">'+G('Misión de speaking','Speaking mission')+'</div><p class="dice" id="d"></p><div class="frases" id="fr"></div><div class="oye" id="oye"></div><div class="flotan" id="fl"></div>');
   await esperar(450);
-  await hablar(M.prep,l.querySelector('#d'));
+  await hablar(M.prep,l.querySelector('#d'),GL());
   M.frases.forEach(function(f,i){ var b=document.createElement('button'); b.type='button'; b.className='vidrio'; b.textContent='🔊 '+f; l.querySelector('#fr').appendChild(b);
     setTimeout(function(){ b.classList.add('on'); },180*i); b.onclick=function(){ hablar(f,null,{lang:'en',vel:.9}); }; });
-  await hablar('Estas frases te pueden servir. Tócalas para oírlas. Cuando estés listo, dime: listo.',null);
-  await elegir(l,[{t:'¡Listo!',k:/listo|ready|vamos|\bya\b|\bsi\b|ok|dale/}],'es-MX',{});
+  await hablar(G('Estas frases te pueden servir. Tócalas para oírlas. Cuando estés listo, dime: listo.','These phrases can help you. Tap them to hear them. When you are ready, say: ready.'),null,GL());
+  await elegir(l,[{t:G('¡Listo!','Ready!'),k:/listo|ready|vamos|\bya\b|\bsi\b|ok|dale|yes|let'?s go/}],OYE(),{});
   // 2. la escena
   document.body.classList.add('en-mision');
   var turnos=[], reporte=null, vueltas=0, extra={}, dijo=null;
@@ -1003,10 +1040,11 @@ async function mision(M){
     var cierre=ult.quien==='efa'&&/try again|otra vez|intentamos/i.test(ult.t);
     if(cierre){
       document.body.classList.remove('en-mision');
-      var r=await elegir(lz,[{t:'Intentar otra vez',k:/otra vez|again|repetir|de nuevo/},{t:'Terminar',k:/terminar|no gracias|\bno\b|adios|bye|ya estuvo/}],'es-MX',{});
-      if(r.opcion==='Intentar otra vez'){ turnos=[]; dijo=null; document.body.classList.add('en-mision'); res=await pedirMision(M,turnos,{}); continue; }
-      dijo=r.opcion==='Terminar'?'Terminar':r.texto;   // o una pregunta libre: "¿cuáles fueron mis errores?"
-      extra=r.opcion==='Terminar'?{fin:true}:{};
+      var OTRA=G('Intentar otra vez','Try again'), FIN=G('Terminar','Finish');
+      var r=await elegir(lz,[{t:OTRA,k:/otra vez|again|repetir|de nuevo|one more/},{t:FIN,k:/terminar|no gracias|\bno\b|adios|bye|ya estuvo|finish|done|that'?s all/}],OYE(),{});
+      if(r.opcion===OTRA){ turnos=[]; dijo=null; document.body.classList.add('en-mision'); res=await pedirMision(M,turnos,{}); continue; }
+      dijo=r.opcion===FIN?'Terminar':r.texto;   // o una pregunta libre: "¿cuáles fueron mis errores?"
+      extra=r.opcion===FIN?{fin:true}:{};
     } else {
       var rr=await Promise.race([escuchar(lz.querySelector('#oye'),'en-US').then(function(t){ return {t:t}; }),teacherTocado()]);
       if(rr.teacher){ dijo='(pressed Teacher)'; extra={ayuda:true}; }
@@ -1020,9 +1058,9 @@ async function mision(M){
   // 3. lo que se lleva (el reporte completo se guarda para el panel)
   try{ var g=JSON.parse(localStorage.getItem('efa2_misiones')||'[]'); g.push({id:M.id,fecha:new Date().toISOString(),nivel:perfil.nivel,turnos:turnos,reporte:reporte}); localStorage.setItem('efa2_misiones',JSON.stringify(g)); }catch(e){}
   if(reporte&&(reporte.errors||[]).length){
-    var c=lienzo('<div class="etiqueta">Lo que te llevas</div><p class="dice" id="d"></p><div class="correcciones" id="co"></div>');
+    var c=lienzo('<div class="etiqueta">'+G('Lo que te llevas','What you take with you')+'</div><p class="dice" id="d"></p><div class="correcciones" id="co"></div>');
     reporte.errors.slice(0,3).forEach(function(e,i){ var dv=document.createElement('div'); dv.className='w'; dv.innerHTML='<s>'+esc(e.said)+'</s> → <b>'+esc(e.better)+'</b>'; c.querySelector('#co').appendChild(dv); setTimeout(function(){ dv.classList.add('on'); },400+250*i); });
-    await hablar('Esto es lo que te llevas de la misión.',c.querySelector('#d'));
+    await hablar(G('Esto es lo que te llevas de la misión.','This is what you take with you from the mission.'),c.querySelector('#d'),GL());
     await esperar(1500);
   }
   return reporte;
@@ -1045,6 +1083,26 @@ function entender(){
   ]);
 }
 
+/* ═══════════════ modo caminata ═══════════════
+   Con audífonos, sin ver la pantalla: la pantalla se queda despierta y en
+   negro (gasta menos), EFA dice las opciones en voz alta y la plática
+   sigue. Si el alumno sale de la app y regresa, retoma donde iba. Para
+   que siga con la app CERRADA o la pantalla bloqueada hace falta la app
+   nativa (el navegador apaga el micrófono al salir). */
+var CAM=false, WL=null, VOLVER=[];
+function despierto(){ try{ if(navigator.wakeLock&&!document.hidden) navigator.wakeLock.request('screen').then(function(x){ WL=x; }).catch(function(){}); }catch(e){} }
+function alVolver(fn){ VOLVER.push(fn); }
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden) return;
+  despierto(); BURBUJA.despertar();
+  var f=VOLVER.splice(0); f.forEach(function(x){ try{ x(); }catch(e){} });
+});
+function caminata(on){
+  CAM=on; document.body.classList.toggle('caminata',on); $('bCam').classList.toggle('on',on); despierto();
+  try{ localStorage.setItem('efa2_caminata',on?'1':''); }catch(e){}
+  if(on){ var n=$('camNota'); n.innerHTML=G('<b>Modo caminata</b><br>EFA sigue platicando contigo por los audífonos.<br>Toca dos veces para salir.','<b>Walk mode</b><br>EFA keeps talking with you through your headphones.<br>Double tap to exit.'); n.classList.remove('fuera'); setTimeout(function(){ n.classList.add('fuera'); },5000); }
+}
+
 /* ── controles de respaldo ── */
 $('orbe').onclick=function(){ if(!arrancado) return arrancar(); if(!AUD.paused){ AUD.pause(); AUD.onended&&AUD.onended(); } try{ speechSynthesis.cancel(); }catch(e){} };
 $('bMic').onclick=function(){
@@ -1055,10 +1113,13 @@ $('bMic').onclick=function(){
 $('bTec').onclick=function(){ $('teclado').classList.toggle('on'); if($('teclado').classList.contains('on')) $('tx').focus(); };
 $('teclado').onsubmit=function(e){ e.preventDefault(); var v=$('tx').value.trim(); if(!v) return; $('tx').value=''; if(actual&&actual.querySelector('.oye')) actual.querySelector('.oye').textContent=v; if(escuchar._teclado) escuchar._teclado(v); };
 $('saltar').onclick=function(){ location.href='./'; };
+$('bCam').onclick=function(){ caminata(!CAM); };
+$('caminata').ondblclick=function(){ caminata(false); };
+$('camSalir').onclick=function(e){ e.stopPropagation(); caminata(false); };
 
 /* en iPhone el sonido arranca solo después de un toque */
 var arrancado=false;
-function arrancar(){ if(arrancado) return; arrancado=true; try{ AUD.play().catch(function(){}); AUD.pause(); }catch(e){} BURBUJA.conectar(AUD); BURBUJA.despertar(); inicio(); }
+function arrancar(){ if(arrancado) return; arrancado=true; try{ AUD.play().catch(function(){}); AUD.pause(); }catch(e){} BURBUJA.conectar(AUD); BURBUJA.despertar(); despierto(); inicio(); }
 // la portada: el pasaporte de siempre, que se abre como libro
 (function(){
   var st=document.createElement('style'); st.textContent=MUNDO.css; document.head.appendChild(st);

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FBF3DE">
+<title>EFA · Prueba de pronunciación</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--papel:#FBF3DE;--tinta:#2B1E14;--tinta2:rgba(43,30,20,.62);--oro:#A8700F;--amarillo:#F2C14E;--verde:#2E7D4F;--rojo:#B23A48}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;color:var(--tinta);font-family:Inter,system-ui,-apple-system,sans-serif;
+    background:radial-gradient(130% 55% at 90% 108%,rgba(242,193,78,.3),rgba(242,193,78,0) 62%),linear-gradient(180deg,#FFFDF8,#FBF3DE)}
+  main{max-width:520px;margin:0 auto;padding:calc(24px + env(safe-area-inset-top,0px)) 18px 40px}
+  .et{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--oro);font-weight:600}
+  h1{font-size:28px;font-weight:400;letter-spacing:-.02em;margin:6px 0 18px}
+  label{display:block;font-size:13px;color:var(--tinta2);margin:14px 0 5px}
+  input,select{width:100%;padding:12px 14px;font:16px Inter,system-ui,sans-serif;color:var(--tinta);border:1px solid rgba(176,122,18,.28);border-radius:14px;background:rgba(255,255,255,.85)}
+  .fila{display:flex;gap:10px}.fila>div{flex:1}
+  .nota{font-size:13px;color:var(--tinta2);margin-top:6px;line-height:1.45}
+  .ok{color:var(--verde)} .mal{color:var(--rojo)}
+  #mic{display:flex;align-items:center;justify-content:center;gap:10px;margin:26px auto 10px;padding:16px 28px;border:0;border-radius:999px;background:var(--amarillo);color:#2a1a08;font:600 17px Inter,system-ui,sans-serif;cursor:pointer;box-shadow:0 10px 26px rgba(232,178,58,.35)}
+  #mic.graba{background:var(--tinta);color:#fbf3e4}
+  #mic.graba::before{content:"";width:11px;height:11px;border-radius:50%;background:#e5484d;animation:p 1.2s infinite}
+  @keyframes p{50%{opacity:.35}}
+  #mic.piensa{background:rgba(43,30,20,.15);color:var(--tinta2)}
+  #estado{text-align:center;font-size:14px;color:var(--tinta2);min-height:20px}
+  .caja{margin-top:18px;background:rgba(255,255,255,.75);border:1px solid rgba(176,122,18,.2);border-radius:20px;padding:18px;display:none}
+  .caja.on{display:block}
+  .pron-frase{font-size:25px;line-height:1.55}
+  .pron-palabra{padding:0 3px;border-radius:7px}
+  .pron-bien{color:var(--verde)} .pron-medio{color:#9a650c;background:rgba(242,193,78,.24)}
+  .pron-mal{color:var(--rojo);background:rgba(178,58,72,.1)} .pron-falta{color:rgba(43,30,20,.35);text-decoration:line-through}
+  .pron-extra{color:rgba(43,30,20,.45);font-style:italic}
+  .msg{font-size:16px;line-height:1.5;margin:12px 0 0} ul{padding-left:18px;margin:8px 0 0} li{margin:4px 0}
+  .num{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+  .num div{background:rgba(242,193,78,.14);border-radius:12px;padding:8px 10px;font-size:12px;color:var(--tinta2)}
+  .num b{display:block;font-size:20px;color:var(--tinta);font-weight:600}
+  .oido{font-size:13px;color:var(--tinta2);margin-top:10px}
+</style>
+</head>
+<body>
+<main>
+  <div class="et">EFA · Herramienta de Brian</div>
+  <h1>Prueba de pronunciación</h1>
+
+  <label>URL de Pronunciacion.gs (la que termina en /exec)</label>
+  <input id="url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off">
+  <div class="nota" id="urlNota">Se guarda solo en este celular. Con ella, la práctica de pronunciación con Azure se prende aquí para EFA 2.0 y para la clase del HCM.</div>
+
+  <label>Frase que debe decir</label>
+  <input id="frase" value="I think this is the third time I work here.">
+  <div class="fila">
+    <div><label>Nivel</label>
+      <select id="nivel"><option>Pre-A1</option><option>A1</option><option selected>A2</option><option>B1</option><option>B2</option><option>C1</option><option>C2</option></select></div>
+    <div><label>Acento</label>
+      <select id="acento"><option value="us">EE. UU.</option><option value="uk">Británico</option><option value="au">Australiano</option><option value="in">Indio</option></select></div>
+  </div>
+
+  <button id="mic" type="button">🎙️ Grabar</button>
+  <div id="estado">Toca para grabar. Termina solo cuando te callas, o toca otra vez.</div>
+
+  <div class="caja" id="res"></div>
+</main>
+<script src="pronunciacion.js"></script>
+<script>
+var $=function(i){ return document.getElementById(i); };
+var url=$('url');
+try{ url.value=localStorage.getItem('efa_pron_endpoint')||''; }catch(e){}
+function nota(t,c){ $('urlNota').textContent=t; $('urlNota').className='nota '+(c||''); }
+url.onchange=function(){
+  var v=url.value.trim();
+  try{ if(v) localStorage.setItem('efa_pron_endpoint',v); else localStorage.removeItem('efa_pron_endpoint'); }catch(e){}
+  EFAPron.configurar({endpoint:v});
+  if(!v){ nota('Sin URL: las apps siguen con la calificación de antes.'); return; }
+  nota('Probando la conexión…');
+  fetch(v,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({accion:'ping'})})
+    .then(function(r){ return r.json(); }).then(function(j){ nota(j&&j.ok?'✓ Conectado. Ya está prendida en este celular.':'No contestó bien: revisa la URL.', j&&j.ok?'ok':'mal'); })
+    .catch(function(){ nota('No se pudo conectar: revisa que la implementación sea "Cualquier usuario".','mal'); });
+};
+var intentos={}, g=null;
+function decir(t){ try{ speechSynthesis.cancel(); var u=new SpeechSynthesisUtterance(t); u.lang=/[áéíóúñ¿¡]/i.test(t)?'es-MX':'en-US'; speechSynthesis.speak(u); }catch(e){} }
+function boton(e,t){ $('mic').className=e||''; $('mic').textContent=t; }
+$('mic').onclick=function(){
+  if(g){ g.detener(); return; }
+  if(!EFAPron.listo()){ $('estado').textContent='Primero pega la URL de arriba.'; return; }
+  boton('graba','Ya terminé'); $('estado').textContent='Te escucho…';
+  g=EFAPron.grabar({auto:true, alTerminar:function(a){
+    g=null;
+    if(!a){ boton('','🎙️ Grabar'); $('estado').textContent='No se escuchó nada. Intenta otra vez.'; return; }
+    boton('piensa','Revisando…'); $('estado').textContent=a.segundos.toFixed(1)+' s de audio. Calificando…';
+    var frase=$('frase').value.trim(); intentos[frase]=(intentos[frase]||0)+1;
+    EFAPron.evaluar({audio:a.base64,texto:frase,nivel:$('nivel').value,acento:$('acento').value,alumno:'prueba',ejercicio:'demo',intento:intentos[frase],app:'prueba'})
+      .then(function(r){
+        var R=r.resumen, F=r.feedback, c=EFAPron.consejosHTML(F);
+        $('res').innerHTML='<div class="pron-frase">'+EFAPron.fraseHTML(R)+'</div><p class="msg">'+(F.mensaje||'')+'</p>'+(c?'<ul>'+c+'</ul>':'')+
+          '<div class="num"><div><b>'+R.general+'</b>General</div><div><b>'+R.precision+'</b>Precisión</div><div><b>'+R.fluidez+'</b>Fluidez</div>'+
+          '<div><b>'+R.completo+'</b>Completo</div><div><b>'+(R.prosodia!=null?R.prosodia:'—')+'</b>Entonación</div><div><b>'+intentos[frase]+'</b>Intento</div></div>'+
+          '<div class="oido">Azure oyó: “'+(R.oido||'')+'” · retroalimentación de '+(F.origen==='claude'?'Claude':'respaldo')+'</div>';
+        $('res').classList.add('on'); decir(F.mensaje||'');
+        $('estado').textContent=F.repetir?'Inténtalo otra vez':'¡Listo!';
+      }).catch(function(e){ $('estado').textContent='Error: '+e.message; })
+      .then(function(){ boton('','🎙️ Grabar'); });
+  }});
+  g.iniciar().catch(function(){ g=null; boton('','🎙️ Grabar'); $('estado').textContent='Necesito permiso para usar el micrófono.'; });
+};
+</script>
+</body>
+</html>

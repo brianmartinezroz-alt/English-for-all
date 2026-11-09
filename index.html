@@ -2,6 +2,81 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<script>
+/* ═══════════ MUDANZA a Cloudflare ═══════════
+   La dirección nueva de EFA es english-for-all.brianmartinezroz.workers.dev.
+   Lo que el alumno lleva guardado en su celular (avance, perfil, foto) vive
+   en la dirección vieja, así que al cambiarse se lo trae consigo:
+   · en la vieja (github.io): si MUDANZA_ACTIVA, junta lo de EFA y manda al
+     alumno a la nueva con sus datos dentro del link. Con ?quedarse=1 se queda.
+   · en la nueva: si el link trae los datos, los guarda y recarga limpio.
+   No se borra nada en la vieja: si algo falla, el alumno puede regresar.   */
+(function(){
+  var NUEVO='https://english-for-all.brianmartinezroz.workers.dev';
+  var MUDANZA_ACTIVA=true;       // prendida el 9 nov 2026 (OneSignal ya con la dirección nueva)
+  var h=location.hostname;
+  function b64(s){ return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+  function deB64(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4)s+='='; return decodeURIComponent(escape(atob(s))); }
+  try{
+    if(/github\.io$/.test(h)){
+      if(!MUDANZA_ACTIVA || /[?&]quedarse=1/.test(location.search)) return;
+      var d={}, n=0;
+      for(var i=0;i<localStorage.length;i++){
+        var k=localStorage.key(i);
+        if(!k || !/^efa/.test(k) || k==='efa_videos') continue;   // los videos se vuelven a bajar solos
+        d[k]=localStorage.getItem(k); n++;
+      }
+      var hashViejo=location.hash.replace(/^#/,'');
+      var extra='';
+      if(n){
+        var carga=b64(JSON.stringify(d));
+        if(carga.length>1500000 && d.efa_foto){ delete d.efa_foto; carga=b64(JSON.stringify(d)); }  // la foto, si no cabe
+        extra='mudanza='+carga;
+      }
+      var pagina=location.pathname.replace(/^\/English-for-all\/?/,'/');
+      var hash=[hashViejo,extra].filter(Boolean).join('&');
+      location.replace(NUEVO+pagina+location.search+(hash?'#'+hash:''));
+      return;
+    }
+    var m=location.hash.match(/(^#|&)mudanza=([^&]+)/);
+    if(m){
+      var datos=JSON.parse(deB64(m[2]));
+      Object.keys(datos).forEach(function(k){ if(/^efa/.test(k)) try{ localStorage.setItem(k,datos[k]); }catch(e){} });
+      try{ localStorage.setItem('efa_mudanza','1'); }catch(e){}
+      var resto=location.hash.replace(/^#/,'').replace(/(^|&)mudanza=[^&]+/,'').replace(/^&/,'');
+      history.replaceState(null,'',location.pathname+location.search+(resto?'#'+resto:''));
+      location.reload();
+      document.documentElement.style.visibility='hidden';
+    }
+  }catch(e){
+    // si los datos no llegaron completos, se ofrece regresar a la dirección vieja
+    window.__efaMudanzaFallo=true;
+    try{ history.replaceState(null,'',location.pathname+location.search); }catch(x){}
+  }
+})();
+(function(){
+  // aviso único después de cambiarse: reinstalar el ícono
+  var fallo=!!window.__efaMudanzaFallo, ok=false;
+  try{ ok=localStorage.getItem('efa_mudanza')==='1'; }catch(e){}
+  if(!fallo && !ok) return;
+  document.addEventListener('DOMContentLoaded',function(){
+    var d=document.createElement('div');
+    d.style.cssText='position:fixed;left:12px;right:12px;bottom:14px;z-index:99999;background:#15140F;color:#F7F0DC;'+
+      'border-radius:16px;padding:14px 16px;font:15px/1.4 system-ui,sans-serif;box-shadow:0 12px 34px rgba(0,0,0,.35)';
+    d.innerHTML=fallo
+      ? '<b style="color:#E8C063">No se pasaron tus datos.</b> Tu avance sigue en la dirección anterior. '+
+        '<a href="https://brianmartinezroz-alt.github.io/English-for-all/?quedarse=1" style="color:#E8C063">Regresar ahí</a>'
+      : '<b style="color:#E8C063">EFA cambió de dirección</b> y tu avance ya viene contigo. Si la tenías en tu pantalla de inicio, '+
+        'vuelve a agregarla desde aquí (Compartir → Agregar a inicio).';
+    var x=document.createElement('button'); x.textContent='✕';
+    x.style.cssText='float:right;background:none;border:0;color:#F7F0DC;font-size:18px;margin-left:10px';
+    x.onclick=function(){ d.remove(); try{ localStorage.removeItem('efa_mudanza'); }catch(e){} };
+    d.insertBefore(x,d.firstChild); document.body.appendChild(d);
+  });
+})();
+</script>
+<script src="voz-local.js"></script>
+
 <script src="asistente.js"></script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,17 +91,17 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="English For All">
 <meta property="og:locale" content="es_MX">
-<meta property="og:url" content="https://brianmartinezroz-alt.github.io/English-for-all/">
+<meta property="og:url" content="https://english-for-all.brianmartinezroz.workers.dev/">
 <meta property="og:title" content="Inglés que sí se habla · English For All">
 <meta property="og:description" content="Veinte minutos al día desde tu celular, con frases sacadas de tu propio trabajo. Y un maestro de verdad leyendo lo que practicas.">
-<meta property="og:image" content="https://brianmartinezroz-alt.github.io/English-for-all/og.png">
+<meta property="og:image" content="https://english-for-all.brianmartinezroz.workers.dev/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="English For All · pantalla de la app con el mapa del Aeropuerto de la Ciudad de México y las siete paradas de la primera ciudad">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Inglés que sí se habla · English For All">
 <meta name="twitter:description" content="Veinte minutos al día desde tu celular, con frases de tu propio trabajo. Con un maestro de verdad atrás.">
-<meta name="twitter:image" content="https://brianmartinezroz-alt.github.io/English-for-all/og.png">
+<meta name="twitter:image" content="https://english-for-all.brianmartinezroz.workers.dev/og.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="EFA">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -10581,8 +10656,9 @@ function arrancarAvisos(){
         // GitHub Pages sirve el sitio en una subcarpeta: si no se le dice
         // dónde está su worker, OneSignal lo busca en la raíz del dominio
         // y no lo encuentra nunca.
-        serviceWorkerPath:'English-for-all/push/onesignal/OneSignalSDKWorker.js',
-        serviceWorkerParam:{scope:'/English-for-all/push/onesignal/'},
+        // en GitHub Pages va en la subcarpeta; en Cloudflare, en la raíz
+        serviceWorkerPath:(/github\.io$/.test(location.hostname)?'English-for-all/':'')+'push/onesignal/OneSignalSDKWorker.js',
+        serviceWorkerParam:{scope:(/github\.io$/.test(location.hostname)?'/English-for-all':'')+'/push/onesignal/'},
         autoResubscribe:true
       });
       await identificarme(OneSignal);

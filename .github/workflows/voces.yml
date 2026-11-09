@@ -40,11 +40,13 @@ jobs:
       - name: Herramientas
         timeout-minutes: 12
         run: |
-          # apt a veces se cuelga en los servidores de GitHub: tres intentos de 3 min
-          for i in 1 2 3; do
-            sudo timeout 180 apt-get update -qq && sudo timeout 180 apt-get install -y -qq ffmpeg espeak-ng && break
-            echo "apt tardó demasiado, otra vez ($i)"; sleep 5
-          done
+          # apt a veces se cuelga en los servidores de GitHub: un intento corto y,
+          # si no sale, ffmpeg de pip (imageio-ffmpeg), que no depende de apt
+          sudo timeout 150 bash -c "apt-get update -qq && apt-get install -y -qq ffmpeg espeak-ng" || echo "apt no salió"
+          if ! command -v ffmpeg; then
+            pip install -q imageio-ffmpeg
+            sudo ln -sf "$(python -c 'import imageio_ffmpeg;print(imageio_ffmpeg.get_ffmpeg_exe())')" /usr/local/bin/ffmpeg
+          fi
           command -v ffmpeg
       - name: Motor de voz
         timeout-minutes: 20

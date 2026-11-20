@@ -2336,7 +2336,19 @@ function soloTuVoz(texto,cb,archivo){
 
 /* ═══════════ voz: escuchar ═══════════ */
 var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-var EN_MARCO=(function(){try{return window.self!==window.top;}catch(e){return true;}})();
+/* Dentro de la app del Heroico Colegio Militar EFA vive en un marco que SÍ
+   tiene permiso de micrófono: ahí no es "vista previa" y la voz se queda. */
+var HCM_ORIGEN=/^https:\/\/brianmartinezroz-alt\.github\.io$/;
+var DENTRO_HCM=(function(){
+  try{
+    if(window.self===window.top) return false;
+    var ao=location.ancestorOrigins;
+    if(ao&&ao.length){ for(var i=0;i<ao.length;i++){ if(HCM_ORIGEN.test(ao[i])) return true; } return false; }
+    var r=(document.referrer||'').match(/^https?:\/\/[^\/]+/);
+    return !!(r&&HCM_ORIGEN.test(r[0]));
+  }catch(e){ return false; }
+})();
+var EN_MARCO=(function(){try{return window.self!==window.top && !DENTRO_HCM;}catch(e){return true;}})();
 var SEGURO=(window.isSecureContext!==false)&&location.protocol!=='file:';
 var HAY_MIC=!!SR;
 
@@ -18199,6 +18211,66 @@ function pantallaPuerta(vencido,alPasar){
       pantallaPuerta(e==='vencido',function(){ baseP.apply(self,args); });
     };
   }
+})();
+
+/* ═══════════════════════════════════════════════════════════════════
+   PUENTE_HCM · cadetes del Heroico Colegio Militar (Brian, 20 nov)
+   Cuando EFA se abre DENTRO de la app del HCM, el cadete ya se registró
+   allá: llega con su nombre completo y su grupo, no se le pide código de
+   acceso, y en el alta se saltan "¿Cómo te llamas?" y "¿A qué te
+   dedicas?". Solo aplica dentro de la app del Colegio; quien abre EFA
+   directo sigue pasando por la puerta de siempre.
+   ═══════════════════════════════════════════════════════════════════ */
+var HCM_CADETE=null;
+(function(){
+  if(!DENTRO_HCM) return;
+  try{
+    var d=load(), h=String(location.hash||'');
+    if(/[#&]hcm=1/.test(h)){
+      var q={};
+      h.replace(/^#/,'').split('&').forEach(function(kv){
+        var i=kv.indexOf('='); if(i>0){ try{ q[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1)); }catch(e){} }
+      });
+      var nom=String(q.n||'').replace(/\s+/g,' ').trim().slice(0,60);
+      if(nom){
+        d.hcm={nombre:nom, grupo:String(q.g||'').replace(/[^0-9A-Za-z]/g,'').slice(0,6),
+               desde:(d.hcm&&d.hcm.desde)||new Date().toISOString().slice(0,10)};
+        save(d); D=d;
+      }
+      // el nombre no se queda a la vista en la dirección
+      try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
+    }
+    if(d.hcm && d.hcm.nombre) HCM_CADETE=d.hcm;
+  }catch(e){}
+  if(!HCM_CADETE) return;
+
+  // 1. sin código de acceso
+  var puertaBase=estadoPuerta;
+  estadoPuerta=function(){ return HCM_CADETE ? 'ok' : puertaBase(); };
+
+  // 2. el alta no vuelve a preguntar nombre ni a qué se dedica
+  var SALTA={nombre:1, trabajo:1};
+  var entrevistaBase=entrevista;
+  entrevista=function(){
+    if(!edatos.nombre) edatos.nombre=HCM_CADETE.nombre;
+    if(!edatos.trabajo_es){ edatos.trabajo_es='cadete militar'; edatos.trabajo_en=null; }
+    while(PASOS[epaso] && SALTA[PASOS[epaso].id]) epaso++;
+    if(epaso>=PASOS.length) epaso=PASOS.length-1;
+    return entrevistaBase.apply(this, arguments);
+  };
+
+  // 3. el perfil queda marcado como cadete, con su grupo
+  var cerrarBase=cerrarPerfil;
+  cerrarPerfil=function(){
+    var r=cerrarBase.apply(this, arguments);
+    try{
+      if(P){
+        P.nombre=HCM_CADETE.nombre; P.origen='HCM'; P.grupo_hcm=HCM_CADETE.grupo||'';
+        var d2=load(); d2.perfil=P; save(d2); D=d2;
+      }
+    }catch(e){}
+    return r;
+  };
 })();
 
 /* arranque */

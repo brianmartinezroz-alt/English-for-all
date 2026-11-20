@@ -18234,6 +18234,7 @@ var HCM_CADETE=null;
       var nom=String(q.n||'').replace(/\s+/g,' ').trim().slice(0,60);
       if(nom){
         d.hcm={nombre:nom, grupo:String(q.g||'').replace(/[^0-9A-Za-z]/g,'').slice(0,6),
+               carril:/^(bajo|medio|alto)$/.test(q.c||'')?q.c:((d.hcm&&d.hcm.carril)||'medio'),
                desde:(d.hcm&&d.hcm.desde)||new Date().toISOString().slice(0,10)};
         save(d); D=d;
       }
@@ -18242,11 +18243,42 @@ var HCM_CADETE=null;
     }
     if(d.hcm && d.hcm.nombre) HCM_CADETE=d.hcm;
   }catch(e){}
+  // Dentro del Colegio NUNCA se pide código, aunque la app no haya mandado el nombre
+  var puertaBase=estadoPuerta;
+  estadoPuerta=function(){ return DENTRO_HCM ? 'ok' : puertaBase(); };
   if(!HCM_CADETE) return;
 
-  // 1. sin código de acceso
-  var puertaBase=estadoPuerta;
-  estadoPuerta=function(){ return HCM_CADETE ? 'ok' : puertaBase(); };
+  // 0. DIRECTO A LAS ACTIVIDADES (Brian, 20 nov): el cadete no hace el alta.
+  //    Su perfil se arma solo con lo que ya dio en la app del Colegio, se
+  //    saltan la portada, la prueba de sonido, la voz y la foto, y cae
+  //    derecho en su mapa. Si quiere, después cambia todo en "Mis datos".
+  try{
+    var dd=load();
+    if(!dd.perfil){
+      var niv={bajo:[1,'A1'], medio:[2,'A2'], alto:[3,'B1']}[HCM_CADETE.carril||'medio']||[2,'A2'];
+      var p0={nombre:HCM_CADETE.nombre,
+        trabajo_es:'cadete militar', trabajo_en:null, lugar_es:null, lugar_en:null,
+        accion_es:'estudio, entreno y hago guardias', accion_en:null,
+        hora_es:'6', hora_en:'at six',
+        gusto_es:'el deporte y hacer ejercicio', gusto_en:'sports and working out',
+        meta_es:'por mi trabajo y para estudiar', meta_en:'for my job and to study',
+        voz:'sin voz', nivel:niv[1], nivel_n:niv[0], nivel_pts:0, nivel_resp:'',
+        gusto_otra:'', meta_otra:'', enfoque_es:'Las dos cosas', enfoque:enfoqueClave('Las dos cosas'),
+        creado:new Date().toISOString().slice(0,10)};
+      var p1=interpretar(p0);
+      p1.nombre=HCM_CADETE.nombre; p1.origen='HCM'; p1.grupo_hcm=HCM_CADETE.grupo||'';
+      dd.perfil=p1;
+      try{ dd.temas=sembrarTemas(p1); dd.temaFijo=''; }catch(e){}
+      dd.tutorVisto=true;   // sin recorrido de bienvenida: directo a practicar
+    }
+    if(!dd.probado) dd.probado=1;
+    if(dd.paquete===undefined) dd.paquete=PAQUETE_ACTIVO;
+    dd.fotoPreguntada=true;
+    save(dd); D=dd; P=dd.perfil;
+    vioMarca=true;          // sin la portada del pasaporte: directo al mapa
+  }catch(e){ try{ console.warn('EFA·HCM: no pude armar el perfil', e); }catch(_){} }
+
+  // 1. sin código de acceso: ya quedó arriba (todo lo que abre dentro del Colegio)
 
   // 2. el alta no vuelve a preguntar nombre ni a qué se dedica
   var SALTA={nombre:1, trabajo:1};
